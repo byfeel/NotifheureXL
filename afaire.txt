@@ -1,0 +1,5 @@
+Sauvegarde json systeme ok
+Autoluminosite ok
+minuteur
+boutons
+DFPlayer
