@@ -13,7 +13,7 @@
 // * Modules (Parola ou Generic )  - type S
 //  n/2+1 ... n-2 n-1 n   -> Matrice haute
 //  n/2 ... 3  2  1  0    <- Matrice basse
-const String ver = "0.8.1";
+const String ver = "0.8.2";
 // Bibliotheque à inclure
 //***** Gestion reseau
 #include <ESP8266mDNS.h>
@@ -61,8 +61,9 @@ const String ver = "0.8.1";
 #define PINAUTO_LUM A0
 
 
-const unsigned long MAGICEEP=12345678;
-int eeAddress = 64;
+const unsigned long MAGICEEP=13579025;
+const byte EP_VERSION = 2;
+int eeAddress = 32;
 
 // gestion des effets
 #define PAUSE_TIME 0
@@ -72,14 +73,17 @@ int eeAddress = 64;
 //Hard Config
 struct sHardConfig {
   unsigned long magic;
+  byte EPvers;
   byte maxDisplay;
   byte zoneTime;
   byte maxZonesMsg;
   bool XL;
   bool perso;
   byte ZP[MAX];
+  bool setup;
 };
 sHardConfig hardConfig;
+
 
 // software config
 struct sConfigSys {
@@ -98,14 +102,14 @@ struct sConfigSys {
   char charOff;
 };
 sConfigSys configSys;
-const size_t capacityConfig = JSON_ARRAY_SIZE(6) + JSON_OBJECT_SIZE(41) + 500;
+const size_t capacityConfig = JSON_ARRAY_SIZE(8) + JSON_OBJECT_SIZE(19) + 500;
 const char *fileconfig = "/config/config.json";  // fichier config
 
 WiFiUDP ntpUDP;
 
 // By default 'pool.ntp.org' is used with 60 seconds update interval and
 // no offset
-NTPClient timeClient(ntpUDP, "pool.ntp.org", 7200, 60000);
+NTPClient timeClient(ntpUDP, "pool.ntp.org", 7200, 600000);
 
 //variable pour inversion zone superieur selon module
 bool invertUpperZone = false;  // Type ICS ou FC16
@@ -132,12 +136,13 @@ byte _maxZones;
 byte ZonesWide[MAX];
 byte ZWP[MAX];   // zone Wide perso
 byte Zones[MAX];
-enum {Time_Lo,Time_Up,ZN_1,ZN_2,ZN_3,ZN_4,ZN_5};
+enum {Time_Lo,Time_Up,ZN_1,ZN_2,ZN_3,ZN_4,ZN_5,ZN_6};
 byte zoneXL_L,zoneXL_H,zoneTime,zoneMsg;
 
 //variable sys
 byte mem=0;
-
+String msgDebug="";
+String _pagehtml="index.html";
 
 //************* Structure notif
 struct sNotif {
@@ -153,6 +158,17 @@ struct sNotif {
 
 sNotif Notification[7];
 byte tab_notif=1;
+
+/*
+ * Structure historique
+ */
+struct sHistNotif {
+  char Notif[BUF_SIZE];
+  long int date;
+  char flag;
+};
+sHistNotif histNotif[10];
+
 
 //******** fx *******
 textEffect_t  effect[] =
@@ -255,14 +271,23 @@ void utf8Ascii(char* s)
 /*************************
 * * *lecture eeprom * * *
 *************************/
+void writeEEPROM() {
+ hardConfig.magic=MAGICEEP;
+ hardConfig.EPvers=EP_VERSION;
+ EEPROM.put(eeAddress,hardConfig);
+ EEPROM.commit();
+}
 
-void readEConfig() {
-//bool err=false;
+
+void readEConfig(bool reset=false) {
+  EEPROM.begin(512);
+bool err=false,writeOK=false;
 EEPROM.get( eeAddress, hardConfig);
-Serial.println("hardConfig.config="+String(hardConfig.magic));
-if (hardConfig.magic != MAGICEEP) {
+err = hardConfig.magic != MAGICEEP;
+if (reset) err=true;
+if (err) {
+  writeOK=true;
   Serial.println("Pas de configuration enregistrement par défaut");
-  hardConfig.magic=MAGICEEP;
  hardConfig.maxDisplay=4;
  hardConfig.zoneTime=4;
  hardConfig.maxZonesMsg=0;
@@ -271,19 +296,25 @@ if (hardConfig.magic != MAGICEEP) {
  for (int i=0;i<MAX;i++) {
  hardConfig.ZP[i]=i;
  }
-EEPROM.put(eeAddress,hardConfig);
-EEPROM.commit();
 }
-Serial.println("Configuration EEprom trouvé");
+if (hardConfig.EPvers <2 || err) {
+  writeOK=true;
+  hardConfig.setup=false;
+}
+if (writeOK) writeEEPROM();
+
+Serial.println("Configuration EEprom");
+Serial.println("Version EEProm  ="+String( hardConfig.EPvers));
 Serial.println("Mode XL  ="+String( hardConfig.XL));
 Serial.println("Mode maxDisplay  ="+String( hardConfig.maxDisplay));
 Serial.println("Mode perso  ="+String( hardConfig.perso));
 Serial.println("Mode zoneTime  ="+String( hardConfig.zoneTime));
 Serial.println("Mode maxZonesMsg  ="+String( hardConfig.maxZonesMsg));
+Serial.println("Mode Setup  ="+String( hardConfig.setup));
 for (int i=0;i<MAX;i++) {
   Serial.println("Mode ZP-"+String(hardConfig.ZP[i]));
 }
-
+EEPROM.end();
 }
 
 
@@ -295,23 +326,23 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   // Open file config
   File file = SPIFFS.open(fileconfig, "r");
    if (!file) {
+     msgDebug+="Fonction load : Fichier Config absent ---";
      //InfoDebugtInit=InfoDebugtInit+" Fichier config Jeedom absent -";
-     if (configSys.DEBUG) Serial.println("Fichier Config absent");
+     //if (configSys.DEBUG) Serial.println("Fichier Config absent");
     }
   DynamicJsonDocument docConfig(capacityConfig);
   DeserializationError err = deserializeJson(docConfig, file);
   if (err) {
-    if (configSys.DEBUG) {
-      Serial.print(F("deserializeJson() failed: "));
-      Serial.println(err.c_str());
+      msgDebug+="deserializeJson() failed: ";
+      msgDebug+=err.c_str();
     }
-  }
+
   // Initialisation des variables systémes pour configuration , si non présente valeur par defaut affecté
   strlcpy(config.NTPSERVER,docConfig["NTPSERVER"] | "pool.ntp.org",sizeof(config.NTPSERVER));
   strlcpy(config.hostName,docConfig["HOSTNAME"] | "NotifeureXL",sizeof(config.hostName));
   config.timeZone = docConfig["TIMEZONE"] | 1;
   config.DLS = docConfig["DLS"] | true;
-  config.DEBUG = docConfig["DEBUG"] | false;
+  config.DEBUG = docConfig["DEBUG"] | true;
   config.pauseTime=docConfig["PAUSE"] | 1000;
   config.scrollSpeed=docConfig["SPEED"] | 30;
   config.intensity=docConfig["INTENSITY"] | 2;
@@ -334,18 +365,20 @@ String createJson(sConfigSys  &config) {
   docConfig["HOSTNAME"]=config.hostName;
   docConfig["TIMEZONE"]=config.timeZone;
   docConfig["DLS"]=config.DLS;
-  docConfig["DEBUG"]=config.pauseTime;
+  docConfig["DEBUG"]=config.DEBUG;
   docConfig["SPEED"] =config.scrollSpeed;
   docConfig["PAUSE"] =config.pauseTime;
   docConfig["INTENSITY"]=config.intensity;
   docConfig["CHAROFF"]=config.charOff;
   docConfig["MEMOJSON"]=docConfig.memoryUsage();
+  docConfig["VERSION"]=ver;
   //donnee hardConfig
   docConfig["XL"]=hardConfig.XL;
   docConfig["MAXDISPLAY"]=hardConfig.maxDisplay;
   docConfig["MAXZONEMSG"]=hardConfig.maxZonesMsg;
   docConfig["ZONETIME"]=hardConfig.zoneTime;
   docConfig["PERSO"]=hardConfig.perso;
+  docConfig["SETUP"]=hardConfig.setup;
   JsonArray docZP = docConfig.createNestedArray("ZP");
   for (int i=0;i<MAX;i++) {
   docZP.add(hardConfig.ZP[i]);
@@ -360,6 +393,7 @@ void saveConfigSys(const char *fileconfig,String json) {
   if (!f) {
     //InfoDebugtInit=InfoDebugtInit+" Fichier config Jeedom absent -";
     if (configSys.DEBUG) Serial.println("Fichier Config absent - création fichier");
+    Serial.println("Fichier Config absent - création fichier");
    }
    f.print(json);  // sauvegarde de la chaine
    f.close();
@@ -412,7 +446,9 @@ else sprintf(psz,"%c",configSys.charOff);
 }
 
 void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_LEFT, uint16_t S=configSys.scrollSpeed ,uint16_t P=configSys.pauseTime , byte fi=1,byte fo=1) {
- // Msg.toCharArray( Notifs,BUF_SIZE);
+ // Verification Zones
+ if (NZO >_maxZones-1 || _maxZones==xl) NZO=zoneMsg;
+ //construction notif
   Notification[NZO].Alert=true;
   Msg.toCharArray( Notification[NZO].Notif,BUF_SIZE);
   if (!hardConfig.XL)  utf8Ascii(Notification[NZO].Notif);
@@ -485,7 +521,7 @@ bool validString(String val,int s ,int e) {
 
 // pour Decoupage chaine
 void optionsSplit(byte *Opt,String Val,char split) {
-  Serial.println("valeur de zp2  "+Val);
+  Serial.println("valeur de zoneperso :  "+Val);
   int  r=0 , t=0;
 
    for (int i=0; i < Val.length(); i++)
@@ -511,13 +547,14 @@ void handleConfig() {
         key.toLowerCase();
         if (key=="xl") if (optionsBool(&hardConfig.XL,server.arg(i))) mem=1;
         if (key=="maxdisplay") {optionsNum(&hardConfig.maxDisplay,server.arg(i),4,80);mem=1;}
-        if (key=="zonetime") {optionsNum(&hardConfig.zoneTime,server.arg(i),4,80);mem=1;}
+        if (key=="zonetime") {optionsNum(&hardConfig.zoneTime,server.arg(i),4,hardConfig.maxDisplay);mem=1;}
         if (key=="maxzonemsg") {
-          maxMsg=floor((hardConfig.maxDisplay - hardConfig.zoneTime)/2);
+          maxMsg=floor(hardConfig.maxDisplay - hardConfig.zoneTime);
           optionsNum(&hardConfig.maxZonesMsg,server.arg(i),0,maxMsg);
           mem=1;
         }
         if (key=="perso") if (optionsBool(&hardConfig.perso,server.arg(i))) mem=1;
+        if (key=="setup") if (optionsBool(&hardConfig.setup,server.arg(i))) mem=1;
         if (key=="zp") {optionsSplit(hardConfig.ZP,server.arg(i),',');mem=1;}
         if (key=="speed") {optionsNum(&configSys.scrollSpeed,server.arg(i),10,100);mem=2;}
 
@@ -537,13 +574,20 @@ info += server.arg(i) + "\n";
 Serial.println(info);
 }
 }
-
+bool verif=true;
   switch (mem) {
     case 1 :
+        if (hardConfig.XL && hardConfig.zoneTime*2 > hardConfig.maxDisplay) verif=false;
+        if (!hardConfig.XL && hardConfig.zoneTime > hardConfig.maxDisplay) verif=false;
+        if (verif) {
+        EEPROM.begin(512);
         EEPROM.put(eeAddress,hardConfig);
         EEPROM.commit();
-        rep="Modification config matrix - Sys reboot";
+        EEPROM.end();
+        rep="OK - > Modification config matrix -- Systeme reboot - Mode perso : "+String(hardConfig.perso);
         reboot=true;
+      }
+        else rep="Erreur , les valeurs ne semblent pas coherentes";
         break;
     case 2 :
         rep=createJson(configSys);
@@ -571,7 +615,8 @@ void handleOptions() {
           else value="L : "+String(configSys.intensity);
         displayNotif(value,zoneMsg,9);
       }
-    if (key=="INT") {optionsNum(&configSys.intensity,server.arg(i),0,15);
+    if (key=="INT") {
+      optionsNum(&configSys.intensity,server.arg(i),0,15);
       mem=1;
       configSys.LUM=false;
       value="L : "+String(configSys.intensity);
@@ -579,6 +624,9 @@ void handleOptions() {
     }
   }
   if (mem==1) {
+    String json="";
+    json=createJson(configSys);
+    saveConfigSys(fileconfig,json);
       server.send(200, "text/plane","OK");
   }
   server.send(200, "text/plane","Pas de changement");
@@ -684,22 +732,40 @@ if(!wifiManager.autoConnect("WIFI-Notifheure")) {
             delay(2000);
       }
 }
-// ************************
-// ************************
+// *********
+/***********
+ * SETUP *
+ *********/
+// *********
 void setup() {
-  EEPROM.begin(512);
+ Serial.begin(57600);
   // serial monitor
-  SPIFFS.begin();
+
   // wifi manager
   wifiMan();
- Serial.begin(115200);
+  SPIFFS.begin();
  // Initialisation des variables
+ //info SPIFFS
+ FSInfo fsInfo;
+// info fs
+SPIFFS.info(fsInfo);
+//fsInfo.totalBytes
+float total=(fsInfo.totalBytes/1024);
+Serial.println("info totalbytes : "+String(total));
+Serial.println("info usedbytes : "+String(fsInfo.usedBytes));
+Serial.println("info blocksize : "+String(fsInfo.blockSize));
+Serial.println("info pagesize: "+String(fsInfo.pageSize));
+Serial.println("info maxOpenFiles : "+String(fsInfo.maxOpenFiles));
+Serial.println("info maxPathLength : "+String(fsInfo.maxPathLength));
  // Eeprom
  readEConfig();
  // lecture fichier json dans memoire SPIFFS
  loadConfigSys(fileconfig, configSys);
+ if (hardConfig.setup) _pagehtml="index.html";
+ else _pagehtml="setup.html";
  // Serveur OTA
 Ota(configSys.hostName);
+Serial.println(msgDebug);
 //serveur WEB
 //server.on("/Notification",handleNotif); //Gestion des Notifications
  server.on("/Notification",handleNotif); //Gestion des Notifications
@@ -712,10 +778,16 @@ Ota(configSys.hostName);
   }
 });
  server.begin();
+ // init
  // init variable  - Assignation zone
  _spaceChar = 1;
 // variable par defaut pour calcul des Zones
 int Start,End,WZN;
+// verification si Zone ok
+if (hardConfig.maxDisplay<hardConfig.zoneTime) {
+    hardConfig.zoneTime=hardConfig.maxDisplay;
+    hardConfig.XL=false;
+  }
 if (hardConfig.XL) {
         ZonesWide[0]= hardConfig.zoneTime;
         ZonesWide[1]= hardConfig.zoneTime;
@@ -727,22 +799,23 @@ else {
 }
 if (configSys.DEBUG) Serial.println("valeur xl = "+String(xl));
 _maxZones=xl;
-// calcul zone dispo pour Notifications
-_maxDisplayMsg=hardConfig.maxDisplay-xl* hardConfig.zoneTime;
+
+_maxDisplayMsg=hardConfig.maxDisplay-xl*hardConfig.zoneTime;
 Serial.println("Display dispo pour notif : "+String(_maxDisplayMsg));
-if (_maxDisplayMsg > 0 ) {
+if (_maxDisplayMsg > 0 && hardConfig.maxZonesMsg>0) {
     WZN = floor(_maxDisplayMsg/hardConfig.maxZonesMsg );
     for (int i=xl;i<hardConfig.maxZonesMsg+xl-1;i++)
         {
      ZonesWide[i]=WZN;
-    // Serial.println("Zone "+String(i+1)+" taille = "+String(ZonesWide[i]));
+
      _maxZones++;
+     Serial.println("Zone dans boucle index : "+String(i));
       }
   // la derniére zone prend ce qu'il reste
   if (hardConfig.maxZonesMsg>=1)  {
     ZonesWide[_maxZones]=hardConfig.maxDisplay-(hardConfig.maxZonesMsg-1)*WZN-xl*( hardConfig.zoneTime);
      _maxZones++;
-    // Serial.println("Zone "+String(_maxZones)+" taille = "+String(ZonesWide[_maxZones-1]));
+     Serial.println("Zone finale "+String(_maxZones)+" taille = "+String(ZonesWide[_maxZones-1]));
     }
   }
 
@@ -770,7 +843,8 @@ if (hardConfig.perso) {
   else zoneMsg=Zones[Time_Up];
   // test zones
  Serial.println("zone time "+String( zoneTime));
- Serial.println("zone SL H"+String( zoneXL_H));
+ Serial.println("zone XL L "+String( zoneXL_L));
+ Serial.println("zone XL H "+String( zoneXL_H));
  Serial.println("zone msg "+String( zoneMsg));
 
 // Selon modele des matrices - inversion de l'affichage ( true si Generic ou Parola )
@@ -821,14 +895,24 @@ for (int i=0;i<MAX;i++) {
     P.setZoneEffect(zoneXL_L , true, PA_FLIP_UD);
     P.setZoneEffect(zoneXL_H , true, PA_FLIP_LR);
   }
+  /*
+   * inversion
+  P.setZoneEffect(zoneXL_L , true, PA_FLIP_LR);
+  P.setZoneEffect(zoneXL_L , true, PA_FLIP_UD);
+  P.setZoneEffect(zoneXL_H , true, PA_FLIP_UD);
+  P.setZoneEffect(zoneXL_H, true, PA_FLIP_LR);
+  zoneTime=Zones[Time_Up];
+  zoneXL_L=Zones[Time_Up];
+  zoneXL_H=Zones[Time_Lo];
+*/
+// recuperation heure
+  timeClient.begin();
+  timeClient.forceUpdate();
+  if (configSys.DEBUG) Serial.println("time :"+String(timeClient.getEpochTime()));
   if (_maxZones==xl) zoneMsg=zoneTime;
   displayClock();
-  if (_maxZones>xl) {
- // P.setFont(zoneMsg,ExtASCII);
- // P.displayZoneText(zoneMsg,Notifs,PA_LEFT,SCROLL_SPEED, PAUSE_TIME,PA_SCROLL_LEFT,PA_SCROLL_LEFT);
-  }
 
-  timeClient.begin();
+
   configSys.intensity=lumAuto();
   //fin setup
   String infoSys="OK IP : ";
@@ -909,12 +993,16 @@ if ( XLZoneTest) {
         disClock=false;
        }
      getFormatClock(msgL, flasher);
-     if (hardConfig.XL) createHStringXL(msgH, msgL);
+    // if (hardConfig.XL) createHStringXL(msgH, msgL);
+    if (hardConfig.XL) createHStringXL(msgH, msgL);
      //displayClock();
 
   }
   P.displayReset(zoneXL_L);
+  //P.displayReset(zoneXL_H);
+
   if (hardConfig.XL) P.displayReset(zoneXL_H);
+  //if (hardConfig.XL) P.displayReset(zoneXL_L);
  }
 
  //if (_maxZones >xl) {
@@ -955,14 +1043,14 @@ String getContentType(String filename){
 
 bool handleFileRead(String path){  // send the right file to the client (if it exists)
   Serial.println("handleFileRead: " + path);
-  if(path.endsWith("/")) path += "index.html";           // If a folder is requested, send the index file
+  if(path.endsWith("/")) path += _pagehtml;           // If a folder is requested, send the index file
   String contentType = getContentType(path);             // Get the MIME type
   String pathWithGz = path + ".gz";
   if(SPIFFS.exists(pathWithGz) || SPIFFS.exists(path)){  // If the file exists, either as a compressed archive, or normal
     if(SPIFFS.exists(pathWithGz))                          // If there's a compressed version available
       path += ".gz";                                         // Use the compressed version
     File file = SPIFFS.open(path, "r");                    // Open the file
-  //  size_t sent = server.streamFile(file, contentType);    // Send it to the client
+   size_t sent = server.streamFile(file, contentType);    // Send it to the client
     file.close();                                          // Close the file again
     Serial.println(String("\tSent file: ") + path);
     return true;

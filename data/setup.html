@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+  <!--  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/materia/bootstrap.min.css">
+
+
+    <title>Setup NotifHeure XL</title>
+  </head>
+  <body>
+    <!-- Header -->
+<div class="container col-12 bg-primary p-3 text-white ">
+    <header class="page-header ">
+
+        <h4 class="d-inline "><b>SETUP Notif'Heure XL <span id="lieu" class="font-weight-bold"></span></b></h4><small class="float-right">  Version : <span id="version" class="font-weight-bold"></span></small>
+    </header>
+</div>
+  <!-- questionnaire -->
+  <div class="container col-lg-10">
+    <h6 id="firstSetup" class="text-center text-info m-2">  - Configuration Initial - </h6>
+    <div class="row">
+
+    <div class="col-lg-7 col-md-6 col-10">
+
+    <div class="form-group">
+    <label class="col-form-label" for="inputNbMatrix">Nombre de Matrices ?</label>
+    <input type="number" class="form-control" placeholder="nombres Matrices" id="inputNbMatrix"  min="4" max="80">
+    <small class="form-text text-muted">Indiquez ici le nombre total de matrices</small>
+    </div>
+    <div id="groupTime" class="form-group d-none">
+    <label class="col-form-label" for="inputZoneTime">Taille Zone Horloge ?</label>
+    <input type="number" class="form-control" placeholder="largeur affichage horloge" id="inputZoneTime" value="4" min="4" max="80">
+    <small class="form-text text-muted"></small>
+    </div>
+    <div id="groupXL" class="custom-control custom-checkbox d-none ">
+        <input type="checkbox" class="custom-control-input" id="checkXL">
+        <label class="custom-control-label" for="checkXL">Activer le mode XL</label>
+    </div>
+    <div id="groupMsg" class="form-group d-none">
+    <label class="col-form-label" for="inputMaxZoneMsg">Nombre de Zone(s) supplementaire(s) pour les notifs.</label>
+    <input type="number" class="form-control" placeholder="Nombre de Zone(s)" id="inputMaxZoneMsg" value="0" min="0" max="7">
+    <small class="form-text text-muted"></small>
+    </div>
+
+</div>
+<div class="col-lg-5 col-md-6 col-11">
+
+    <div class="card border-success  m-3 shadow " >
+    <div class="card-header text-white bg-success"><h4>Configuration Affichage</h4></div>
+    <div class="card-body">
+    <h5 class="card-title">Valeurs à enregistrer</h5>
+    <p class="card-text"><ul>
+      <li>Nombres Matrices : <span id="infoMatrix"></span></li>
+      <li>Taille Zone Horloge : <span id="infoTime"></span></li>
+      <li>Mode XL  : <span id="infoXL"></span></li>
+      <li>Nb zones sup (notif)  : <span id="infoNotif"></span></li>
+    </ul>
+    <h6 id="infoZPtext"> Mode zone Perso désactivé</h6>
+    <div id="infoPerso" class="d-none">
+    <ul>
+      <li> Total Zones : <span id="infoZP"></span> </li>
+      <li>Index Zones Perso :<span id="infoZPindex"></span></li>
+    </ul>
+  </div>
+    <div class="mx-auto m-4 text-center">
+      <button id="btnSetup" type="button" class="btn btn-success d-none" onsubmit="submitSetup();">Enregistrer Config</button>
+    </div>
+    <p><small id="infoSubmit" class="text-info"></small></p>
+  </p>
+    </div>
+    </div>
+
+  </div>
+
+</div>
+<div class="row border-left border-danger border-3 m-3 p-3">
+<h5 class="text-danger">Activation Mode Zone Perso</h5>
+<div class="w-100"></div>
+<div >
+  <div  class="custom-control custom-checkbox">
+      <input type="checkbox" class="custom-control-input" id="checkPerso">
+      <label class="custom-control-label" for="checkPerso">Désactiver réglages des Zones Automatique </label>
+      <small class="d-block">Ce mode permet de modifier l'ordre standard des Zones , ce mode est à utiliser si vous savez ce que vous faites.
+        Par défaut les Zones sont crées dans l'ordre suivant : Zone 0 , horloge , Zone 1 : Zone message ou Zone WL haute , zone 2 , zone 3 etc ...
+        pour les zones Notifs supplementaires.</small>
+  </div>
+</div>
+</div>
+<div class="row p-3">
+  <div class="col-lg-7 col-md-6 col-10">
+      <div id="groupPerso" class="d-none">
+        <h6 >Configuration des Zones : </h6>
+        <small>Réaffectez les numeros de Zones , en fonction de la disposition de vos matrices , par exemple pour passer la zone Horloge sur la Zone 3 , séléctionnez 3.
+          <p>La zone basse de l'horloge pour la partie XL est la même que la zone horloge</p>
+          <p class="text-warning">Attention a bien verifier les zones , ce mode permet de réorganiser manuellment les zones , pas de controle de cohérence .</p>
+        </small>
+        <div id="groupZP">
+      </div>
+    </div>
+</div>
+  </div>
+</div>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+
+    <script   src="https://code.jquery.com/jquery-3.4.1.min.js"   integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="   crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script>
+        // init
+        var Socket;
+        var NbMatrix=4,WZT=4,MZM=0,xl=1;
+        var perso=false;
+        var erreur=false;
+        var setup=false;
+        var XL=false;
+        var ZXL=["Zone XL Bas","Zone XL haut","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone notif 6"];
+        var Z=["Zone Horloge","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone Notif 6","Zone Notif 7"];
+        var zpinit=[0,1,2,3,4,5,6,7];
+        var zperso=[0,1,2,3,4,5,6,7];
+        var jinfo;
+
+        function IsJsonString(str) {
+            try {
+            JSON.parse(str);
+            } catch (e) {
+            return false;
+            }
+            return true;
+            }
+
+
+            $( document ).ready(function() {
+            console.log( "start!" );
+            // recupere info
+            $.ajax({
+                   url: "/GetInfo",
+                   type: "GET",
+                   dataType:"html",
+                   success: function(data) {
+                     console.log(data);
+                     if (IsJsonString(data)){
+                       var jinfo = JSON.parse(data);
+                       NbMatrix=jinfo.MAXDISPLAY;
+                       WZT=jinfo.ZONETIME;
+                       MZM=jinfo.MAXZONEMSG;
+                       if(jinfo.XL) XL=true ;
+                       else XL=false;
+                      perso=jinfo.PERSO;
+                      setup=jinfo.SETUP;
+                      $('#version').text(jinfo.VERSION);
+                      zperso=jinfo.ZP;
+
+                      }
+                 },
+                   error: function(resultat,statut) {
+                       init();
+                   },
+                   complete: function(resultat, statut){
+                     init();
+               }
+
+               }); //fin ajax
+          // init document
+            //  if (XL) xl=2;
+            //  else xl=1;
+              $('#inputNbMatrix').on('blur change click',checkZone);
+              $('#inputZoneTime').on('blur change click',checkZone);
+              $('#checkXL').on('change',checkZone);
+              $('#inputMaxZoneMsg').on('blur change click',checkZone);
+              $("#btnSetup").on('click', submitSetup);
+              $('#checkPerso').on('change',modePerso);
+            })
+
+      function init() {
+
+         $('#inputNbMatrix').val(NbMatrix);
+         $('#inputZoneTime').val(WZT);
+         $('#inputMaxZoneMsg').val(MZM);
+         $('#checkXL').prop('checked',XL);
+         if (XL) xl=2;
+         else xl=1;
+         if (setup) {
+           $('#firstSetup').addClass("d-none");
+           displayControl(1);
+           displayControl(2);
+           $('#inputMaxZoneMsg').removeClass("d-none");
+           $('#checkPerso').prop('checked',perso);
+           checkZone();
+            console.log("test perso : ");
+           //if (perso) {
+          //    nbz=xl+MZM;
+          //   modePerso();
+          //  console.log("test nbz "+nbz);
+          // }
+         }
+      }
+
+      function testValid() {
+        return true;
+      }
+
+      function displayControl(step) {
+        switch (step) {
+          case 1:$('#groupTime').removeClass("d-none");
+          break;
+          case 2 :$('#groupMsg').removeClass("d-none");
+          break;
+          case 3 :$('#btnSetup').removeClass("d-none");
+          break;
+          case 4 :$('#btnSetup').addClass("d-none");
+          break;
+        }
+      }
+
+      function checkZone() {
+        el=$(this).attr('id');
+        erreur=false;
+        // nombre de cellules
+        NbMatrix=parseInt($('#inputNbMatrix').val());
+      //  console.log($(this).attr('id'));
+        if (NbMatrix >=4 && NbMatrix<=80 )  {
+        $('#inputNbMatrix').addClass("is-valid");
+        $('#inputNbMatrix').removeClass("is-invalid");
+        displayControl(1);
+      }
+      else {
+        $('#inputNbMatrix').addClass("is-invalid");
+        $('#inputNbMatrix').removeClass("is-valid");
+        erreur=true;
+      }
+      // zone time
+
+        WZT=parseInt($('#inputZoneTime').val());
+        console.log("WZT = "+WZT);
+          if ((WZT > NbMatrix) || (WZT<4) ) {
+            $('#inputZoneTime').addClass("is-invalid");
+            $('#inputZoneTime').removeClass("is-valid");
+            erreur=true;
+          }
+          else {
+              $('#inputZoneTime').removeClass("is-invalid");
+              $('#inputZoneTime').addClass("is-valid");
+              if (el=="inputZoneTime") displayControl(2);
+              if (WZT*2 <= NbMatrix) {
+                $('#groupXL').removeClass("d-none");
+              }
+              else {
+              $('#checkXL').prop('checked',false);
+              $('#groupXL').addClass("d-none");
+              }
+        }
+
+        // check XL
+
+        if (el=="checkXL") {
+          displayControl(2);
+        }
+        if ($('#checkXL').prop('checked') && (WZT*2 <= NbMatrix))
+        xl=2;
+        else xl=1;
+
+        // verif ZoneMessage
+        MZM=parseInt($('#inputMaxZoneMsg').val());
+        NbMatrix=parseInt($('#inputNbMatrix').val());
+        zonesDispo=NbMatrix-(xl*WZT);
+        maxZones=Math.round(zonesDispo/2);
+        if (maxZones<0) maxZones=0;
+        if (maxZones>7) maxZones=7;
+        if (zonesDispo<=0)   {
+          $('#inputMaxZoneMsg').attr("min",0);
+          $('#groupMsg small').text("Aucune Zones supplementaires à créer");
+          $('#inputMaxZoneMsg').val(0);
+        }
+          else   {
+            $('#inputMaxZoneMsg').attr("min",1);
+            $('#groupMsg small').text("Nombres de Zones supplémentaires à créer pour les notifications  , entre 1 et au max "+maxZones);
+            if ($('#inputMaxZoneMsg').val()<=1 ) $('#inputMaxZoneMsg').val(1);
+          }
+        if(MZM < $('#inputMaxZoneMsg').attr("min") || (MZM>maxZones)) {
+          $('#inputMaxZoneMsg').addClass("is-invalid");
+          $('#inputMaxZoneMsg').removeClass("is-valid");
+          erreur=true;
+        }
+          else {
+            $('#inputMaxZoneMsg').addClass("is-valid");
+            $('#inputMaxZoneMsg').removeClass("is-invalid");
+            if (el=="inputMaxZoneMsg") displayControl(3);
+          }
+
+//verif PERSO
+modePerso();
+
+
+//init
+        $('#groupTime small').text("taille de la zone Horloge entre 4 et "+NbMatrix);
+
+        $('#inputZoneTime').attr("max",NbMatrix);
+        $('#inputMaxZoneMsg').attr("max",maxZones);
+        // Mise a jour Zone Info
+        $('#infoMatrix').text(NbMatrix);
+        $('#infoTime').text($('#inputZoneTime').val());
+        if ($('#checkXL').prop('checked'))   $('#infoXL').text('Activé');
+        else $('#infoXL').text('Désactivé');
+        $('#infoNotif').text($('#inputMaxZoneMsg').val());
+        if (erreur) displayControl(4);
+        else displayControl(3);
+      }
+
+    function submitSetup() {
+      zonePerso=readZP();
+      checkZone();
+
+      console.log("Zoneperso : "+zonePerso );
+      if (!erreur){
+        setup=true;
+        console.log("enregistrement setup");
+        $.post('/Config',
+              {
+        xl: $('#checkXL').prop('checked'),
+        maxdisplay: NbMatrix,
+        zonetime:WZT,
+        maxzonemsg:MZM,
+        perso:perso,
+        zp:zonePerso,
+        setup:setup
+            }, function(data) {
+        $("#infoSubmit").text(data);
+          });
+      }
+    }
+
+    function modePerso() {
+      if ($("#checkPerso").prop('checked') && $('#inputMaxZoneMsg').hasClass("is-valid") && $('#inputMaxZoneMsg').val()>=1) {
+        $("#groupPerso").removeClass("d-none");
+        $("#infoPerso").removeClass("d-none");
+        $("#infoZPtext").text("Mode Zone Perso Actif");
+        $("#infoZPtext").addClass("text-danger");
+      nbZ=xl+MZM;
+      ajoutZonePerso(nbZ);
+      perso=true;
+
+    } else {
+    $('#groupZP').html('');
+    perso=false;
+    zperso=zpinit;
+    $("#groupPerso").addClass("d-none");
+    $("#infoPerso").addClass("d-none");
+    $("#infoZPtext").text("Mode zone Perso désactivé");
+    $("#infoZPtext").removeClass("text-danger");
+    $("#checkPerso").prop('checked',false);
+  }
+  readZP();
+    }
+
+    function readZP() {
+      var zpClass=0;
+      var zonePerso="";
+      zpClass=$(".zp").length;
+      //if ($("#checkPerso").prop('checked')) {
+      if (zpClass>1) {
+      $(".zp").each(function(index) {
+      if (zonePerso.indexOf($( this ).val())==-1) $(this).removeClass("is-invalid");
+      else $(this).addClass("is-invalid");
+        zonePerso+=$(this).val()+",";
+        zperso[index]=$(this).val();
+      });
+    }
+    $('#infoZP').text(zpClass);
+  //}
+    $('#infoZPindex').text(zonePerso);
+    return zonePerso;
+  }
+
+      function ajoutZonePerso(nbZ) {
+            $('#groupZP').html('');
+            html='';
+            if (nbZ==xl) {
+            html='<div>';
+            html+='<p class="text-primary"> Pas de zones à modifier</p>'
+            html+='</div>';
+            }
+            else {
+              mZ=nbZ-1;
+            if ($('#checkXL').prop('checked')) ZP=ZXL;
+            else ZP=Z;
+            for (i=0;i<nbZ;i++) {
+             //html ='<div class="input-group input-group-sm mb-3">';
+             html+='<div class="input-group-prepend">';
+             html+='<span class="input-group-text mr-2 text-primary" id="inputZone'+i+'">'+ZP[i]+' : </span>';
+            // html+='</div>';
+             html+='<input type="number" class="form-control zp" aria-label="Numéro Zone 0" aria-describedby="inputZone0" onchange="readZP();" min=0 max='+mZ+' value='+zperso[i]+'>';
+             html+='</div>';
+           }
+         }
+         jQuery("#groupZP").append(html);
+       }
+
+        </script>
+  </body>
+</html>
