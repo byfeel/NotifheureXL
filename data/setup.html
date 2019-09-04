@@ -25,10 +25,25 @@
   <div class="container col-lg-10">
     <h6 id="firstSetup" class="text-center text-info m-2">  - Configuration Initial - </h6>
     <div class="row">
+      <div class="col-lg-7 col-md-6 col-10">
+      <label class="col-form-label" for="inputName">Nom du Notifheure ?<small class="text-info" id="infoNom"> nouveau nom : <span>hello</span></small></label>
+      <div class="input-group">
 
+<div class="input-group input-group-sm">
+  <input type="text" class="form-control" placeholder="exemple : salon" aria-label="exemple : salon" aria-describedby="indiquer un nom" id="inputName" required pattern="[A-Za-z]">
+    <div class="input-group-append">
+    <button class="btn btn-outline-primary btn-sm" type="button" onclick="submitConfig();">Sauvegarder</button>
+      </div>
+    </div>
+</div>
+      <small class="form-text text-muted">Indiquez ici le nom de votre nouveau Notifheure ( 3 à 15 caractéres ) </small>
+      </div>
+    </div>
+    <div class="d-none" id="groupMatrix">
+    <div class="row">
     <div class="col-lg-7 col-md-6 col-10">
 
-    <div class="form-group">
+    <div class="form-group mt-3">
     <label class="col-form-label" for="inputNbMatrix">Nombre de Matrices ?</label>
     <input type="number" class="form-control" placeholder="nombres Matrices" id="inputNbMatrix"  min="4" max="80">
     <small class="form-text text-muted">Indiquez ici le nombre total de matrices</small>
@@ -69,7 +84,7 @@
     </ul>
   </div>
     <div class="mx-auto m-4 text-center">
-      <button id="btnSetup" type="button" class="btn btn-success d-none" onsubmit="submitSetup();">Enregistrer Config</button>
+      <button id="btnSetup" type="button" class="btn btn-success d-none" onsubmit="submitSetup();">Enregistrer Config Matrices</button>
     </div>
     <p><small id="infoSubmit" class="text-info"></small></p>
   </p>
@@ -106,6 +121,7 @@
 </div>
   </div>
 </div>
+</div>
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
 
@@ -140,13 +156,15 @@
             console.log( "start!" );
             // recupere info
             $.ajax({
-                   url: "/GetInfo",
+                   url: "/getInfo",
                    type: "GET",
                    dataType:"html",
                    success: function(data) {
                      console.log(data);
                      if (IsJsonString(data)){
                        var jinfo = JSON.parse(data);
+                       if (jinfo.NOM=="New") $("#inputName").val('');
+                       else $("#inputName").val(jinfo.NOM);
                        NbMatrix=jinfo.MAXDISPLAY;
                        WZT=jinfo.ZONETIME;
                        MZM=jinfo.MAXZONEMSG;
@@ -316,7 +334,6 @@ modePerso();
     function submitSetup() {
       zonePerso=readZP();
       checkZone();
-
       console.log("Zoneperso : "+zonePerso );
       if (!erreur){
         setup=true;
@@ -335,6 +352,31 @@ modePerso();
           });
       }
     }
+
+    function submitConfig() {
+      console.log("Nom : "+$('#inputName').val());
+    var regex=/^[a-zA-Z0-9_-]{3,15}$/;
+    nom=$('#inputName').val();
+      if (regex.test(nom)) {
+              console.log("ok");
+              $('#inputName').addClass("is-valid");
+              $('#inputName').removeClass("is-invalid");
+              $.post('/Config',
+                    {
+              name : $('#inputName').val(),
+                  }, function(data) {
+              $("#infoNom").text(data);
+                });
+            }
+      else {
+        console.log("faux");
+        $('#inputName').addClass("is-invalid");
+        $('#inputName').removeClass("is-valid");
+      }
+
+      }
+
+
 
     function modePerso() {
       if ($("#checkPerso").prop('checked') && $('#inputMaxZoneMsg').hasClass("is-valid") && $('#inputMaxZoneMsg').val()>=1) {

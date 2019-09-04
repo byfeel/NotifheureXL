@@ -8,7 +8,7 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
       <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/materia/bootstrap.min.css">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.3.2/rangeslider.min.css">
-
+        <link rel="stylesheet" href="notifheure.css">
     </head>
 <body>
             <!-- Header -->
@@ -27,7 +27,7 @@
     <a class="nav-link show active bg" data-toggle="tab" href="#Notif">Notification</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link show" data-toggle="tab" href="#Minuteur">Minuteur</a>
+    <a class="nav-link show" data-toggle="tab" href="#Minuteur">Minuteure</a>
   </li>
 </ul>
 </div>
@@ -50,31 +50,24 @@
 <INPUT type='text' name='msg' id='msg' maxlength='59' placeholder='Votre Message ...' class="form-control" aria-describedby="msghelp"/>
 <small id ="msghelp" class="form-text text-muted">Notification limité à 60 caractéres.</small>
                  </div>
-<div class="form-row">
+  <div class="form-row">
+    <div class="col-12">
+
     <div class="col-6 col-sm-6 col-md-5 col-lg-4">
-        <p class="text-primary">Intensité d'affichage</p>
-        <div>
-  <input type="range" id="start" name="volume"
-         min="0" max="11">
-  <label for="volume">Volume</label>
-</div>
+
+ </div>
       </div>
-    <div class="col-6 col-sm-6 col-md-7 col-lg-8">
-            <div class="form-group">
-   <div class="custom-control custom-checkbox">
-      <input type="checkbox" class="custom-control-input" id="checkInt" >
-      <label class="custom-control-label" for="checkInt">Intensité par défaut</label>
-    </div>
-</div>
+    <div class="col-6">
+
         <div class="form-group">
 <label for='type' class="text-primary">Animation : </label>
 <select class="form-control" name='type' id='type'>
- <option value=''>Aucune</option>
- <option value='INFO'>INFO</option>
- <option value='FIX'>FIX</option>
- <option value='PAC'>PAC MAN</option>
- <option value='BLINDS'>BLINDS</option>
- <option value='OPENING'>Opening</option>
+ <option value='0'>Aucune</option>
+ <option value='1'>INFO</option>
+ <option value='2'>FIX</option>
+ <option value='3'>PAC MAN</option>
+ <option value='4'>BLINDS</option>
+ <option value='5'>Opening</option>
  </select>
             </div>
     <div class="form-group" id="textfield">
@@ -88,6 +81,13 @@
 <small id ="Phelp" class="form-text text-muted">Temps de pause en secondes ( de 0 à 60 )</small>
      </div>
   </div>
+    <div class="col-6">
+      <div class="form-group">
+      <label class="col-form-label" for="inputZone">Zone </label>
+      <input type="number" class="form-control" placeholder="numero Zone" id="inputZone"  min="0" max="7">
+      <small class="form-text text-muted">Zone pour afficher notification</small>
+      </div>
+    </div>
   </div>
 
 
@@ -112,13 +112,16 @@
           </div>
           <div class="card-body text-center">
         <p>Réglage Durée Minuteur en Minutes</p>
-       <div id="SliderMinuteur" class="mx-auto"></div>
+        <div class="mx-auto" id="groupTempo">
+              <input  type="range" id="MINUT" name="Tempo" min="0" max="120" oninput="valMINUT.value = Tempo.valueAsNumber">
+              <output for="MINUT"  name="valMINUT"></output>
+         </div>
        <br >
        <div class="text-center">
-       <button type="button" class="btn btn-outline-primary m-2" onclick="startMin(1);">Start</button>
-       <button type="button" class="btn btn-outline-warning m-2" onclick="startMin(0);">Stop</button>
+       <button type="button" class="btn btn-outline-primary m-2" onclick="Minuteur('MIN',5);">Start</button>
+       <button type="button" class="btn btn-outline-warning m-2" onclick="">Stop</button>
 
-       <button type="button" class="btn btn-outline-info m-2" onclick="SetOptions('CR',true);"><span id="btnCr" >Masquer</span></button>
+       <button type="button" class="btn btn-outline-info m-2" onclick=""><span id="CR" >Masquer</span></button>
      </div>
   </div></div></div>
   </div>
@@ -130,7 +133,7 @@
     <!-- DHT-->
     <div class="col-10 col-sm-10 col-md-7 col-lg-4 d-none mx-auto" id="dht_box">
     <div class="card bg-dark text-white mb-3 text-center" style="max-width: 20rem;">
-        <div class="card-header" id="thermo"><h4><span id="Modele">DHT</span></h4></div>
+        <div class="card-header bg-success" id="thermo"><h4><span id="Modele">DHT</span></h4></div>
   <div class="card-body tex-center">
 
         <h2 class="display-3"><span id="Temp"></span> &deg;C</h2>
@@ -141,30 +144,37 @@
     </div>
     <!-- Options -->
     <div class=" col-10 col-sm-8 col-md-5 col-lg-4 mx-auto">
+      <legend class="text-primary">Options :</legend>
     <form name="FormOptions" action='/Options' method='POST' class="my-3 mx-2">
-        <legend class="text-primary">Options :</legend>
-     <div class="form-check mb-1">
-     <input name='SEC' type="checkbox"  data-toggle="toggle" data-onstyle="success" data-offstyle="danger" data-size="small"  id="SEC" checked >
-          <label class="form-check-label ml-3" for="SEC"> Affichage secondes </label>
-    </div>
-    <div class="form-check mb-1">
-    <input name='HOR' type="checkbox"  data-toggle="toggle" data-onstyle="success" data-offstyle="danger" data-size="small" id="HOR"  checked>
-         <label class="form-check-label ml-3" for="HOR"> Affichage Horloge </label>
-        </div>
+      <div class="form-group">
+      <div class="custom-control custom-checkbox">
+      <input type="checkbox" class="custom-control-input" id="LUM" checked>
+      <label class="custom-control-label text-primary" for="LUM">Luminosité Auto</label>
+      </div>
+      </div>
+     <div class="mx-auto d-none" id="groupLum">
+           <input  type="range" id="INT" name="intensity" min="0" max="15" oninput="valint.value = intensity.valueAsNumber">
+           <output for="INT"  name="valint"></output>
+      </div>
+      <div class="form-group">
+      <div class="custom-control custom-checkbox">
+      <input name='SEC' type="checkbox"  class="custom-control-input"  id="SEC" checked >
+      <label   class="custom-control-label text-primary" for="SEC"> Affichage secondes </label>
+     </div>
+   </div>
+   <div class="form-group">
+   <div class="custom-control custom-checkbox">
+   <input name='HOR' type="checkbox"  class="custom-control-input"  id="HOR" checked >
+   <label   class="custom-control-label text-primary" for="HOR"> Affichage Horloge </label>
+  </div>
+  </div>
+</div>
+
+
       <div class="form-check mb-1 d-none" id="blocled">
     <input name='LED' type="checkbox"  data-toggle="toggle" data-onstyle="success" data-offstyle="danger" data-size="small" id="LED" >
          <label class="form-check-label ml-3" for="LED"> On / Off LED</label>
         </div>
-      <div class="form-check mb-1">
-    <input name='LUM' type="checkbox"  data-toggle="toggle" data-onstyle="success" data-offstyle="danger" data-size="small" data-on="Auto" data-off="Manu" class="col-sm-3" id="LUM" checked>
-    <label class="form-check-label ml-2" for="LUM">Mode Auto / Manuel <span class="badge badge-info" id="int"></span></label>
-    </div>
-         <div id="OptionsINT" class="d-none">
-        <p class="text-danger">Réglage Intensité en Mode Manuel</p>
-       <div id="SliderIntensiteOption" class="mx-auto"></div>
-    </div>
-        </div>
-
         </form>
 </div>
 </div>
@@ -202,7 +212,7 @@
       </table>
           </div></div>
  <div class="card border-danger  m-1" style="min-width:300px;">
-  <div class="card-header text-center"><H3>Reseau</H3></div>
+  <div class="card-header text-center"><H3>NetWork</H3></div>
   <div class="card-body">
       <table class="table table-bordered table-sm table-md">
 <tr><th scope="row" class="bg-dark text-white">Mac adr.</th><td id="MAC"></td></tr>
@@ -211,16 +221,20 @@
   <tr><th scope="row" class="bg-dark text-white">Passerelle</th><td id="passerelle"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">DNS 1</th><td id="DNS"></td></tr>
    <tr><th scope="row" class="bg-dark text-white">DNS 2</th><td id="DNS2"></td></tr>
+   <tr><th scope="row" class="bg-dark text-white">SSID</th><td id="SSID"></td></tr>
+     <tr><th scope="row" class="bg-dark text-white">Signal Wifi</th><td id="RSSI"></td></tr>
+   <tr><th scope="row" class="bg-dark text-white">Canal</th><td id="channel"></td></tr>
+     <tr><th scope="row" class="bg-dark text-white">BSSID</th><td id="BSSID"></td></tr>
       </table>
                     </div></div>
       <div class="card border-warning  m-1" style="min-width:300px;"  >
-  <div class="card-header text-center"><H3>WIFI</H3></div>
+  <div class="card-header text-center"><H3>Display</H3></div>
   <div class="card-body">
       <table class="table table-bordered table-sm table-md">
-<tr><th scope="row" class="bg-dark text-white">SSID</th><td id="SSID"></td></tr>
-  <tr><th scope="row" class="bg-dark text-white">Signal Wifi</th><td id="RSSI"></td></tr>
-<tr><th scope="row" class="bg-dark text-white">Canal</th><td id="channel"></td></tr>
-  <tr><th scope="row" class="bg-dark text-white">BSSID</th><td id="BSSID"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Nb Matrices</th><td id="display"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Largeur Time</th><td id="WZT"></td></tr>
+<tr><th scope="row" class="bg-dark text-white">Mode XL</th><td id="XL"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Nb Zones Notif</th><td id="MZM"></td></tr>
       </table>
           </div></div>
           <div class="card border-info  m-1" style="min-width:300px;">
@@ -233,8 +247,6 @@
 <tr><th scope="row" class="bg-dark text-white">DHT</th><td id="dht"></td></tr>
  <tr><th scope="row" class="bg-dark text-white">LED</th><td id="StatutLED"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">Box</th><td id="boxinfo"></td></tr>
-          <tr><th scope="row" class="bg-dark text-white">Display </th><td id="display"></td></tr>
-          <tr><th scope="row" class="bg-dark text-white">MultiZone </th><td id="multizone"></td></tr>
       </table>
           </div></div>
           </div></div>
@@ -376,11 +388,9 @@
 
     var jours = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
     var mois = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
-    var ddj;
-    var listnotif;
-    var tabnotif = new Array();
-    var Socketmdns;
 
+    var ZXL=["Zone XL Bas","Zone XL haut","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone notif 6"];
+    var Z=["Zone Horloge","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone Notif 6","Zone Notif 7"];
 
     function IsJsonString(str) {
     try {
@@ -398,11 +408,186 @@ function notifheure(n,i,v,u,s) {
     this.signal=s;
 }
 
-  $( document ).ready(function() {
-  $('input[type="range"]').rangeslider({
-      polyfill: false
+function unixToDate(unixStamp) {
+  var dt=eval(unixStamp*1000);
+  var myDate = new Date(dt);
+  return(myDate.toLocaleString());
+}
+
+function up(seconds) {
+seconds = Number(seconds);
+var d = Math.floor(seconds / (3600*24));
+var h = Math.floor(seconds % (3600*24) / 3600);
+var m = Math.floor(seconds % 3600 / 60);
+var s = Math.floor(seconds % 60);
+
+var dDisplay = d > 0 ? d + " J, " : "";
+var hDisplay = h > 0 ? h + " H, " : "";
+var mDisplay = m > 0 ? m + " m, " : "";
+var sDisplay = s > 0 ? s + " s" : "";
+return dDisplay + hDisplay + mDisplay + sDisplay;
+}
+
+function getInfo() {
+  $.ajax({
+         url: "/getInfo",
+         type: "GET",
+         dataType:"html",
+         success: function(data) {
+           console.log(data);
+           if (IsJsonString(data)){
+             var jinfo = JSON.parse(data);
+             $("#display").text(jinfo.MAXDISPLAY);
+              $('#version').text(jinfo.VERSION);
+              $('#lieu').text(jinfo.NOM);
+             WZT=jinfo.ZONETIME;
+             $('#WZT').text(WZT);
+             MZM=jinfo.MAXZONEMSG;
+             $('#MZM').text(MZM);
+             $("#INT").val(jinfo.INTENSITY);
+             $("#MINUT").val(jinfo.CRTIME);
+             $('#MINUT').rangeslider('update', true);
+             $("#groupLum output").val(jinfo.INTENSITY);
+             $('#LUM').prop('checked',jinfo.LUM);
+             checkLum();
+             $('#hostname').text(jinfo.HOSTNAME);
+             $('#uptime').text(up(jinfo.UPTIME));
+             $('#first').text(unixToDate(jinfo.STARTTIME));
+             $('#last').text(unixToDate(jinfo.LASTSYNCHRO));
+             $('#NTP').text(jinfo.NTPSERVER);
+             $('#MAC').text(jinfo.MAC);
+              $('#IP').text(jinfo.IP);
+              $('#SSID').text(jinfo.SSID);
+              $('#RSSI').text(jinfo.RSSI);
+              $('#BSSID').text(jinfo.BSSID);
+              $('#channel').text(jinfo.CHANNEL);
+              $('#masque').text(jinfo.MASQUE);
+              $('#passerelle').text(jinfo.PASSERELLE);
+              $('#DNS').text(jinfo.DNS);
+              $('#DNS2').text(jinfo.DNS2);
+              if (jinfo.DHT) {
+                $('#dht_box').removeClass('d-none');
+                $('#Temp').text(jinfo.TEMP);
+                $('#Hum').text(jinfo.HUM);
+                $('#Modele').text(jinfo.DHTMODEL);
+                $('#Status').text(jinfo.DHTSTATUS);
+              }
+              else $('#dht_box').addClass('d-none');
+              if (jinfo.XL) $('#XL').text('Activé');
+              else $('#XL').text('Désactivé');
+              if(jinfo.DEBUG) $('#debug').text("Actif");
+                     else $('#debug').text("inactif");
+              if(jinfo.PHOTOCELL) $('#photocell').text("Présent");
+                      else $('#photocell').text("Absent");
+              if(jinfo.DHT) $('#dht').text("Présent");
+                      else $('#dht').text("Absent");
+              if(jinfo.BTN1) $('#bouton1').text("Présent");
+                      else $('#bouton1').text("Absent");
+              if(jinfo.BTN2) $('#bouton2').text("Présent");
+                      else $('#bouton2').text("Absent");
+              if(jinfo.LED) $('#StatutLED').text("Présent");
+                      else $('#StatutLED').text("Absent");
+              if(jinfo.BOX) $('#boxinfo').text("Présent");
+                      else $('#boxinfo').text("Absent");
+            }
+       },
+         error: function(resultat,statut) {
+            // init();
+         },
+         complete: function(resultat, statut){
+           // init();
+     }
+
+     }); //fin ajax
+}
+
+$("#FormMsg").submit(function(){
+    // formatage envoie ISO
+   // Msg = escape($('#msg').val()).replace(/\+/g, "%2B");
+    //Msg = Msg.replace("%u20AC", "%80");  // pour Euro
+    Msg=$('#msg').val();
+    //type = $('#type').val();
+  //  int=$('#intensity').val();
+  //  if ($('#checkInt').prop('checked')) {
+  //      postInt='';
+//    } else postInt='&intnotif='+int;
+
+   $.post('/Notification',
+         {
+    msg:Msg,
+    type:$("#type").val(),
+    nzo:$("#inputZone").val()
+       }, function(data) {
+   $("#infoSubmit").text(data);
+     });
+
+  return false;
+  });
+
+  function checkLum()
+ {
+   if ($('#LUM').prop('checked'))  {
+     $('#groupLum').addClass("d-none");
+     $('label[for="checkInt"]').text('Luminosité Auto');
+    // Options();
+        }
+
+   else {
+    $('#groupLum').removeClass("d-none");
+    $('label[for="checkInt"]').text('Luminosité Manuelle');
+    $('#INT').rangeslider('update', true);
+  //$('#groupLum output').val();
+   }
+ }
+
+ function Options() {
+key=$(this).attr('id');
+if (key=="LUM") checkLum();
+if (key=="INT")   val=$(this).val();
+else val=$(this).prop('checked');
+
+    console.log ("valeur "+key+" : "+val);
+   url="/Options?"+key+"="+val;
+ $.get(url, function( data ) {
+   var res = data.split(":");
+   console.log(data+" decoupe : "+res[0]+" et "+res[1]);
+
+  if (res[0]=="INT") {
+    $('#INT').val(res[1]);
+     $('#INT').rangeslider('update', true);
+    }
+  });
+ }
+
+ function Minuteur(key,val) {
+   val=val*60;
+    url="/Options?"+key+"="+val;
+    $.get(url);
+ }
+//var rangeSlider = document.getElementById("range");
+//var rangeBullet = document.getElementById("rs-bullet");
+
+//rangeSlider.addEventListener("input", showSliderValue, false);
+
+//function showSliderValue() {
+//  rangeBullet.innerHTML = rangeSlider.value;
+//  var bulletPosition = (rangeSlider.value /rangeSlider.max);
+//  rangeBullet.style.left = (bulletPosition * 250) + "px";
+//}
+
+$( document ).ready(function() {
+getInfo();
+$('#LUM').on('change',Options);
+$('#SEC').on('change',Options);
+$('#HOR').on('change',Options);
+$('#INT').on('change',Options);
+$('input[type="range"]').rangeslider({
+     polyfill: false
     });
+
 })
+
+
 
 </script>
 

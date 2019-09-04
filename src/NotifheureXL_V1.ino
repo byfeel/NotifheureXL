@@ -13,7 +13,8 @@
 // * Modules (Parola ou Generic )  - type S
 //  n/2+1 ... n-2 n-1 n   -> Matrice haute
 //  n/2 ... 3  2  1  0    <- Matrice basse
-const String ver = "0.8.2";
+const String ver = "0.8.5";
+const String hardware = "Notifheure XL";
 // Bibliotheque à inclure
 //***** Gestion reseau
 #include <ESP8266mDNS.h>
@@ -32,12 +33,28 @@ const String ver = "0.8.2";
 #include "bigfontext.h"
 //NTP
 #include <NTPClient.h>
+#include <TimeLib.h>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 // wifimanager
 #include <ESP8266WebServer.h>
 #include <WiFiManager.h>
+//*************************
+// Options
+//*************************
+// bibliotheque temperature
+#include <DHTesp.h>
+// Bibliotheque dfplayer ( mp3 )
+#include "SoftwareSerial.h"    // pour les communications series avec le DFplayer
+#include "DFRobotDFPlayerMini.h"  // bibliotheque pour le DFPlayer
+
+//***************************
+// admin page config
+//***************************
+
+const char* www_username = "admin";
+const char* www_password = "notif";
 //****************************************************
 // En fonction de vos matrices , si probléme         *
 // d'affichage ( inversé , effet miroir , etc .....) *
@@ -53,17 +70,31 @@ const String ver = "0.8.2";
 #define DATA_PIN  13  // MOSI ( D7 wemos D1R1 ou mini )
 #define CS_PIN    15  // SS ( D10 sur D1R1  ou D8 sur Mini )
 //#define CS_PIN    12  // SS ( D10 sur D1R1  ou D8 sur Mini )
+// ancienne version NotifHeure
+//#define CLK_PIN   D5
+//#define DATA_PIN  D7
+//#define CS_PIN    D6
+// ********** DHT
+#define DHTTYPE DHTesp::DHT11  // si DHT11
+#define dhtpin 16 // GPIO16  egale a D2 sur WEMOS D1R1  ou D0 pour mini ( a verifier selon esp )
+// dfplayer init
+// PIN qui serviront pour la communication série sur le WEMOS
+SoftwareSerial mySoftwareSerial(4,12); // RX, TX ( wemos D2,D6 ou 4,12 GPIO )  ou Tx,RX ( Dfplayer )
+DFRobotDFPlayerMini myDFPlayer;  // init player
 
+// autres valeurs
 #define MAX_DEVICES 80
 // Max zone à gerer
 #define MAX 8
 // PIN Analogique
 #define PINAUTO_LUM A0
 
-
+const unsigned long synchroNTP=60000;
 const unsigned long MAGICEEP=13579025;
 const byte EP_VERSION = 2;
 int eeAddress = 32;
+const unsigned long _refTime=1514800000;
+const unsigned long _refTimeHigh=1514800000;
 
 // gestion des effets
 #define PAUSE_TIME 0
@@ -87,6 +118,8 @@ sHardConfig hardConfig;
 
 // software config
 struct sConfigSys {
+  bool setup;
+  char nom[20];
   int pauseTime;
   int scrollSpeed;
   byte intensity;
@@ -100,16 +133,20 @@ struct sConfigSys {
   bool HOR;
   bool LUM;
   char charOff;
+  char textnotif[20];
+  bool autoLargeurNotif;
+  int CrTime;
+  bool MP3player;
 };
 sConfigSys configSys;
-const size_t capacityConfig = JSON_ARRAY_SIZE(8) + JSON_OBJECT_SIZE(19) + 500;
+const size_t capacityConfig = JSON_ARRAY_SIZE(8) + JSON_OBJECT_SIZE(50) + 500;
 const char *fileconfig = "/config/config.json";  // fichier config
 
 WiFiUDP ntpUDP;
 
 // By default 'pool.ntp.org' is used with 60 seconds update interval and
 // no offset
-NTPClient timeClient(ntpUDP, "pool.ntp.org", 7200, 600000);
+NTPClient timeClient(ntpUDP, "fr.pool.ntp.org", 7200, synchroNTP);
 
 //variable pour inversion zone superieur selon module
 bool invertUpperZone = false;  // Type ICS ou FC16
@@ -117,6 +154,15 @@ bool invertUpperZone = false;  // Type ICS ou FC16
 // HARDWARE SPI
 MD_Parola P = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 
+// init dht
+DHTesp dht;
+float humidity=0;
+float temperature=0;
+float heatIndex=0;
+float dewPoint=0;
+byte per=0;
+String stamp_DHT;
+String Modele;
 
 // définition des chaines de stockage pour les zones inf et sup
 char msgH[15];
@@ -127,6 +173,10 @@ char msgL[15]; // un buffer de 15 caractères au max
 //char Notifs[BUF_SIZE];
 // variable notif
 bool Notif=false;
+//variable minuteur
+bool CR=false;
+bool CRStop=false;
+int minuteur=0;
 
 //variable affichage Zone
 byte _spaceChar=1;
@@ -143,6 +193,12 @@ byte zoneXL_L,zoneXL_H,zoneTime,zoneMsg;
 byte mem=0;
 String msgDebug="";
 String _pagehtml="index.html";
+bool _photocell=false;
+bool _dht=false;
+String  hostname;
+long int _lastSynchro = 0;
+long int _startTime=0;
+long int _upTime=0;
 
 //************* Structure notif
 struct sNotif {
@@ -152,12 +208,14 @@ struct sNotif {
   byte fxOut;
   uint16_t speed;
   uint16_t pause;
-  byte zone;
+//  byte zone;
   bool Alert;
+  int type;
 };
 
 sNotif Notification[7];
 byte tab_notif=1;
+sNotif fxNotif;
 
 /*
  * Structure historique
@@ -180,13 +238,13 @@ textEffect_t  effect[] =
   PA_SCROLL_UP,
   PA_GROW_UP,
   PA_SCAN_HORIZ,
-  PA_NO_EFFECT,
+  PA_BLINDS,
   PA_WIPE,
   PA_SCAN_VERTX,
   PA_SLICE,
   PA_FADE,
   PA_OPENING_CURSOR,
-  PA_BLINDS,
+  PA_NO_EFFECT,
   PA_SPRITE,
   PA_CLOSING,
   PA_SCAN_VERT,
@@ -268,6 +326,34 @@ void utf8Ascii(char* s)
   *cp = '\0';   // terminate the new string
 }
 
+// *****************************
+// ANIMATION
+// SPRITE DEFINITION (PAC MAn )
+// *****************************
+
+const uint8_t F_PMAN1 = 6;
+ const uint8_t W_PMAN1 = 8;
+static  uint8_t pacman1[F_PMAN1 * W_PMAN1] =  // gobbling pacman animation
+{
+  0x00, 0x81, 0xc3, 0xe7, 0xff, 0x7e, 0x7e, 0x3c,
+  0x00, 0x42, 0xe7, 0xe7, 0xff, 0xff, 0x7e, 0x3c,
+  0x24, 0x66, 0xe7, 0xff, 0xff, 0xff, 0x7e, 0x3c,
+  0x3c, 0x7e, 0xff, 0xff, 0xff, 0xff, 0x7e, 0x3c,
+  0x24, 0x66, 0xe7, 0xff, 0xff, 0xff, 0x7e, 0x3c,
+  0x00, 0x42, 0xe7, 0xe7, 0xff, 0xff, 0x7e, 0x3c,
+};
+
+const uint8_t F_PMAN2 = 6;
+const uint8_t W_PMAN2 = 18;
+static uint8_t pacman2[F_PMAN2 * W_PMAN2] =  // ghost pursued by a pacman
+{
+  0x00, 0x81, 0xc3, 0xe7, 0xff, 0x7e, 0x7e, 0x3c, 0x00, 0x00, 0x00, 0xfe, 0x7b, 0xf3, 0x7f, 0xfb, 0x73, 0xfe,
+  0x00, 0x42, 0xe7, 0xe7, 0xff, 0xff, 0x7e, 0x3c, 0x00, 0x00, 0x00, 0xfe, 0x7b, 0xf3, 0x7f, 0xfb, 0x73, 0xfe,
+  0x24, 0x66, 0xe7, 0xff, 0xff, 0xff, 0x7e, 0x3c, 0x00, 0x00, 0x00, 0xfe, 0x7b, 0xf3, 0x7f, 0xfb, 0x73, 0xfe,
+  0x3c, 0x7e, 0xff, 0xff, 0xff, 0xff, 0x7e, 0x3c, 0x00, 0x00, 0x00, 0xfe, 0x73, 0xfb, 0x7f, 0xf3, 0x7b, 0xfe,
+  0x24, 0x66, 0xe7, 0xff, 0xff, 0xff, 0x7e, 0x3c, 0x00, 0x00, 0x00, 0xfe, 0x73, 0xfb, 0x7f, 0xf3, 0x7b, 0xfe,
+  0x00, 0x42, 0xe7, 0xe7, 0xff, 0xff, 0x7e, 0x3c, 0x00, 0x00, 0x00, 0xfe, 0x73, 0xfb, 0x7f, 0xf3, 0x7b, 0xfe,
+};
 /*************************
 * * *lecture eeprom * * *
 *************************/
@@ -339,17 +425,22 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
 
   // Initialisation des variables systémes pour configuration , si non présente valeur par defaut affecté
   strlcpy(config.NTPSERVER,docConfig["NTPSERVER"] | "pool.ntp.org",sizeof(config.NTPSERVER));
-  strlcpy(config.hostName,docConfig["HOSTNAME"] | "NotifeureXL",sizeof(config.hostName));
+  strlcpy(config.hostName,docConfig["SUFFIXE-HOST"] | "notifXL",sizeof(config.hostName));
+  strlcpy(config.nom,docConfig["NOM"] | "New",sizeof(config.nom));
   config.timeZone = docConfig["TIMEZONE"] | 1;
   config.DLS = docConfig["DLS"] | true;
   config.DEBUG = docConfig["DEBUG"] | true;
-  config.pauseTime=docConfig["PAUSE"] | 1000;
+  config.pauseTime=docConfig["PAUSE"] | 3;
   config.scrollSpeed=docConfig["SPEED"] | 30;
   config.intensity=docConfig["INTENSITY"] | 2;
   config.SEC=docConfig["SEC"] | true;
   config.HOR=docConfig["HOR"] | true;
   config.LUM=docConfig["LUM"] | true;
   config.charOff=docConfig["CHAROFF"] | ' ';
+  strlcpy(config.textnotif,docConfig["TEXTNOTIF"] | "Notif",sizeof(config.textnotif));
+  config.autoLargeurNotif=docConfig["AUTOLARGEURNOTIF"] | true;
+  config.CrTime=docConfig["CRTIME"] | 5;
+  config.MP3player=docConfig["MP3"] | false;
   file.close();
 
 } // fin fonction loadconfig
@@ -358,11 +449,13 @@ String createJson(sConfigSys  &config) {
   String json;
   //const size_t capacityConfig = 2*JSON_ARRAY_SIZE(3) + JSON_OBJECT_SIZE(41) + 1500;
   DynamicJsonDocument docConfig(capacityConfig);
+  docConfig["HARDWARE"]=hardware;
+  docConfig["NOM"]=config.nom;
   docConfig["SEC"]=config.SEC;
   docConfig["HOR"]=config.HOR;
   docConfig["LUM"]=config.LUM;
   docConfig["NTPSERVER"]=config.NTPSERVER;
-  docConfig["HOSTNAME"]=config.hostName;
+  docConfig["SUFFIXE-HOST"]=config.hostName;
   docConfig["TIMEZONE"]=config.timeZone;
   docConfig["DLS"]=config.DLS;
   docConfig["DEBUG"]=config.DEBUG;
@@ -370,8 +463,40 @@ String createJson(sConfigSys  &config) {
   docConfig["PAUSE"] =config.pauseTime;
   docConfig["INTENSITY"]=config.intensity;
   docConfig["CHAROFF"]=config.charOff;
+  docConfig["TEXTNOTIF"]=config.textnotif;
+  docConfig["AUTOLARGEURNOTIF"]=config.autoLargeurNotif;
+  //info systeme
   docConfig["MEMOJSON"]=docConfig.memoryUsage();
   docConfig["VERSION"]=ver;
+  docConfig["MAC"]=WiFi.macAddress();
+  docConfig["RSSI"] = String(WiFi.RSSI())+" dBm";
+  docConfig["SSID"] = WiFi.SSID();
+  docConfig["CHANNEL"] = WiFi.channel();
+  docConfig["BSSID"] =WiFi.BSSIDstr();
+  docConfig["IP"] =WiFi.localIP().toString();
+  docConfig["HOSTNAME"] = WiFi.hostname();
+  docConfig["DNS"] = WiFi.dnsIP().toString();
+  docConfig["DNS2"] =  WiFi.dnsIP(1).toString();
+  docConfig["PASSERELLE"] = WiFi.gatewayIP().toString();
+  docConfig["MASQUE"] = WiFi.subnetMask().toString();
+  docConfig["PHOTOCELL"] = _photocell;
+
+  //temps
+  _upTime=now()-_startTime;
+  docConfig["STARTTIME"]=_startTime;
+  docConfig["UPTIME"]=_upTime;
+  docConfig["LASTSYNCHRO"]=_lastSynchro;
+  //DHT
+  GetTemp();
+  docConfig["DHT"] = _dht;
+  docConfig["TEMP"]= temperature;
+  docConfig["HUM"]= humidity;
+  docConfig["DHTMODEL"]=Modele;
+  docConfig["DHTSTATUS"]= dht.getStatusString();
+//minuteur
+  docConfig["CR"]=CR;
+  docConfig["CRSTOP"]=CRStop;
+  docConfig["CRTIME"]=config.CrTime;
   //donnee hardConfig
   docConfig["XL"]=hardConfig.XL;
   docConfig["MAXDISPLAY"]=hardConfig.maxDisplay;
@@ -398,6 +523,46 @@ void saveConfigSys(const char *fileconfig,String json) {
    f.print(json);  // sauvegarde de la chaine
    f.close();
 }
+
+//// Mesure DHT
+void GetTemp() {
+  int ModelDHT;
+    ModelDHT=dht.getModel();
+    temperature = dht.getTemperature();
+    _dht=true;
+    humidity= dht.getHumidity();
+    heatIndex = dht.computeHeatIndex(temperature, humidity, false);
+    dewPoint = dht.computeDewPoint(temperature,humidity,false);
+    per = dht.computePerception(temperature, humidity,true);
+    //stamp_DHT=DateFormat(timeClient.getEpochTime());
+
+  if (isnan(humidity) || isnan(temperature)) {
+    _dht=false;
+    temperature = 0;
+    humidity= 0;
+    heatIndex = 0;
+    dewPoint = 0;
+    per = 0;
+  }
+
+   // Mise a jour des valeurs dht dans JSON
+    //DHTsensor
+
+    switch(ModelDHT) {
+      case 1 : Modele="DHT11";
+      break;
+      case 2 : Modele="DHT22";
+      break;
+      default : Modele="Inconnu";
+      break;
+    }
+
+  if (configSys.DEBUG) {
+      Serial.println("Valeur Sensor DHT :"+String(_dht));
+       Serial.println(" T:" + String(temperature) + "°C  H:" + String(humidity) + "%  I:" + String(heatIndex) + " D:" + String(dewPoint) + "  et per :"+ String(per));
+  }
+}
+
 // chaine decalage
 void createHStringXL(char *pH, char *pL)
 {
@@ -410,6 +575,7 @@ void createHStringXL(char *pH, char *pL)
 
 void createSecondes(char *Sec)
 {
+
   for (; *Sec != '\0'; Sec++)  *Sec = *Sec + 32;   // decalage caractére de 32
     *Sec = '\0'; // termine la chaine
 }
@@ -432,24 +598,57 @@ void displayClock() {
 void getFormatClock(char *psz, bool f = true)
 // Code pour affichage time
 {
+
   if (configSys.HOR) {
   if (zoneTime==zoneMsg) displayClock();
   char Sec[2];
-  if (configSys.SEC) sprintf(Sec,"%02d",timeClient.getSeconds());
+  //if (configSys.SEC) sprintf(Sec,"%02d",timeClient.getSeconds());
+  if (configSys.SEC) sprintf(Sec,"%02d",second());
   //else {Sec[1]=' ';Sec[0]=' ';}
-  else Sec[0]='\0';
+  //else Sec[0]='\0';
   createSecondes(Sec);
-  sprintf(psz, "%02d%c%02d%s", timeClient.getHours(), (f ? ':' : ' '), timeClient.getMinutes(),Sec);
+  //sprintf(psz, "%02d%c%02d%s", timeClient.getHours(), (f ? ':' : ' '), timeClient.getMinutes(),Sec);
+sprintf(psz, "%02d%c%02d%s", hour(), (f ? ':' : ' '), minute(),Sec);
 }
 else sprintf(psz,"%c",configSys.charOff);
+if (CR) displayTimer(psz,f);
 //sprintf(psz, "%02d%c%02d", timeClient.getHours(), (f ? ':' : ' '), timeClient.getMinutes());
+}
+
+void displayTimer(char *psz,bool f) {
+   int h,m,s;
+      h  = minuteur / 60 / 60 % 24;
+      m = minuteur / 60 % 60;
+      s = minuteur % 60;
+  char Sec[2];
+  sprintf(Sec,"%02d",s);
+  createSecondes(Sec);
+    if (h>0) sprintf(psz,"%c %1d%c%02d%s",(CRStop ? 91 : 90 ),h,(f || CRStop ? ':' : ' '),m,Sec);
+    else if (m>0) sprintf(psz,"%c %02d%s",(CRStop ? 91 : 90 ),m,Sec);
+    else sprintf(psz,"%c %02d",(CRStop ? 91 : 90),s);
+
+      // fin minuteur
+       if (minuteur==0) {
+
+        CR=false;
+       }
 }
 
 void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_LEFT, uint16_t S=configSys.scrollSpeed ,uint16_t P=configSys.pauseTime , byte fi=1,byte fo=1) {
  // Verification Zones
  if (NZO >_maxZones-1 || _maxZones==xl) NZO=zoneMsg;
+ // calcul largeur notif
+ int maxLed,L,largeurMsg;
+ largeurMsg=Msg.length();
+ if (NZO==zoneTime) L=xl*5;
+ else L=5;
+ maxLed=ZWP[NZO]*8;
+ if (largeurMsg>floor(maxLed/L)) type=0;
+ // adapte la pause au millieme
+ P=P*1000;
  //construction notif
   Notification[NZO].Alert=true;
+  Notification[NZO].type=type;
   Msg.toCharArray( Notification[NZO].Notif,BUF_SIZE);
   if (!hardConfig.XL)  utf8Ascii(Notification[NZO].Notif);
   Notification[NZO].pos=pos;
@@ -459,16 +658,32 @@ void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_L
   Notification[NZO].fxOut=fo;
   switch (type) {
     case 0 : // type message scroll
-     Notification[NZO].fxIn=1;
-     Notification[NZO].fxOut=1;
+     //Notification[NZO].fxIn=1;
+     //Notification[NZO].fxOut=1;
      break;
     case 1 : // type info
     Serial.println("mode info");
-    Notification[NZO].speed=40;
-    Notification[NZO].pause=3000;
+    //Notification[NZO].speed=40;
+    if (P<1000) Notification[NZO].pause=1000;
     Notification[NZO].pos=PA_CENTER;
     Notification[NZO].fxIn=24;
     Notification[NZO].fxOut=4;
+    break;
+    case 2 : // type fix
+    Serial.println("mode fix");
+    //Notification[NZO].speed=40;
+    Notification[NZO].pause=0;
+    Notification[NZO].pos=PA_CENTER;
+    Notification[NZO].fxIn=0;
+    Notification[NZO].fxOut=13;
+    break;
+    case 3: // animation Pac
+    Serial.println("mode fix");
+    //Notification[NZO].speed=40;
+    //Notification[NZO].pause=0;
+    Notification[NZO].pos=PA_LEFT;
+    Notification[NZO].fxIn=14;
+    Notification[NZO].fxOut=14;
     break;
     case 9 : // type infoSys
     Serial.println("mode infoSys");
@@ -485,9 +700,23 @@ void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_L
 // luminosite auto
 // fonction reglage auto luminosite
 int lumAuto() {
+  static int cptTestCell=0;
+  static int valTestCell=0;
   int sensorValue,lum;
   sensorValue = analogRead(0); // read analog input pin 0
-  if (configSys.DEBUG) Serial.println("valeur photocell dans boucle auto : "+String(sensorValue));
+  cptTestCell++;
+  if (sensorValue)
+  valTestCell +=sensorValue;
+  if (configSys.DEBUG) {
+      Serial.println("valeur photocell dans boucle auto : "+String(sensorValue));
+      Serial.println("valeur test "+String(valTestCell)+" boucle lum : "+String(cptTestCell));
+    }
+  if (cptTestCell>=6 ) {
+    if (round(valTestCell/cptTestCell) <= 12)  _photocell=false;
+    else _photocell=true;
+    cptTestCell=0;
+    valTestCell=0;
+    }
    lum =round((sensorValue*1.5)/100);
    lum = constrain(lum,0,15);
    return lum;
@@ -545,38 +774,58 @@ void handleConfig() {
   for (int i = 0; i < server.args(); i++) {
         key=server.argName(i);
         key.toLowerCase();
-        if (key=="xl") if (optionsBool(&hardConfig.XL,server.arg(i))) mem=1;
-        if (key=="maxdisplay") {optionsNum(&hardConfig.maxDisplay,server.arg(i),4,80);mem=1;}
-        if (key=="zonetime") {optionsNum(&hardConfig.zoneTime,server.arg(i),4,hardConfig.maxDisplay);mem=1;}
+        if (key=="xl") if (optionsBool(&hardConfig.XL,server.arg(i))) mem=2;
+        if (key=="maxdisplay") {optionsNum(&hardConfig.maxDisplay,server.arg(i),4,80);mem=2;}
+        if (key=="zonetime") {optionsNum(&hardConfig.zoneTime,server.arg(i),4,hardConfig.maxDisplay);mem=2;}
         if (key=="maxzonemsg") {
           maxMsg=floor(hardConfig.maxDisplay - hardConfig.zoneTime);
           optionsNum(&hardConfig.maxZonesMsg,server.arg(i),0,maxMsg);
-          mem=1;
+          mem=2;
         }
-        if (key=="perso") if (optionsBool(&hardConfig.perso,server.arg(i))) mem=1;
-        if (key=="setup") if (optionsBool(&hardConfig.setup,server.arg(i))) mem=1;
-        if (key=="zp") {optionsSplit(hardConfig.ZP,server.arg(i),',');mem=1;}
-        if (key=="speed") {optionsNum(&configSys.scrollSpeed,server.arg(i),10,100);mem=2;}
-
-        if (key=="debug") if (optionsBool(&configSys.DEBUG,server.arg(i))) mem=2;
-        if (key=="hostname") { if (validString(server.arg(i),4,20)) {
+        if (key=="perso") if (optionsBool(&hardConfig.perso,server.arg(i))) mem=2;
+        if (key=="setup") if (optionsBool(&hardConfig.setup,server.arg(i))) mem=2;
+        if (key=="zp") {optionsSplit(hardConfig.ZP,server.arg(i),',');mem=2;}
+        if (key=="speed") {optionsNum(&configSys.scrollSpeed,server.arg(i),10,100);mem=1;}
+        if (key=="pause") {optionsNum(&configSys.pauseTime,server.arg(i),0,180);mem=1;}
+        if (key=="debug") if (optionsBool(&configSys.DEBUG,server.arg(i))) mem=1;
+        if (key=="hostname") {
+                if (validString(server.arg(i),4,20)) {
                           value=server.arg(i);
                           value.toLowerCase();
                           value.toCharArray(configSys.hostName,sizeof(configSys.hostName));
                           //toLowerCase();
-                          mem=2;
+                          mem=1;
                         }
-                      }
+                      } // fin hostname
+        if (key=="name") {
+                if (validString(server.arg(i),4,20)) {
+                            value=server.arg(i);
+                            value.toLowerCase();
+                            value.toCharArray(configSys.nom,sizeof(configSys.nom));
+                            //toLowerCase();
+                            mem=1;
+                            }
+                        } // fin hostname
+        if (key=="wifireset" && server.arg(i)=="true") wifiReset();
+        if (key=="reboot" && server.arg(i)=="true") ESP.restart();
+        if (key=="matrixreset" && server.arg(i)=="true") {readEConfig(true);ESP.restart();}
+
 if (configSys.DEBUG) {
 info = "Arg n"+ String(i) + "–>";
 info += server.argName(i) + ": ";
 info += server.arg(i) + "\n";
 Serial.println(info);
-}
+                  }// fin debug
+
 }
 bool verif=true;
   switch (mem) {
     case 1 :
+        rep=createJson(configSys);
+        saveConfigSys(fileconfig,rep);
+        rep="Modification config systéme";
+        break;
+    case 2 :
         if (hardConfig.XL && hardConfig.zoneTime*2 > hardConfig.maxDisplay) verif=false;
         if (!hardConfig.XL && hardConfig.zoneTime > hardConfig.maxDisplay) verif=false;
         if (verif) {
@@ -589,11 +838,7 @@ bool verif=true;
       }
         else rep="Erreur , les valeurs ne semblent pas coherentes";
         break;
-    case 2 :
-        rep=createJson(configSys);
-        saveConfigSys(fileconfig,rep);
-        rep="Modification config systéme";
-        break;
+
   }
 
      server.send(200, "text/plane",rep);
@@ -603,17 +848,19 @@ bool verif=true;
 
 void handleOptions() {
   String key,value;
+  String rep="No Options";
   mem=0;
   for (int i = 0; i < server.args(); i++) {
     key=server.argName(i);
     key.toUpperCase();
-    if (key=="SEC") if (optionsBool(&configSys.SEC,server.arg(i))) mem=1;
-    if (key=="HOR") if (optionsBool(&configSys.HOR,server.arg(i))) mem=1;
+    if (key=="SEC")
+    if (key=="HOR") if (optionsBool(&configSys.HOR,server.arg(i))) {mem=1;rep="HOR:"+String(configSys.HOR);}
     if (key=="LUM") if (optionsBool(&configSys.LUM,server.arg(i))) {
         mem=1;
         if (configSys.LUM) value="Auto";
           else value="L : "+String(configSys.intensity);
         displayNotif(value,zoneMsg,9);
+        rep="INT:"+String(configSys.intensity);
       }
     if (key=="INT") {
       optionsNum(&configSys.intensity,server.arg(i),0,15);
@@ -621,15 +868,23 @@ void handleOptions() {
       configSys.LUM=false;
       value="L : "+String(configSys.intensity);
       displayNotif(value,zoneMsg,9);
+        rep="INT:"+String(configSys.intensity);
     }
+    if (key=="MIN") {
+        optionsNum(&minuteur,server.arg(i),1,35999);
+        CR=true;
+        rep="OK MIN:"+String(minuteur/60)+" mn";
+    }
+    if (key=="CR") if (optionsBool(&CR,server.arg(i))) {rep="OK CR:"+String(CR);}
+    if (key=="CRSTP") if (optionsBool(&CRStop,server.arg(i))) {rep="OK CRSTOP:"+String(CRStop);}
   }
   if (mem==1) {
     String json="";
     json=createJson(configSys);
     saveConfigSys(fileconfig,json);
-      server.send(200, "text/plane","OK");
+    server.send(200, "text/plane","OK "+rep);
   }
-  server.send(200, "text/plane","Pas de changement");
+  else server.send(200,"text/plane",rep);
 }
 
 void handleGetInfo() {
@@ -639,15 +894,34 @@ void handleGetInfo() {
 }
 
 void handleNotif() {
-  String notif,rep;
+  String notif,rep,key,value;
   rep="Erreur";
-  if ( server.hasArg("msg")) {
+  //displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_LEFT, uint16_t S=configSys.scrollSpeed ,uint16_t P=configSys.pauseTime , byte fi=1,byte fo=1)
+  int NZO=zoneMsg;
+  byte type=0;
+  textPosition_t pos=PA_LEFT;
+  int S=configSys.scrollSpeed ;
+  int P=configSys.pauseTime;
+  byte fi=1,fo=1;
+  //parcours argument http
+  for (int i = 0; i < server.args(); i++) {
+    key=server.argName(i);
+    key.toUpperCase();
+    if (key=="MSG" && server.arg(i)!="") { notif=server.arg(i);rep="ok";}
+    if (key=="NZO" ) { NZO=server.arg(i).toInt();}
+    if (key=="TYPE" ) { type=server.arg(i).toInt();}
+    if (key=="SPEED" ) { optionsNum(&S,server.arg(i),10,100);}
+    if (key=="PAUSE" ) { optionsNum(&P,server.arg(i),0,180);}
+    if (key=="FI" ) { optionsNum(&fi,server.arg(i),0,28);}
+    if (key=="FO" ) { optionsNum(&fo,server.arg(i),0,28);}
+  }
+  /*if ( server.hasArg("msg")) {
          notif=server.arg("msg");
          if (notif!="") {
            rep="ok";
          }
-       }
-  if (rep=="ok") displayNotif(notif);
+       }*/
+  if (rep=="ok") displayNotif(notif,NZO,type,pos,S,P,fi,fo);
   server.send(200, "text/plane",rep);
 }
 
@@ -708,28 +982,62 @@ ArduinoOTA.setHostname((const char *)hostname.c_str());
   ArduinoOTA.begin();
 }
 //******* FIN OTA ***************
+// reset parametre wifi , relance AP
+void wifiReset() {
+  WiFiManager wifiManager;
+  wifiManager.resetSettings();
+}
+// callback fonction wifimanager
+void configModeCallback (WiFiManager *myWifiManager) {
+  Serial.println("Entrez dans mode AP");
+  Serial.println(WiFi.softAPIP());
+  P.print("AP mode");
+  delay(1000);
+  P.print(myWifiManager->getConfigPortalSSID());
+
+  Serial.println(myWifiManager->getConfigPortalSSID());
+}
+
 void wifiMan() {
   //WiFiManager
   //Local intialization. Once its business is done, there is no need to keep it around
-  WiFiManager wifiManager;
+WiFiManager wifiManager;
   //reset saved settings
   //wifiManager.resetSettings();
-
-  //set custom ip for portal
+  //set adresse ip static
   //wifiManager.setAPStaticIPConfig(IPAddress(10,0,1,1), IPAddress(10,0,1,1), IPAddress(255,255,255,0));
-
+  //timeout de 3 mn sur AP
+  wifiManager.setConfigPortalTimeout(150);
+  WiFiManagerParameter custom_text("<p>Portail AP Notifheure XL</p>");
+  wifiManager.addParameter(&custom_text);
+  wifiManager.setAPCallback(configModeCallback);
   //fetches ssid and pass from eeprom and tries to connect
   //if it does not connect it starts an access point with the specified name
   //here  "AutoConnectAP"
   //and goes into a blocking loop awaiting configuration
   //wifiManager.autoConnect("AutoConnectAP");
   //or use this for auto generated name ESP + ChipID
-if(!wifiManager.autoConnect("WIFI-Notifheure")) {
+if(!wifiManager.autoConnect("AP-NotifXL")) {
           P.print("erreur AP");
             delay(2000);
             //reset and try again, or maybe put it to deep sleep
             ESP.reset();
             delay(2000);
+      }
+
+}
+void checkTime() {
+  timeClient.forceUpdate();
+  if (configSys.DEBUG) Serial.println(" checktime : "+String(timeClient.getEpochTime()));
+  if (timeClient.getEpochTime()>_refTime  && timeClient.getEpochTime()< (now() + 10000000)) {
+    long int x;
+    x=timeClient.getEpochTime()-now();
+    if (configSys.DEBUG) Serial.println(" Dephasage time : "+String(x));
+    if ( std::abs(x)>1) {
+            setTime(timeClient.getEpochTime());
+            _lastSynchro=now();
+            if (configSys.DEBUG) Serial.println(" Synchro time : "+String(_lastSynchro));
+        }
       }
 }
 // *********
@@ -738,13 +1046,57 @@ if(!wifiManager.autoConnect("WIFI-Notifheure")) {
  *********/
 // *********
 void setup() {
- Serial.begin(57600);
-  // serial monitor
 
+  // serial monitor
+ Serial.begin(115200);
+ // Eeprom
+ readEConfig();
+// _startTime=now();
+//P.begin();
+//P.setZone(0,0,hardConfig.zoneTime-1);
+//P.setFont(ExtASCII);
+initPrintSystem();
+P.print("Start ...");
+// init spiffs
+SPIFFS.begin();
   // wifi manager
+  // lecture fichier json dans memoire SPIFFS
+  loadConfigSys(fileconfig, configSys);
+  if (hardConfig.setup) _pagehtml="index.html";
+  else _pagehtml="setup.html";
+// Connexion WIFI
   wifiMan();
-  SPIFFS.begin();
- // Initialisation des variables
+if (configSys.MP3player) {
+  //initplayer
+  // serial softawre (pour player )
+  mySoftwareSerial.begin(9600);
+ if (!myDFPlayer.begin(mySoftwareSerial,false)) {  //Utilisation de  softwareSerial pour communiquer
+ Serial.println("Pb communication:");
+ Serial.println("1.SVP verifier connexion serie!");
+ Serial.println("2.SVP verifier SDcard !");
+ while(true){
+      delay(0); // Code to compatible with ESP8266 watch dog.
+    }
+ }
+  Serial.println("DFPlayer Mini En ligne.");
+  myDFPlayer.setTimeOut(500); // Définit un temps de time out sur la communication série à 500 ms
+
+  //----Controle volume----
+  myDFPlayer.volume(17);  //Monte le volume à 18 ( valeur de 0 à 30 )
+// ---- indique d'utiliser le player de carte SD interne
+  myDFPlayer.outputDevice(DFPLAYER_DEVICE_SD);
+
+// optionel , permet d'afficher quelques infos
+Serial.println(myDFPlayer.readFileCounts()); //Le nombre total de fichier mp3 sur la carte ( dossier inclus )
+Serial.println(myDFPlayer.readFileCountsInFolder(1)); // l'index courant
+// Joue le premier morceau de la liste
+  myDFPlayer.playFolder(1,1);
+}
+// si ok
+P.print("ok...");
+delay(300);
+
+
  //info SPIFFS
  FSInfo fsInfo;
 // info fs
@@ -757,28 +1109,63 @@ Serial.println("info blocksize : "+String(fsInfo.blockSize));
 Serial.println("info pagesize: "+String(fsInfo.pageSize));
 Serial.println("info maxOpenFiles : "+String(fsInfo.maxOpenFiles));
 Serial.println("info maxPathLength : "+String(fsInfo.maxPathLength));
- // Eeprom
- readEConfig();
- // lecture fichier json dans memoire SPIFFS
- loadConfigSys(fileconfig, configSys);
- if (hardConfig.setup) _pagehtml="index.html";
- else _pagehtml="setup.html";
+
+ // creation hostname wifi// Set Hostname.
+   hostname = configSys.nom;
+   hostname +=configSys.hostName;
+   hostname +="-"+String(ESP.getChipId(), HEX);
+   WiFi.hostname(hostname);
  // Serveur OTA
-Ota(configSys.hostName);
+Ota(hostname);
 Serial.println(msgDebug);
 //serveur WEB
 //server.on("/Notification",handleNotif); //Gestion des Notifications
  server.on("/Notification",handleNotif); //Gestion des Notifications
  server.on("/Config",handleConfig); //page gestion Options
  server.on("/Options",handleOptions); //page gestion Options
- server.on("/GetInfo",handleGetInfo); //page gestion Options
+ server.on("/getInfo",handleGetInfo); //page gestion Options
+ // Gestion securisé page config
+ server.on("/setup.html", []() {
+      if (!server.authenticate(www_username, www_password)) {
+     return server.requestAuthentication();
+   }
+      if (!handleFileRead("/setup.html")) {
+     server.send(404, "text/plain", "FileNotFound");
+   }
+    });
  server.onNotFound([]() {
   if (!handleFileRead(server.uri())) {
     server.send(404, "text/plain", "FileNotFound");
   }
 });
  server.begin();
- // init
+
+ // recuperation info temps
+ // recuperation heure
+ P.print("Time...");
+   timeClient.begin();
+   setTime(timeClient.getEpochTime());
+   _startTime=now();
+   _lastSynchro=_startTime;
+ while ( _startTime < _refTime ) {
+     timeClient.forceUpdate();
+     setTime(timeClient.getEpochTime());
+     _startTime=now();
+     _lastSynchro=now();
+     if (configSys.DEBUG) Serial.println("time synchro :"+String(timeClient.getEpochTime()));
+   }
+
+   if (configSys.DEBUG) Serial.println("time ok :"+String(now()));
+
+
+ P.print("init...");
+ // init options
+ // Initialize temperature sensor
+  // dht.setup(dhtPin, DHTType);
+  int pin(dhtpin);
+  dht.setup(pin,DHTTYPE);
+  delay(500);
+  //ZONES
  // init variable  - Assignation zone
  _spaceChar = 1;
 // variable par defaut pour calcul des Zones
@@ -829,7 +1216,7 @@ if (_maxDisplayMsg > 0 && hardConfig.maxZonesMsg>0) {
   Serial.println("Nombre Zones à créé  ="+String(_maxZones));
 // Zones perso si existe
 if (hardConfig.perso) {
-  Serial.println("mode paerso");
+  Serial.println("mode perso");
   for (int i=0;i<MAX;i++) {
     Zones[i]=hardConfig.ZP[i];
      Serial.println("zones perso "+String(Zones[i]));
@@ -905,18 +1292,17 @@ for (int i=0;i<MAX;i++) {
   zoneXL_L=Zones[Time_Up];
   zoneXL_H=Zones[Time_Lo];
 */
-// recuperation heure
-  timeClient.begin();
-  timeClient.forceUpdate();
-  if (configSys.DEBUG) Serial.println("time :"+String(timeClient.getEpochTime()));
-  if (_maxZones==xl) zoneMsg=zoneTime;
-  displayClock();
+P.setSpriteData(pacman1, W_PMAN1, F_PMAN1,pacman2, W_PMAN2, F_PMAN2);   // chargement animation en memoire
 
+//prepa zone horloge
+if (_maxZones==xl) zoneMsg=zoneTime;
+displayClock();
 
-  configSys.intensity=lumAuto();
-  //fin setup
-  String infoSys="OK IP : ";
- infoSys += WiFi.localIP().toString();
+configSys.intensity=lumAuto();
+
+//fin setup
+String infoSys="OK IP : ";
+infoSys += WiFi.localIP().toString();
 displayNotif(infoSys);
 
 }
@@ -925,25 +1311,35 @@ void loop() {
 
   static bool XLZoneTest=true;
   static bool disClock=false;
-  timeClient.update();
   static uint32_t  lastTime = 0; // millis() memory
   static uint32_t  lastTimeLumAuto = 0; // millis() memory
-  // static uint32_t  lastTimeMsg = 0; // millis() memory
+  static uint32_t  lastTimeSystem= 0; // millis() system / synchro
   static bool flasher = false;  // seconds passing flasher
    //  ****** Page WEb :   traite les requetes http et ws
   server.handleClient();
   ArduinoOTA.handle();
+  timeClient.update();
   //tmpo
    if (millis() - lastTime >= 1000)
     {
       lastTime = millis();
       flasher = !flasher;
+      if (minuteur>0 && !CRStop) {
+              minuteur--;
+              if (minuteur>=0 && minuteur<5) CR=true;
+     }
     }
     if (millis() - lastTimeLumAuto >= 20000)
      {
        lastTimeLumAuto = millis();
        if (configSys.LUM) configSys.intensity=lumAuto();
      }
+  if (millis() - lastTimeSystem >= 300000)
+     {
+       lastTimeSystem =millis();
+       checkTime();
+     }
+
 
 P.setIntensity(configSys.intensity);
 P.displayAnimate();
@@ -957,8 +1353,10 @@ if ( XLZoneTest) {
                 //if (zoneMsg == zoneTime ) {
                    Serial.println("mode notification");
                  //display notif
-                 P.displayClear();
+                P.displayClear(zoneTime);
               if (hardConfig.XL) {
+                Serial.println("mode XL");
+                P.displayClear(zoneXL_H);
                   // affichage double
                      P.setFont(zoneXL_L, BigFontLower);
                      P.setFont(zoneXL_H, BigFontUpper);
@@ -972,19 +1370,31 @@ if ( XLZoneTest) {
                       }
                       else
                       {
-                       P.displayZoneText(zoneXL_L,Notification[zoneTime].Notif,Notification[zoneTime].pos,Notification[zoneTime].speed, Notification[zoneTime].pause,effect[Notification[zoneTime].fxIn], effect[Notification[zoneTime].fxIn]);
-                       P.displayZoneText(zoneXL_H,Notification[zoneTime].Notif,Notification[zoneTime].pos,Notification[zoneTime].speed, Notification[zoneTime].pause,effect[Notification[zoneTime].fxIn], effect[Notification[zoneTime].fxOut]);
+                          byte fi,fo;
+                        if (Notification[zoneTime].type==1 ) {
+                          fi=Notification[zoneTime].fxOut;
+                          fo=Notification[zoneTime].fxIn;
+                        } else
+                        {
+                          fo=Notification[zoneTime].fxOut;
+                          fi=Notification[zoneTime].fxIn;
+                        }
+                       P.displayZoneText(zoneXL_H,Notification[zoneTime].Notif,Notification[zoneTime].pos,Notification[zoneTime].speed, Notification[zoneTime].pause,effect[fi], effect[fo]);
+                       P.displayZoneText(zoneXL_L,Notification[zoneTime].Notif,Notification[zoneTime].pos,Notification[zoneTime].speed, Notification[zoneTime].pause,effect[Notification[zoneTime].fxIn], effect[Notification[zoneTime].fxOut]);
                       }
                       P.synchZoneStart();
+                      Serial.println("valeur de fx dans affichage : "+String(Notification[zoneTime].fxOut));
                  } else {
                   // affichage simple
+                  Serial.println("mode simple");
                   P.setFont(zoneXL_L, ExtASCII);
                    P.displayZoneText(zoneXL_L,Notification[zoneTime].Notif,Notification[zoneTime].pos,Notification[zoneTime].speed, Notification[zoneTime].pause,effect[Notification[zoneTime].fxIn], effect[Notification[zoneTime].fxOut]);
                 }
         //}
-
           Notification[zoneTime].Alert=false;
-          disClock=true;
+        //  if (Notification[zoneTime].type==2) Notification[zoneTime].Alert=true;
+          if (Notification[zoneTime].type!=2 ) disClock=true;
+
         }
       else {
        //Serial.println("clock");
@@ -992,35 +1402,32 @@ if ( XLZoneTest) {
         displayClock();
         disClock=false;
        }
-     getFormatClock(msgL, flasher);
-    // if (hardConfig.XL) createHStringXL(msgH, msgL);
-    if (hardConfig.XL) createHStringXL(msgH, msgL);
-     //displayClock();
-
+       // affichage horloge
+       if (Notification[zoneTime].type!=2 ) {
+       getFormatClock(msgL, flasher);
+       if (hardConfig.XL) createHStringXL(msgH, msgL);
+     }
   }
   P.displayReset(zoneXL_L);
-  //P.displayReset(zoneXL_H);
-
-  if (hardConfig.XL) P.displayReset(zoneXL_H);
-  //if (hardConfig.XL) P.displayReset(zoneXL_L);
+ if (hardConfig.XL) P.displayReset(zoneXL_H);
  }
 
  //if (_maxZones >xl) {
  for (int i=0;i<_maxZones;i++) {
+    if (i!=zoneTime) {
       if (P.getZoneStatus(i)) {
               if (Notification[i].Alert) {
-      Serial.println("notif actif  zoneTime ="+String(i)+" zone msg ="+String(Notification[i].Notif));
+                 P.displayClear(i);
+      Serial.println("notif boucle zone ="+String(i)+" msg ="+String(Notification[i].Notif));
  // affichage simple
                   P.setFont(i, ExtASCII);
                  P.displayZoneText(i,Notification[i].Notif,Notification[i].pos, Notification[i].speed,Notification[i].pause, effect[Notification[i].fxIn], effect[Notification[i].fxOut]);
            P.displayReset(i);
        Notification[i].Alert=false;
-      }
-    }
-  }
- //}
-
-
+     } // fin alert
+   } // fin zonestatus
+  } // fin if xl
+} // fin boucle
 
 
 } // fin loop

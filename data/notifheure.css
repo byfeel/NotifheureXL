@@ -1,0 +1,19 @@
+
+
+.rangeslider__fill {
+    background: #2196f3;
+
+}
+.rangeslider__handle {
+  width:33px;
+  height:33px;
+
+}
+
+.rangeslider--horizontal .rangeslider__handle {
+    top: -9px;
+  }
+
+  .rangeslider--horizontal {
+      height: 13px;
+    }
