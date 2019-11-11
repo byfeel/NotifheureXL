@@ -95,9 +95,9 @@ MD_MAX72XX::fontType_t numeric7SegXL[] PROGMEM = {
   4, 79, 73, 73, 127,   // 57 -89 '9'
   11, 96, 112, 120, 124, 126, 127, 126, 124, 120, 112, 96, 	// 90 sablier bas
   11, 0, 31, 31, 15, 0, 0, 0, 15, 31, 31, 0, 	// 91 pause timer bas
-    0,		// 92 - '\'
-    0,		// 93 - ']'
-    0,		// 94 - '^'
+  3, 248, 0, 248,  		// 92 - 'petit pause pour clock
+  3, 248, 112, 32, 		// 93 - 'petit play pour clock
+  3, 0, 176, 0,  		// 94 - 'petit ! pour alarm clock
     0,		// 95 - '_'
     0,		// 96 - '`'
     10, 62, 127, 1, 1, 1, 1, 1, 1, 127, 62,		// 97 - 'a'
@@ -223,9 +223,9 @@ MD_MAX72XX::fontType_t numeric7SegXL[] PROGMEM = {
     4, 0,0, 0, 0,    // 57 -217 '9'
     11, 6, 14, 30, 62, 126, 254, 126, 62, 30, 14, 6, 	// 218 sablier haut
     11, 0, 248, 248, 240, 0, 0, 0, 240, 248, 248, 0, 	// 219 pause timer haut
-    0,		// 220
-    0,		// 221
-    0,		// 222
+    3, 0, 0,0,  		// 220 - 'ESPACE petit pause pour clock
+    3, 0, 0, 0,  		// 221 - 'ESPACE petit play pour clock
+    3, 0, 0, 0,  		// 222 - 'ESPACE petit ! pour alarm clock
     0,		// 223
     0,		// 224
     10, 124, 254, 131, 131, 131, 131, 131, 131, 254, 124,		// 225

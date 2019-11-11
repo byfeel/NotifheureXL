@@ -26,11 +26,11 @@
     <h6 id="firstSetup" class="text-center text-info m-2">  - Configuration Initial - </h6>
     <div class="row">
       <div class="col-lg-7 col-md-6 col-10">
-      <label class="col-form-label" for="inputName">Nom du Notifheure ?<small class="text-info" id="infoNom"> nouveau nom : <span>hello</span></small></label>
+      <label class="col-form-label" for="inputName">Nom du Notifheure ?<small class="text-info d-none" id="infoNom"> nouveau nom : <span>hello</span></small></label>
       <div class="input-group">
 
 <div class="input-group input-group-sm">
-  <input type="text" class="form-control" placeholder="exemple : salon" aria-label="exemple : salon" aria-describedby="indiquer un nom" id="inputName" required pattern="[A-Za-z]">
+  <input type="text" class="form-control" placeholder="exemple : salon" aria-label="exemple : salon" aria-describedby="indiquer un nom" id="inputName" >
     <div class="input-group-append">
     <button class="btn btn-outline-primary btn-sm" type="button" onclick="submitConfig();">Sauvegarder</button>
       </div>
@@ -164,7 +164,10 @@
                      if (IsJsonString(data)){
                        var jinfo = JSON.parse(data);
                        if (jinfo.NOM=="New") $("#inputName").val('');
-                       else $("#inputName").val(jinfo.NOM);
+                       else { $("#inputName").val(jinfo.NOM);
+                              $("#lieu").val(jinfo.NOM);
+                              $('#groupMatrix').removeClass('d-none');
+                     }
                        NbMatrix=jinfo.MAXDISPLAY;
                        WZT=jinfo.ZONETIME;
                        MZM=jinfo.MAXZONEMSG;
@@ -366,6 +369,8 @@ modePerso();
               name : $('#inputName').val(),
                   }, function(data) {
               $("#infoNom").text(data);
+              $('#infoNom').removeClass('d-none');
+              $('#groupMatrix').removeClass('d-none');
                 });
             }
       else {
@@ -376,6 +381,9 @@ modePerso();
 
       }
 
+$( "#inputName" ).focus(function() {
+        $(this).removeClass('is-valid is-invalid');
+      });
 
 
     function modePerso() {

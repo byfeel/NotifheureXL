@@ -12,7 +12,7 @@
 #ifndef FONTDATA_CS_H
 #define FONTDATA_CS_H
 
-MD_MAX72XX::fontType_t clockFont[] PROGMEM = 
+MD_MAX72XX::fontType_t clockFont[] PROGMEM =
 {
 	0,		// 0
 	0,		// 1
@@ -88,13 +88,13 @@ MD_MAX72XX::fontType_t clockFont[] PROGMEM =
 	5, 127, 9, 9, 9, 9,			// 70 - 'F'
   0,   // 71 -
   0,    // 72 -
-  0,    // 73 - 
-  0,    // 74 - 
+  0,    // 73 -
+  0,    // 74 -
   0,    // 75 -'
-  0,    // 76 - 
-  0,    // 77 - 
-  0,    // 78- 
-  0,    // 79 - 
+  0,    // 76 -
+  0,    // 77 -
+  0,    // 78-
+  0,    // 79 -
 	3, 124, 68, 124,    // 780 - '0' petit caractere pour secondes
   3, 0, 124, 0,    // 81 - '1'
   3, 116,84,92,   // 82 - '2'
@@ -105,12 +105,12 @@ MD_MAX72XX::fontType_t clockFont[] PROGMEM =
   3, 4,4,124,    // 87 - '7'
   3, 124,84,124,    // 88 - '8'
   3, 92,84,124,   // 89 - '9'
-	
-	6, 195, 165, 153, 153, 165, 195,   // 90 sablier
-	5, 127, 2, 28, 2, 127,   // 91 - 'M'
-	1,128,		// 92  caractére pour signe Minuteur
-	0,		// 93 - ']'
-	0,		// 94 - '^'
+
+	5, 66, 102, 126, 102, 66,   // 90 sablier
+	5, 0, 126, 0, 126, 0,  	// 91 - pause
+	2, 224, 224, 		// 92 - 'petit pause pour clock
+	2, 224, 64, 		// 93 - 'petit play pour clock
+	4, 0, 176, 0, 0, 		// 94 - 'petit ! pour alarm clock
 	0,		// 95 - '_'
 	0,		// 96 - '`'
 	5, 127, 9, 9, 9, 127,		// 97 - 'a'

@@ -8,7 +8,8 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
       <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/materia/bootstrap.min.css">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.3.2/rangeslider.min.css">
-        <link rel="stylesheet" href="notifheure.css">
+      <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+      <link rel="stylesheet" href="notifheure.css">
     </head>
 <body>
             <!-- Header -->
@@ -27,7 +28,10 @@
     <a class="nav-link show active bg" data-toggle="tab" href="#Notif">Notification</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link show" data-toggle="tab" href="#Minuteur">Minuteure</a>
+    <a class="nav-link show" data-toggle="tab" href="#Minuteur" onclick="majMinut();">Minuteur</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link show" data-toggle="tab" href="#reveil" >Reveil</a>
   </li>
 </ul>
 </div>
@@ -82,10 +86,35 @@
      </div>
   </div>
     <div class="col-6">
-      <div class="form-group">
+      <div class="form-group d-none" id="groupZone">
       <label class="col-form-label" for="inputZone">Zone </label>
       <input type="number" class="form-control" placeholder="numero Zone" id="inputZone"  min="0" max="7">
       <small class="form-text text-muted">Zone pour afficher notification</small>
+      </div>
+      <div class="form-group d-none" id="groupLED">
+      <div class="custom-control custom-checkbox">
+      <input type="checkbox" class="custom-control-input" id="notifLed">
+      <label class="custom-control-label text-primary" for="notifLed">Notification LED <small class="text-info" id="infoTypeLed"></small></label>
+      </div>
+      </div>
+     <div class="mx-auto d-none" id="groupLED1">
+           <input  type="range" id="intLED" name="puissance" min="0" max="100" value="100" oninput="valIntLed.value = puissance.valueAsNumber">
+           <output class="text-primary" for="intLED"  name="valIntLed"></output>
+      </div>
+      <div class="form-group d-none" id="groupAUDIO">
+      <div class="custom-control custom-checkbox">
+      <input type="checkbox" class="custom-control-input" id="notifAudio">
+      <label class="custom-control-label text-primary" for="notifAudio">Notification AUDIO <small class="text-info" id="infoTypeAudio"></small></label>
+      </div>
+      </div>
+      <div class="form-group d-none" id="groupAUDIO1">
+          <label for='type' class="text-primary">theme : </label>
+          <select class="form-control " name='theme' id='selectTheme'>
+          </select>
+          </div>
+     <div class="mx-auto d-none" id="groupAUDIO2">
+           <input  type="range" id="volAUDIO" name="volume" min="0" max="100" value="10" oninput="valVolume.value = volume.valueAsNumber">
+           <output class="text-primary" for="volAUDIO"  name="valVolume"></output>
       </div>
     </div>
   </div>
@@ -113,17 +142,43 @@
           <div class="card-body text-center">
         <p>Réglage Durée Minuteur en Minutes</p>
         <div class="mx-auto" id="groupTempo">
-              <input  type="range" id="MINUT" name="Tempo" min="0" max="120" oninput="valMINUT.value = Tempo.valueAsNumber">
-              <output for="MINUT"  name="valMINUT"></output>
+              <input  type="range" id="MINUT" min="0" max="120" >
+              <output class="text-primary" for="MINUT"  name="valMINUT"></output>
          </div>
        <br >
        <div class="text-center">
-       <button type="button" class="btn btn-outline-primary m-2" onclick="Minuteur('MIN',5);">Start</button>
-       <button type="button" class="btn btn-outline-warning m-2" onclick="">Stop</button>
+       <button type="button" class="btn btn-outline-primary m-2" onclick="Minuteur('MIN');">Start</button>
+       <button type="button" class="btn btn-outline-warning m-2" onclick="Minuteur('STP')">Stop</button>
 
-       <button type="button" class="btn btn-outline-info m-2" onclick=""><span id="CR" >Masquer</span></button>
+       <button type="button" class="btn btn-outline-info m-2" onclick="Minuteur('CR')"><span id="CR" >Masquer</span></button>
      </div>
   </div></div></div>
+  <!-- Fin panel minuteur -->
+    <div class="tab-pane fade" id="reveil">
+      <div class="card border-primary">
+        <div class="card-header bg-primary ">
+          <h3 class="text-center text-white">Programmation Alarme</h3>
+        </div>
+        <div class="card-body ">
+          <div class="text-center mb-4 text-secondary " id="blocAl">
+          <h1 class="display-3 ">07:00</h1>
+          <h3>Alarme Inactive</h3>
+        </div>
+          <div class="col-8 mx-auto">
+            <div class="form-group">
+            <div class="input-group" id="Alarme" >
+
+                       <input type="time" class="form-control text-primary"   value="07:56"/>
+                       <div class="input-group-append" >
+
+                          <button type="button" class="btn btn-outline-danger" id="btn_upAl"><i class="fas fa-bell h3" ></i></button>
+                          <button type="button" class="btn btn-outline-dark" id="btn_stopAl"><i class="fas fa-power-off h3"></i></button>
+                       </div>
+                   </div>
+</div>
+</div>
+</div></div></div>
+<!--fin panel reveil -->
   </div>
 </div></div></div>
     <!-- Fin Main Tab-->
@@ -147,23 +202,23 @@
       <legend class="text-primary">Options :</legend>
     <form name="FormOptions" action='/Options' method='POST' class="my-3 mx-2">
       <div class="form-group">
-      <div class="custom-control custom-checkbox">
+      <div class="custom-control custom-switch">
       <input type="checkbox" class="custom-control-input" id="LUM" checked>
       <label class="custom-control-label text-primary" for="LUM">Luminosité Auto</label>
       </div>
       </div>
      <div class="mx-auto d-none" id="groupLum">
            <input  type="range" id="INT" name="intensity" min="0" max="15" oninput="valint.value = intensity.valueAsNumber">
-           <output for="INT"  name="valint"></output>
+           <output class="text-primary" for="INT"  name="valint"></output>
       </div>
       <div class="form-group">
-      <div class="custom-control custom-checkbox">
+      <div class="custom-control custom-switch">
       <input name='SEC' type="checkbox"  class="custom-control-input"  id="SEC" checked >
       <label   class="custom-control-label text-primary" for="SEC"> Affichage secondes </label>
      </div>
    </div>
    <div class="form-group">
-   <div class="custom-control custom-checkbox">
+   <div class="custom-control custom-switch">
    <input name='HOR' type="checkbox"  class="custom-control-input"  id="HOR" checked >
    <label   class="custom-control-label text-primary" for="HOR"> Affichage Horloge </label>
   </div>
@@ -202,7 +257,8 @@
           <div class="card-header text-center"><H3>Systéme</H3></div>
   <div class="card-body ">
       <table class="table table-bordered table-sm table-md">
-          <tr><th scope="row" class="bg-dark text-white">Hostname</th><td id="hostname"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Hostname</th><td id="hostname"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Date Systéme</th><td id="ddj"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">mDNS</th><td id="mdns"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">Demarrage</th><td id="uptime"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">Serveur NTP</th><td id="NTP"></td></tr>
@@ -234,6 +290,7 @@
   <tr><th scope="row" class="bg-dark text-white">Nb Matrices</th><td id="display"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">Largeur Time</th><td id="WZT"></td></tr>
 <tr><th scope="row" class="bg-dark text-white">Mode XL</th><td id="XL"></td></tr>
+<tr><th scope="row" class="bg-dark text-white">Total Zones</th><td id="TZ"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">Nb Zones Notif</th><td id="MZM"></td></tr>
       </table>
           </div></div>
@@ -245,7 +302,8 @@
   <tr><th scope="row" class="bg-dark text-white">Bouton 1</th><td id="bouton1"></td></tr>
 <tr><th scope="row" class="bg-dark text-white">Bouton 2</th><td id="bouton2"></td></tr>
 <tr><th scope="row" class="bg-dark text-white">DHT</th><td id="dht"></td></tr>
- <tr><th scope="row" class="bg-dark text-white">LED</th><td id="StatutLED"></td></tr>
+ <tr><th scope="row" class="bg-dark text-white">LED</th><td id="isLED"></td></tr>
+ <tr><th scope="row" class="bg-dark text-white">audio</th><td id="isAUDIO"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">Box</th><td id="boxinfo"></td></tr>
       </table>
           </div></div>
@@ -254,7 +312,7 @@
   <div class="tab-pane fade" id="boutons">
     <p>Ci dessous listes des actions associés aux differents modules ( Boutons , DFPlayer )- Si présent</p>
       <div class="card-deck ">
-      <div class="card text-white bg-success mb-3" style="max-width: 20rem;" id="cardbtn1">
+      <div class="card text-white bg-success mb-3 d-none" style="max-width: 20rem;" id="cardbtn1">
   <div class="card-header text-center"><H2>Bouton 1</H2></div>
   <div class="card-body">
     <h4 class="card-title">Simple Clic</h4>
@@ -265,7 +323,7 @@
  <p class="card-text">Action définie : <span id="btn1clic3"></span></p>
   </div>
   </div>
- <div class="card text-white bg-danger mb-3" style="max-width: 20rem;" id="cardbtn2">
+ <div class="card text-white bg-danger mb-3 d-none" style="max-width: 20rem;" id="cardbtn2">
   <div class="card-header text-center"><H2>Bouton 2</H2></div>
   <div class="card-body">
     <h4 class="card-title">Simple Clic</h4>
@@ -276,7 +334,7 @@
  <p class="card-text">Action définie : <span id="btn2clic3"></span></p>
   </div>
   </div>
-  <div class="card text-white bg-primary mb-3" style="max-width: 20rem;" id="cardMP3">
+  <div class="card text-white bg-primary mb-3 d-none" style="max-width: 20rem;" id="cardMP3">
    <div class="card-header text-center"><H2>DFPLayer</H2></div>
    <div class="card-body">
      <h4 class="card-title">Dossier MP3</h4>
@@ -374,222 +432,11 @@
 <!-- Footer -->
     <!-- Bootstrap core JavaScript
     ================================================== -->
-    <script   src="https://code.jquery.com/jquery-3.4.1.min.js"   integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="   crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"   integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="   crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.3.2/rangeslider.min.js"></script>
-    <script>
-    // init
-
-    var init=1;
-    var debug=false;
-    var immp=false;
-    var Actions = ['Aucune','Afficher / Masquer les Secondes', 'Activer / desactiver Horloge','Mode Manuel ( Mini ) - Manuel ( Maxi ) - Automatique','On / Off LED','Action 1','Action 2','Action 3','Action 4','Action 5','Action 6','Afficher Historique message'];
-
-    var jours = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
-    var mois = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
-
-    var ZXL=["Zone XL Bas","Zone XL haut","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone notif 6"];
-    var Z=["Zone Horloge","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone Notif 6","Zone Notif 7"];
-
-    function IsJsonString(str) {
-    try {
-        JSON.parse(str);
-    } catch (e) {
-        return false;
-    }
-    return true;
-}
-function notifheure(n,i,v,u,s) {
-    this.nom=n;
-    this.ip=i;
-    this.version=v;
-    this.up=u;
-    this.signal=s;
-}
-
-function unixToDate(unixStamp) {
-  var dt=eval(unixStamp*1000);
-  var myDate = new Date(dt);
-  return(myDate.toLocaleString());
-}
-
-function up(seconds) {
-seconds = Number(seconds);
-var d = Math.floor(seconds / (3600*24));
-var h = Math.floor(seconds % (3600*24) / 3600);
-var m = Math.floor(seconds % 3600 / 60);
-var s = Math.floor(seconds % 60);
-
-var dDisplay = d > 0 ? d + " J, " : "";
-var hDisplay = h > 0 ? h + " H, " : "";
-var mDisplay = m > 0 ? m + " m, " : "";
-var sDisplay = s > 0 ? s + " s" : "";
-return dDisplay + hDisplay + mDisplay + sDisplay;
-}
-
-function getInfo() {
-  $.ajax({
-         url: "/getInfo",
-         type: "GET",
-         dataType:"html",
-         success: function(data) {
-           console.log(data);
-           if (IsJsonString(data)){
-             var jinfo = JSON.parse(data);
-             $("#display").text(jinfo.MAXDISPLAY);
-              $('#version').text(jinfo.VERSION);
-              $('#lieu').text(jinfo.NOM);
-             WZT=jinfo.ZONETIME;
-             $('#WZT').text(WZT);
-             MZM=jinfo.MAXZONEMSG;
-             $('#MZM').text(MZM);
-             $("#INT").val(jinfo.INTENSITY);
-             $("#MINUT").val(jinfo.CRTIME);
-             $('#MINUT').rangeslider('update', true);
-             $("#groupLum output").val(jinfo.INTENSITY);
-             $('#LUM').prop('checked',jinfo.LUM);
-             checkLum();
-             $('#hostname').text(jinfo.HOSTNAME);
-             $('#uptime').text(up(jinfo.UPTIME));
-             $('#first').text(unixToDate(jinfo.STARTTIME));
-             $('#last').text(unixToDate(jinfo.LASTSYNCHRO));
-             $('#NTP').text(jinfo.NTPSERVER);
-             $('#MAC').text(jinfo.MAC);
-              $('#IP').text(jinfo.IP);
-              $('#SSID').text(jinfo.SSID);
-              $('#RSSI').text(jinfo.RSSI);
-              $('#BSSID').text(jinfo.BSSID);
-              $('#channel').text(jinfo.CHANNEL);
-              $('#masque').text(jinfo.MASQUE);
-              $('#passerelle').text(jinfo.PASSERELLE);
-              $('#DNS').text(jinfo.DNS);
-              $('#DNS2').text(jinfo.DNS2);
-              if (jinfo.DHT) {
-                $('#dht_box').removeClass('d-none');
-                $('#Temp').text(jinfo.TEMP);
-                $('#Hum').text(jinfo.HUM);
-                $('#Modele').text(jinfo.DHTMODEL);
-                $('#Status').text(jinfo.DHTSTATUS);
-              }
-              else $('#dht_box').addClass('d-none');
-              if (jinfo.XL) $('#XL').text('Activé');
-              else $('#XL').text('Désactivé');
-              if(jinfo.DEBUG) $('#debug').text("Actif");
-                     else $('#debug').text("inactif");
-              if(jinfo.PHOTOCELL) $('#photocell').text("Présent");
-                      else $('#photocell').text("Absent");
-              if(jinfo.DHT) $('#dht').text("Présent");
-                      else $('#dht').text("Absent");
-              if(jinfo.BTN1) $('#bouton1').text("Présent");
-                      else $('#bouton1').text("Absent");
-              if(jinfo.BTN2) $('#bouton2').text("Présent");
-                      else $('#bouton2').text("Absent");
-              if(jinfo.LED) $('#StatutLED').text("Présent");
-                      else $('#StatutLED').text("Absent");
-              if(jinfo.BOX) $('#boxinfo').text("Présent");
-                      else $('#boxinfo').text("Absent");
-            }
-       },
-         error: function(resultat,statut) {
-            // init();
-         },
-         complete: function(resultat, statut){
-           // init();
-     }
-
-     }); //fin ajax
-}
-
-$("#FormMsg").submit(function(){
-    // formatage envoie ISO
-   // Msg = escape($('#msg').val()).replace(/\+/g, "%2B");
-    //Msg = Msg.replace("%u20AC", "%80");  // pour Euro
-    Msg=$('#msg').val();
-    //type = $('#type').val();
-  //  int=$('#intensity').val();
-  //  if ($('#checkInt').prop('checked')) {
-  //      postInt='';
-//    } else postInt='&intnotif='+int;
-
-   $.post('/Notification',
-         {
-    msg:Msg,
-    type:$("#type").val(),
-    nzo:$("#inputZone").val()
-       }, function(data) {
-   $("#infoSubmit").text(data);
-     });
-
-  return false;
-  });
-
-  function checkLum()
- {
-   if ($('#LUM').prop('checked'))  {
-     $('#groupLum').addClass("d-none");
-     $('label[for="checkInt"]').text('Luminosité Auto');
-    // Options();
-        }
-
-   else {
-    $('#groupLum').removeClass("d-none");
-    $('label[for="checkInt"]').text('Luminosité Manuelle');
-    $('#INT').rangeslider('update', true);
-  //$('#groupLum output').val();
-   }
- }
-
- function Options() {
-key=$(this).attr('id');
-if (key=="LUM") checkLum();
-if (key=="INT")   val=$(this).val();
-else val=$(this).prop('checked');
-
-    console.log ("valeur "+key+" : "+val);
-   url="/Options?"+key+"="+val;
- $.get(url, function( data ) {
-   var res = data.split(":");
-   console.log(data+" decoupe : "+res[0]+" et "+res[1]);
-
-  if (res[0]=="INT") {
-    $('#INT').val(res[1]);
-     $('#INT').rangeslider('update', true);
-    }
-  });
- }
-
- function Minuteur(key,val) {
-   val=val*60;
-    url="/Options?"+key+"="+val;
-    $.get(url);
- }
-//var rangeSlider = document.getElementById("range");
-//var rangeBullet = document.getElementById("rs-bullet");
-
-//rangeSlider.addEventListener("input", showSliderValue, false);
-
-//function showSliderValue() {
-//  rangeBullet.innerHTML = rangeSlider.value;
-//  var bulletPosition = (rangeSlider.value /rangeSlider.max);
-//  rangeBullet.style.left = (bulletPosition * 250) + "px";
-//}
-
-$( document ).ready(function() {
-getInfo();
-$('#LUM').on('change',Options);
-$('#SEC').on('change',Options);
-$('#HOR').on('change',Options);
-$('#INT').on('change',Options);
-$('input[type="range"]').rangeslider({
-     polyfill: false
-    });
-
-})
-
-
-
-</script>
+    <script src="notif.js"></script>
 
 </body>
 </html>
