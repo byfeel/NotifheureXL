@@ -2,7 +2,7 @@
 #ifndef BIGFONTDATA_H
 #define BIGFONTDATA_H
 
-MD_MAX72XX::fontType_t BigFontLower[] PROGMEM = 
+MD_MAX72XX::fontType_t BigFontLower[] PROGMEM =
 {
   0,    // 0
   0,    // 1
@@ -180,7 +180,7 @@ MD_MAX72XX::fontType_t BigFontLower[] PROGMEM =
   0,    // 173
   0,    // 174
   0,    // 175
-  0,    // 176
+  5,0,0,0,0,0,    // 176 degres bas
   0,    // 177
   0,    // 178
   0,    // 179
@@ -263,7 +263,7 @@ MD_MAX72XX::fontType_t BigFontLower[] PROGMEM =
 };
 
 
-MD_MAX72XX::fontType_t BigFontUpper[] PROGMEM = 
+MD_MAX72XX::fontType_t BigFontUpper[] PROGMEM =
 {
   0,    // 0
   0,    // 1
@@ -441,7 +441,7 @@ MD_MAX72XX::fontType_t BigFontUpper[] PROGMEM =
   0,    // 173
   0,    // 174
   0,    // 175
-  0,    // 176
+  5, 14, 17, 17, 17, 14, 	// 176 - 'Degree'
   0,    // 177
   0,    // 178
   0,    // 179

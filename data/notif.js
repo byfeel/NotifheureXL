@@ -10,7 +10,7 @@ var mois = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","
 var typeAudio = ["Absent","Buzzer","MP3Player","Autre"];
 var typeLed= ["Absent","LED Interne","Commande Relais","Neopixel Ring","Sortie Digitale"];
 var buzzer=["The simpsons","Tetris","Arkanoid","Super Mario","Xfiles"];
-var ZXL=["Zone XL Bas","Zone XL haut","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone notif 6"];
+var ZXL=["Zone XL","Zone XL haut","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone notif 6"];
 var Z=["Zone Horloge","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone Notif 6","Zone Notif 7"];
 var cr=true;
 var tA,tL;
@@ -50,7 +50,10 @@ var mDisplay = m > 0 ? m + " m, " : "";
 var sDisplay = s > 0 ? s + " s" : "";
 return dDisplay + hDisplay + mDisplay + sDisplay;
 }
-
+function pad (str, max) {
+  str = str.toString();
+  return str.length < max ? pad("0" + str, max) : str;
+}
 // Example functionality to demonstrate a value feedback
 function valueOutput(element) {
 var value = element.value;
@@ -74,15 +77,37 @@ $.ajax({
          $('#WZT').text(WZT);
          MZM=jinfo.MAXZONEMSG;
          TZ=jinfo.TOTALZONE;
+         XL=jinfo.XL;
+         ZP=jinfo.ZP;
          cr=jinfo.CR;
          $('#MZM').text(MZM);
          $('#TZ').text(TZ);
-         if (MZM>0) ("#groupZone").removeClass("d-none");
+         if (MZM>0) { $("#groupZone").removeClass("d-none");
+         if (XL)  Zones=ZXL;
+         else Zones=Z;
+         numero="<ul class='list-group list-group-flush'>";
+         //remplissage select
+         for (i=0;i<=(XL?MZM+1:MZM);i++) {
+           if ((!XL) || (XL && i!=1)) {
+           $('#selectZone').append($('<option>', {
+                   value: ZP[i],
+                   text : Zones[i]
+               }));
+         }
+         numero=numero+"<li class='list-group-item d-flex justify-content-between align-items-center'>"+Zones[i]+"  <span class='badge badge-info badge-pill'>"+ZP[i]+"</span></li>";
+       }
+       numero=numero+"</ul>";
+       $("#num").html(numero);
+     } else $("#num").text("Zone Horloge et Msg unique");
          $("#INT").val(jinfo.INTENSITY);
          $("#MINUT").val(jinfo.CRTIME);
          $("#groupLum output").val(jinfo.INTENSITY);
          $('#LUM').prop('checked',jinfo.LUM);
          checkLum();
+         $('#BRI').val(jinfo.LEDINT);
+         $("#groupLed output").val(jinfo.LEDINT);
+         $('#LED').prop('checked',jinfo.LED);
+         checkLed();
          $('#hostname').text(jinfo.HOSTNAME);
          $('#mdns').text(jinfo.MDNS);
          $('#uptime').text(up(jinfo.UPTIME));
@@ -121,7 +146,7 @@ $.ajax({
             $('#groupAUDIO').removeClass('d-none');
             $('#infoTypeAudio').text(" ("+typeAudio[tA]+")");
         }
-          if (jinfo.XL) $('#XL').text('Activé');
+          if (XL) $('#XL').text('Activé');
           else $('#XL').text('Désactivé');
           if(jinfo.DEBUG) $('#debug').text("Actif");
                  else $('#debug').text("inactif");
@@ -139,7 +164,19 @@ $.ajax({
                   else $('#StatutLED').text("Absent");
           if(jinfo.BOX) $('#boxinfo').text("Présent");
                   else $('#boxinfo').text("Absent");
+            $("#Alarme input").val(pad(jinfo.TIMEREV[0],2)+":"+pad(jinfo.TIMEREV[1],2));
 
+          if (jinfo.REV) {
+            $("#blocAl").addClass("text-danger");
+            $("#blocAl").removeClass("text-secondary");
+            $("#blocAl h3").text("Alarme Active");
+            $("#blocAl h1").text($("#Alarme input").val());
+          }
+          else {
+            $("#blocAl").addClass("text-secondary");
+            $("#blocAl").removeClass("text-danger");
+            $("#blocAl h3").text("Alarme Inactive");
+          }
 
 
         }
@@ -153,6 +190,7 @@ $.ajax({
 
  }); //fin ajax
 }
+
 
 function update_Info() {
 $.ajax({
@@ -170,20 +208,89 @@ $.ajax({
   });
 }
 
+function mdns_Info(IP,n) {
+  $.getJSON( "http://192.168.8.129/getInfo", function( data ) {
+    var items = [];
+    $.each( data, function( key, val ) {
+      items.push( "<li id='" + key + "'>" + val + "</li>" );
+    });
+
+    $( "<ul/>", {
+      "class": "my-new-list",
+      html: items.join( "" )
+    }).appendTo( "body" );
+  });
+  /*
+$.ajax({
+     url: "http://"+IP+"/getInfo",
+     xhrFields: {
+        withCredentials: true
+    },
+     type: "GET",
+     dataType:"html",
+     success: function(data) {
+       if (IsJsonString(data)){
+         var jinfo = JSON.parse(data);
+         if (jinfo.HARDWARE=="Notifheure XL") XL=jinfo.HARDAWRE;
+         else XL="Notifheure";
+         $('#mdnslist').append( "<tr>"
+           +"<td >"+n+"</th>"
+           +"<td>"+jinfo.NOM+"</th>"
+           +"<td>"+IP+"</td>"
+           +"<td>"+XL+" : "+jinfo.VERSION+"</td>"
+           +"<td>"+jinfo.UPTIME+"</td>"
+           +"<td>"+jinfo.RSSI+"</td>"
+         +"</tr>" );
+       }
+      }
+  });
+  */
+}
+
+
+
+function getMdns() {
+  $('#inforafraichir').text(" ... Scan du reseau en cours ...");
+  $('#mdnslist').html("");
+  $.ajax({
+       url: "/getInfo?MDNS",
+       type: "GET",
+       dataType:"html",
+       success: function(data) {
+         var reponse = data.split(":");
+                   if (reponse[1]=="0") $('#inforafraichir').text(" ... Aucun notifheure trouvé.");
+                   else {
+                       listnotif=reponse[1].split(",");
+                       var n=listnotif.length;
+
+                       for (i=0;i<n;i++) {
+                          $('#inforafraichir').text(" ... Récupération ip notifheure "+listnotif[i]+"...");
+                          mdns_Info(listnotif[i],i);
+                       }
+                        $('#inforafraichir').text("");
+                      }
+
+      }
+});
+}
+
 $("#FormMsg").submit(function(){
 Msg=$('#msg').val();
 // valeur par défaut
-ledValue=0;
+ledType=0;
 audioValue=0;
+ledValue=0;
 //Si notif led
 if ($('#notifLed').prop('checked')) {
+  ledType=1;
   if (tL==1 || tL==3) {
     ledValue=$('#intLED').val();
   }
 }
+else ledType=0;
 if ($('#notifAudio').prop('checked')) {
   if (tA==1) {
-    audioValue=$("#selectTheme").val();
+    audioValue=$("#selectTheme option:selected").val();
   }
   else if (tA==2) {
     audioValue=$("#volAUDIO").val();
@@ -201,10 +308,11 @@ if ($('#notifAudio').prop('checked')) {
 $.post('/Notification',
      {
 msg:Msg,
-led:ledValue,
+ledfx:ledType,
+ledlum:ledValue,
 audio:audioValue,
 type:$("#type").val(),
-nzo:$("#inputZone").val()
+nzo:$("#selectZone option:selected").val()
    }, function(data) {
 $("#infoSubmit").text(data);
  });
@@ -228,26 +336,42 @@ $('#INT').rangeslider('update', true);
 }
 }
 
+function checkLed()
+{
+  $('#BRI').rangeslider('update', true);
+if ($('#LED').prop('checked'))  {
+  $('#groupLed').removeClass("d-none");
+// Options();
+    }
+else {
+   $('#groupLed').addClass("d-none");
+
+}
+}
 
 
-function Options(key2="") {
-if (key2 !="")  key=key2;
-else key=$(this).attr('id');
+function Options(cle = "") {
+
+key = ((typeof cle != 'object') ? cle : key=$(this).attr('id'));
+console.log ( "valeur de key :"+$(this).attr('id')+" et type cle "+typeof cle);
 if (key=="LUM") checkLum();
+if (key=="LED") checkLed();
 if (key=="INT")   val=$(this).val();
-if (key=="REV")   val=$("#blocAl h1").text();
+else if (key=="BRI")   { val=$(this).val();key="LEDINT";}
+else if (key=="TIMEREV")  { val=$("#blocAl h1").text()+":";}
+else if (key=="REV")   val=false;
 else val=$(this).prop('checked');
 
-console.log ("valeur "+key+" : "+val);
+console.log ("Envoie des valeur "+key+" et "+val);
 url="/Options?"+key+"="+val;
 $.get(url, function( data ) {
 var res = data.split(":");
-console.log(data+" decoupe : "+res[0]+" et "+res[1]);
-
+console.log("retour serveur : "+data);
 if (res[0]=="INT") {
-$('#INT').val(res[1]);
- $('#INT').rangeslider('update', true);
-}
+  $('#INT').val(res[1]);
+  $('#INT').rangeslider('update', true);
+  }
+
 });
 }
 
@@ -257,13 +381,14 @@ function upAl() {
   $("#blocAl").removeClass("text-secondary");
   $("#blocAl h3").text("Alarme Active");
   $("#blocAl h1").text($("#Alarme input").val());
- Options("REV");
+ Options("TIMEREV");
 }
 
 function stopAl() {
   $("#blocAl").addClass("text-secondary");
   $("#blocAl").removeClass("text-danger");
   $("#blocAl h3").text("Alarme Inactive");
+  Options("REV");
 }
 
 /*
@@ -355,6 +480,8 @@ $('#SEC').on('change',Options);
 $('#HOR').on('change',Options);
 $('#INT').on('change',Options);
 $('#REV').on('change',Options);
+$('#LED').on('change',Options);
+$('#BRI').on('change',Options);
 $('#btn_upAl').on('click',upAl);
 $('#btn_stopAl').on('click',stopAl);
 $('input[type="range"]').rangeslider({
@@ -379,8 +506,8 @@ $('#Alarme').datetimepicker({
 
 });
 */
-});
-
 $(document).on('input', 'input[type="range"]', function(e) {
         valueOutput(e.target);
     });
+
+});

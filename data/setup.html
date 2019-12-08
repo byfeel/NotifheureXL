@@ -163,7 +163,9 @@
                      console.log(data);
                      if (IsJsonString(data)){
                        var jinfo = JSON.parse(data);
-                       if (jinfo.NOM=="New") $("#inputName").val('');
+                       perso=jinfo.PERSO;
+                       setup=jinfo.SETUP;
+                       if (jinfo.NOM=="New" && !setup) $("#inputName").val('');
                        else { $("#inputName").val(jinfo.NOM);
                               $("#lieu").val(jinfo.NOM);
                               $('#groupMatrix').removeClass('d-none');
@@ -173,8 +175,7 @@
                        MZM=jinfo.MAXZONEMSG;
                        if(jinfo.XL) XL=true ;
                        else XL=false;
-                      perso=jinfo.PERSO;
-                      setup=jinfo.SETUP;
+
                       $('#version').text(jinfo.VERSION);
                       zperso=jinfo.ZP;
 

@@ -20,7 +20,7 @@
         </div>
      <!-- Message -->
      <div class="jumbotron bg-secondary no-padding">
-         <div class="container col-md-8 col-lg-6">
+         <div class="container col-lg-6">
            <div class="panel with-nav-tabs nav-justified">
             <div class="panel-heading light">
    <ul class="nav nav-pills nav-fil">
@@ -88,8 +88,9 @@
     <div class="col-6">
       <div class="form-group d-none" id="groupZone">
       <label class="col-form-label" for="inputZone">Zone </label>
-      <input type="number" class="form-control" placeholder="numero Zone" id="inputZone"  min="0" max="7">
-      <small class="form-text text-muted">Zone pour afficher notification</small>
+      <select class="form-control" name='zone' id='selectZone'>
+      </select>
+      <small class="form-text text-muted">Choix de la Zone , pour affichage notif.</small>
       </div>
       <div class="form-group d-none" id="groupLED">
       <div class="custom-control custom-checkbox">
@@ -119,14 +120,6 @@
     </div>
   </div>
 
-
-<div class="form-group d-none" id="boxflash">
-    <div class="custom-control custom-checkbox">
-      <input type="checkbox" class="custom-control-input" id="flash"  aria-describedby="flashHelp" disabled>
-      <label class="custom-control-label" for="flash">Notification lumineuse ( si LED activé )</label>
-    </div>
-  <small id="flashHelp" class="form-text text-muted">Activer ou désactiver la notification lumineuse</small>
-</div>
     <INPUT type='submit' value='Envoyer Message' class="btn btn-primary d-block mx-auto"/>
  </form>
     </div>
@@ -161,20 +154,16 @@
         </div>
         <div class="card-body ">
           <div class="text-center mb-4 text-secondary " id="blocAl">
-          <h1 class="display-3 ">07:00</h1>
+          <h1 class="display-3 ">--:--</h1>
           <h3>Alarme Inactive</h3>
         </div>
-          <div class="col-8 mx-auto">
-            <div class="form-group">
-            <div class="input-group" id="Alarme" >
-
-                       <input type="time" class="form-control text-primary"   value="07:56"/>
-                       <div class="input-group-append" >
-
-                          <button type="button" class="btn btn-outline-danger" id="btn_upAl"><i class="fas fa-bell h3" ></i></button>
-                          <button type="button" class="btn btn-outline-dark" id="btn_stopAl"><i class="fas fa-power-off h3"></i></button>
-                       </div>
+          <div class="col-10 col-lg-8 mx-auto">
+            <div class="form-group text-center">
+            <div class="input-group my-3" id="Alarme" >
+                       <input type="time" class="form-control text-primary"   value="07:00"/>
                    </div>
+                   <button type="button" class="btn btn-outline-dark" id="btn_stopAl"><i class="fas fa-power-off h3"></i></button>
+                   <button type="button" class="btn btn-outline-danger" id="btn_upAl"><i class="fas fa-bell h3" ></i></button>
 </div>
 </div>
 </div></div></div>
@@ -223,13 +212,18 @@
    <label   class="custom-control-label text-primary" for="HOR"> Affichage Horloge </label>
   </div>
   </div>
+
+<div class="form-group">
+<div class="custom-control custom-switch">
+<input name='LED' type="checkbox"  class="custom-control-input"  id="LED">
+<label   class="custom-control-label text-primary" for="LED"> LED / VEILLEUSE</label>
 </div>
-
-
-      <div class="form-check mb-1 d-none" id="blocled">
-    <input name='LED' type="checkbox"  data-toggle="toggle" data-onstyle="success" data-offstyle="danger" data-size="small" id="LED" >
-         <label class="form-check-label ml-3" for="LED"> On / Off LED</label>
-        </div>
+</div>
+<div class="mx-auto d-none" id="groupLed">
+     <input  type="range" id="BRI" name="Brillance" min="1" max="100" oninput="valbri.value = Brillance.valueAsNumber">
+     <output class="text-primary" for="BRI"  name="valbri"></output>
+</div>
+</div>
         </form>
 </div>
 </div>
@@ -292,6 +286,7 @@
 <tr><th scope="row" class="bg-dark text-white">Mode XL</th><td id="XL"></td></tr>
 <tr><th scope="row" class="bg-dark text-white">Total Zones</th><td id="TZ"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">Nb Zones Notif</th><td id="MZM"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">N° Zones </th><td id="num"></td></tr>
       </table>
           </div></div>
           <div class="card border-info  m-1" style="min-width:300px;">
@@ -388,7 +383,7 @@
           <div class="card-header">Liste des Notif'Heure sur le reseau <span class="text-primary" id="inforafraichir"></span></div>
             <div class="card-body">
         <h5 class="card-title text-center" >
-                <button type="button" class="btn btn-primary btn-sm" onclick="Socket.send('MDNS');">Rafraichir</button></h5>
+                <button type="button" class="btn btn-primary btn-sm" onclick="getMdns();">Rafraichir</button></h5>
         <table class="table table-hover">
         <thead>
         <tr>
