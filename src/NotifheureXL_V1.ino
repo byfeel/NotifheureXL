@@ -136,7 +136,7 @@ const char* www_password = "notif";
 #define UTC +1    // fuseau france
 #define DST_DEF false  // Ajustement heure ETE/hivee ( Daylight saving Time )
 #define DEBUG_DEF true
-#define VOLUME 5 // volume audio de 0 à 10
+#define VOLUME 4 // volume audio de 0 à 10
 #define _MP3START 1
 #define _MP3NOTIF 1
 #define TXTALARM "Alarme !!!"
@@ -1080,7 +1080,7 @@ void getFormatClock(char *psz, bool f = true)
   if (configSys.HOR) {
   if (zoneTime==zoneMsg) displayClock();
   char Sec[2];
-  //if (configSys.SEC) sprintf(Sec,"%02d",timeClient.getSeconds());
+  if ((hardConfig.zoneTime<5 && configSys.REV) || (hardConfig.zoneTime<5 && minuteur>0)) configSys.SEC=false;
   if (configSys.SEC) sprintf(Sec,"%02d",second());
 
   createSecondes(Sec);
@@ -1437,7 +1437,7 @@ void handleNotif() {
     key=server.argName(i);
     key.toUpperCase();
     if (key=="MSG" && server.arg(i)!="") { notif=server.arg(i);rep="ok";}
-    if (key=="AUDIO") optionsNum(&A,server.arg(i),0,100);
+    if (key=="AUDIO") optionsNum(&A,server.arg(i),0,10);
     if (key=="LEDFX") {
           optionsNum(&notifLed.fx,server.arg(i),0,10);
           if (notifLed.fx==1) notifLed.loop=3;
@@ -1756,7 +1756,7 @@ void setup() {
     {
     infoSetup(2,"DFplayer ...");
       // serial softawre (pour player )
-     mySoftwareSerial.begin(9600);
+     mySoftwareSerial.begin(115200);
      if (!myDFPlayer.begin(mySoftwareSerial,false)) {  //Utilisation de  softwareSerial pour communiquer
     // if (!myDFPlayer.begin(Serial1)) {  //Utilisation de  softwareSerial pour communiquer
      Serial.println("Pb communication:");
@@ -1766,9 +1766,9 @@ void setup() {
           delay(0); // Code to compatible with ESP8266 watch dog.
         }
      }
-      Serial.println("DFPlayer Mini En ligne.");
+      //Serial.println("DFPlayer Mini En ligne.");
       myDFPlayer.setTimeOut(500); // Définit un temps de time out sur la communication série à 500 ms
-
+      infoSetup(2,"DFplayer ... OK");
       //----Controle volume----
       int vol=configSys.volumeAudio*3;
       vol=constrain(vol,0,30);

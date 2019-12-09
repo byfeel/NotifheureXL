@@ -106,6 +106,9 @@ $.ajax({
          checkLum();
          $('#BRI').val(jinfo.LEDINT);
          $("#groupLed output").val(jinfo.LEDINT);
+         $('#LUM').prop('checked',jinfo.LUM);
+         $('#SEC').prop('checked',jinfo.SEC);
+         $('#HOR').prop('checked',jinfo.HOR);
          $('#LED').prop('checked',jinfo.LED);
          checkLed();
          $('#hostname').text(jinfo.HOSTNAME);
@@ -145,6 +148,8 @@ $.ajax({
           if (tA > 0)  {
             $('#groupAUDIO').removeClass('d-none');
             $('#infoTypeAudio').text(" ("+typeAudio[tA]+")");
+            $('#volAUDIO').val(jinfo.VOLUME);
+
         }
           if (XL) $('#XL').text('Activé');
           else $('#XL').text('Désactivé');
@@ -442,8 +447,9 @@ $('#notifLed').change(function() {
       }
  }
  else {
-   $('#groupLED'+tA).addClass("d-none");
+   $('#groupLED1').addClass("d-none");
  }
+
 });
 
 $('#notifAudio').change(function() {
