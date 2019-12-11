@@ -285,6 +285,7 @@ Msg=$('#msg').val();
 ledType=0;
 audioValue=0;
 ledValue=0;
+numeroPiste=0;
 //Si notif led
 if ($('#notifLed').prop('checked')) {
   ledType=1;
@@ -295,7 +296,7 @@ if ($('#notifLed').prop('checked')) {
 else ledType=0;
 if ($('#notifAudio').prop('checked')) {
   if (tA==1) {
-    audioValue=$("#selectTheme option:selected").val();
+    numeroPiste=$("#selectTheme option:selected").val();
   }
   else if (tA==2) {
     audioValue=$("#volAUDIO").val();
@@ -316,6 +317,7 @@ msg:Msg,
 ledfx:ledType,
 ledlum:ledValue,
 audio:audioValue,
+num:numeroPiste,
 type:$("#type").val(),
 nzo:$("#selectZone option:selected").val()
    }, function(data) {

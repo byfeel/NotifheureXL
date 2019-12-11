@@ -15,7 +15,7 @@
 //  n/2 ... 3  2  1  0    <- Matrice basse
 // ***************************************
 #include <ArduinoJson.h>  // compatibilité Autom
-const String ver = "0.7.0";
+const String ver = "0.7.2";
 const String hardware = "Notifheure XL";
 // Bibliotheque à inclure
 //***** Gestion reseau
@@ -136,9 +136,9 @@ const char* www_password = "notif";
 #define UTC +1    // fuseau france
 #define DST_DEF false  // Ajustement heure ETE/hivee ( Daylight saving Time )
 #define DEBUG_DEF true
-#define VOLUME 4 // volume audio de 0 à 10
+#define VOLUME 50 // volume audio de 0 à 15
 #define _MP3START 1
-#define _MP3NOTIF 1
+#define _MP3NOTIF 3
 #define TXTALARM "Alarme !!!"
 // gestion des effets
 #define PAUSE_TIME 0
@@ -215,7 +215,7 @@ struct sConfigSys {
   bool autoLargeurNotif;
   int CrTime;
   int MP3Start;               // numero MP3 à jouer au démarrage
-  int MP3Notif;               // numero MP2 a jouer pour notification
+  int MP3Notif;               // numero MP3 a jouer pour notification
   int typeAudio;
   int typeLED;
   int volumeAudio;             // volume audio par defaut
@@ -366,8 +366,9 @@ const struct snotifLed breath={2,100,White,50,2};
 struct snotifAudio {
   int fx;
   int piste;
-
+  byte volume;
 };
+struct snotifAudio notifAudio={0,_MP3START,VOLUME};
 
 //******** fx *******
 textEffect_t  effect[] =
@@ -621,9 +622,6 @@ String createJson(sConfigSys  &config) {
   JsonArray doctime = docConfig.createNestedArray("TIMEREV");
   doctime.add(config.timeREV[0]);
   doctime.add(config.timeREV[1]);
-  docConfig["LED"]=config.LED;
-  docConfig["LEDINT"]=config.LEDINT;
-  docConfig["COLOR"]=config.color;
   docConfig["NTPSERVER"]=config.NTPSERVER;
   docConfig["SUFFIXE-HOST"]=config.hostName;
   docConfig["TIMEZONE"]=config.timeZone;
@@ -654,7 +652,12 @@ String createJson(sConfigSys  &config) {
   docConfig["PHOTOCELL"] = _photocell;
   docConfig["TYPEAUDIO"] = config.typeAudio;
   docConfig["VOLUME"] = config.volumeAudio;
+  docConfig["MP3START"]=config.MP3Start;
+  docConfig["MP3NOTIF"]=config.MP3Notif;
   docConfig["TYPELED"] = config.typeLED;
+  docConfig["LED"]=config.LED;
+  docConfig["LEDINT"]=config.LEDINT;
+  docConfig["COLOR"]=config.color;
   //temps
   _upTime=now()-_startTime;
   docConfig["STARTTIME"]=_startTime;
@@ -751,12 +754,12 @@ void GetTemp() {
 }
 
 // fonction audio ( 0:none , 1 : Buzzer , 2 = MP3player , 4 = relais , 5 = sortie PIN digital)
-void audio(char action,int val1=1,int val2=1)
+void audio(char action='P')
 {
 switch (configSys.typeAudio) {
   case 1 : // Buzzer
           {
-            switch (val1) {
+            switch (notifAudio.fx) {
               case 1 :rtttl::begin(AUDIOPINTX, The_Simpsons);
                 break;
                 case 2:rtttl::begin(AUDIOPINTX, tetris);
@@ -778,15 +781,16 @@ switch (configSys.typeAudio) {
       case 2: // MP3 player
       {
        mySoftwareSerial.begin(9600);
+       int vol;
         if (action=='P') {
-          val1=floor(val1*30/100);
-          Serial.println("Morceau : "+String(configSys.MP3Notif)+"  volume :"+String(val1));
+          vol=floor(notifAudio.volume*30/100);
+          Serial.println("Morceau : "+String(configSys.MP3Notif)+"  volume :"+String(vol));
 
           //myDFPlayer.begin(mySoftwareSerial);
 
-          myDFPlayer.volume(val1);
-          //myDFPlayer.playFolder(1,configSys.MP3Start);
-          myDFPlayer.playMp3Folder(configSys.MP3Notif);
+          myDFPlayer.volume(vol);
+          myDFPlayer.playFolder(1,configSys.MP3Notif);
+          //myDFPlayer.advertise(configSys.MP3Notif);
         }
         else if (action=='S') {
           myDFPlayer.pause();
@@ -979,6 +983,7 @@ void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_L
   Notification[NZO].fxOut=fo;
   //if (configSys.typeLED>0 && notifLED>0) fxLED(1,notifLED);
   if (configSys.typeLED>0 && notifLed.fx>0 ) fxLED();
+  if (configSys.typeAudio>0 && notifAudio.fx>0 ) audio();
   //if (music>0 && configSys.typeAudio>0 ) audio('P',music);
   switch (type) {
     case 0 : // type message scroll
@@ -1430,20 +1435,29 @@ void handleNotif() {
   notifLed.loop=1;
   notifLed.color=configSys.color;
   notifLed.speed=50;
-  int A=0;
+  notifAudio.fx=0;
+  notifAudio.volume=configSys.volumeAudio;
+  notifAudio.piste=configSys.MP3Notif;
   byte fi=1,fo=1;
   //parcours argument http
   for (int i = 0; i < server.args(); i++) {
     key=server.argName(i);
     key.toUpperCase();
     if (key=="MSG" && server.arg(i)!="") { notif=server.arg(i);rep="ok";}
-    if (key=="AUDIO") optionsNum(&A,server.arg(i),0,10);
+    if (key=="AUDIO") {
+      optionsNum(&notifAudio.volume,server.arg(i),0,100);
+      if (notifAudio.volume>0) notifAudio.fx=1;
+    }
+    if (key=="NUM") {
+      if (configSys.typeAudio==1) optionsNum(&notifAudio.fx,server.arg(i),0,10);
+      else if (configSys.typeAudio==2) optionsNum(&notifAudio.piste,server.arg(i),0,100);
+    }
     if (key=="LEDFX") {
           optionsNum(&notifLed.fx,server.arg(i),0,10);
           if (notifLed.fx==1) notifLed.loop=3;
         }
     if (key=="LEDLUM") { optionsNum(&notifLed.lum,server.arg(i),0,100);}
-    if (key=="FLASH") notifLed=flash;
+    //if (key=="FLASH") notifLed=flash;
     if (key=="BREATH") notifLed=breath;
     if (key=="NZO" ) { NZO=server.arg(i).toInt();}
     if (key=="TYPE" ) { type=server.arg(i).toInt();}
@@ -1756,9 +1770,9 @@ void setup() {
     {
     infoSetup(2,"DFplayer ...");
       // serial softawre (pour player )
-     mySoftwareSerial.begin(115200);
+     mySoftwareSerial.begin(9600);
      if (!myDFPlayer.begin(mySoftwareSerial,false)) {  //Utilisation de  softwareSerial pour communiquer
-    // if (!myDFPlayer.begin(Serial1)) {  //Utilisation de  softwareSerial pour communiquer
+
      Serial.println("Pb communication:");
      Serial.println("1.SVP verifier connexion serie!");
      Serial.println("2.SVP verifier SDcard !");
@@ -1770,9 +1784,9 @@ void setup() {
       myDFPlayer.setTimeOut(500); // Définit un temps de time out sur la communication série à 500 ms
       infoSetup(2,"DFplayer ... OK");
       //----Controle volume----
-      int vol=configSys.volumeAudio*3;
+      int vol=floor(configSys.volumeAudio*30/100);
       vol=constrain(vol,0,30);
-      myDFPlayer.volume(vol);  //Monte le volume à 18 ( valeur de 0 à 30 )
+      myDFPlayer.volume(vol);  //Monte le volume à 12 ( valeur de 0 à 30 )
     // ---- indique d'utiliser le player de carte SD interne
       myDFPlayer.outputDevice(DFPLAYER_DEVICE_SD);
 
