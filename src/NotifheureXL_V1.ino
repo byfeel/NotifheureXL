@@ -14,7 +14,7 @@
 //  n/2+1 ... n-2 n-1 n   -> Matrice haute
 //  n/2 ... 3  2  1  0    <- Matrice basse
 // ***************************************
-#include <ArduinoJson.h>  // compatibilité Autom
+#include <ArduinoJson.h>  // compatibilité Atom
 const String ver = "0.7.2";
 const String hardware = "Notifheure XL";
 // Bibliotheque à inclure
