@@ -86,8 +86,8 @@ const char* www_password = "notif";
 //#define DATA_PIN  13
 //#define CS_PIN    12
 // Options matériels
-#define LED_OUT 3 // 0 aucune , 1 Led interne , 2 relais ,3 Ring neopixel ,4 Digital output
-#define AUDIO_OUT 2 // 0 aucun , 1 buzzer , 2 MP3player , 3 autres ( sortie relais ou digital)
+#define LED_OUT 0 // 0 aucune , 1 Led interne , 2 relais ,3 Ring neopixel ,4 Digital output
+#define AUDIO_OUT 0 // 0 aucun , 1 buzzer , 2 MP3player , 3 autres ( sortie relais ou digital)
 #define BOUTON1 true
 #define BOUTON2 true
 
