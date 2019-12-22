@@ -15,7 +15,7 @@
 //  n/2 ... 3  2  1  0    <- Matrice basse
 // ***************************************
 #include <ArduinoJson.h>  // compatibilité Atom
-const String ver = "0.7.2";
+const String ver = "0.7.3";
 const String hardware = "Notifheure XL";
 // Bibliotheque à inclure
 //***** Gestion reseau
@@ -97,7 +97,9 @@ const char* www_password = "notif";
 
 
 // ********** DHT
-#define DHTTYPE DHTesp::DHT11  // si DHT11
+#define DHTTYPE DHTesp::AUTO_DETECT
+//#define DHTTYPE DHTesp::DHT11  // si DHT11
+//#define DHTTYPE DHTesp::DHT11  // si DHT11
 // **************
 // *** PIN ******
 // ***************
@@ -135,11 +137,13 @@ const char* www_password = "notif";
 #define NTPSERV "pool.ntp.org"
 #define UTC +1    // fuseau france
 #define DST_DEF false  // Ajustement heure ETE/hivee ( Daylight saving Time )
+#define DST_VALUE 60
 #define DEBUG_DEF true
 #define VOLUME 50 // volume audio de 0 à 15
 #define _MP3START 1
 #define _MP3NOTIF 3
 #define TXTALARM "Alarme !!!"
+#define TXTMINUT "Fin Minuteur."
 // gestion des effets
 #define PAUSE_TIME 0
 #define SCROLL_SPEED 40
@@ -198,6 +202,7 @@ struct sConfigSys {
   char NTPSERVER[30];        // Adresse NTPserveur
   int timeZone;
   bool DST;                   // Le fuseau utilise les horaires été / hiver
+  int DSTvalue;               // decalage en minute du Mode ete/hiver
   bool DEBUG;                 // si debug actif
   byte posClock;              //
   char hostName[20];          // nom reseau
@@ -207,6 +212,7 @@ struct sConfigSys {
   bool REV;
   byte timeREV[2];            // Heure reveil
   char msgAlarme[30];         // Message a affiché pour alarme
+  char msgMinuteur[30];       // Message a affiché pour fin de minuteur
   bool LED;
   int LEDINT;                 // Intensité de la veilleuse
   byte color;                 // couleur par défaut veilleuse
@@ -568,11 +574,13 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
 
   // Initialisation des variables systémes pour configuration , si non présente valeur par defaut affecté
   strlcpy(config.NTPSERVER,docConfig["NTPSERVER"] | "pool.ntp.org",sizeof(config.NTPSERVER));
-  strlcpy(config.hostName,docConfig["SUFFIXE-HOST"] | "notifXL",sizeof(config.hostName));
+  strlcpy(config.hostName,docConfig["SUFFIXEHOST"] | "notifXL",sizeof(config.hostName));
   strlcpy(config.nom,docConfig["NOM"] | "New",sizeof(config.nom));
   strlcpy(config.msgAlarme,docConfig["MSGALARM"] | TXTALARM,sizeof(config.msgAlarme));
+  strlcpy(config.msgMinuteur,docConfig["MSGMINUT"] | TXTMINUT,sizeof(config.msgMinuteur));
   config.timeZone = docConfig["TIMEZONE"] | UTC;
   config.DST = docConfig["DST"] | DST_DEF;
+  config.DSTvalue = docConfig["DSTVALUE"] | DST_VALUE;
   config.DEBUG = docConfig["DEBUG"] | DEBUG_DEF;
   config.pauseTime=docConfig["PAUSE"] | 3;
   config.scrollSpeed=docConfig["SPEED"] | 30;
@@ -601,8 +609,8 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   config.btnclic[1][1] = docConfig["btn1"][0] | 1;
   config.btnclic[1][2] = docConfig["btn1"][1] | 2;
   config.btnclic[1][3] = docConfig["btn1"][2] | 3;
-  config.btnclic[2][1] = docConfig["btn2"][0] | 13;
-  config.btnclic[2][2] = docConfig["btn2"][1] | 12;
+  config.btnclic[2][1] = docConfig["btn2"][0] | 6;
+  config.btnclic[2][2] = docConfig["btn2"][1] | 7;
   config.btnclic[2][3] = docConfig["btn2"][2] | 4;
   file.close();
 
@@ -619,13 +627,15 @@ String createJson(sConfigSys  &config) {
   docConfig["LUM"]=config.LUM;
   docConfig["REV"]=config.REV;
   docConfig["MSGALARM"]=config.msgAlarme;
+  docConfig["MSGMINUT"]=config.msgMinuteur;
   JsonArray doctime = docConfig.createNestedArray("TIMEREV");
   doctime.add(config.timeREV[0]);
   doctime.add(config.timeREV[1]);
   docConfig["NTPSERVER"]=config.NTPSERVER;
-  docConfig["SUFFIXE-HOST"]=config.hostName;
+  docConfig["SUFFIXEHOST"]=config.hostName;
   docConfig["TIMEZONE"]=config.timeZone;
-  docConfig["DLS"]=config.DST;
+  docConfig["DST"]=config.DST;
+  docConfig["DSTVALUE"]=config.DSTvalue;
   docConfig["DEBUG"]=config.DEBUG;
   docConfig["SPEED"] =config.scrollSpeed;
   docConfig["PAUSE"] =config.pauseTime;
@@ -1297,8 +1307,12 @@ void handleConfig() {
         if (key=="speed") {optionsNum(&configSys.scrollSpeed,server.arg(i),10,100);mem=1;}
         if (key=="pause") {optionsNum(&configSys.pauseTime,server.arg(i),0,180);mem=1;}
         if (key=="debug") if (optionsBool(&configSys.DEBUG,server.arg(i))) mem=1;
+        if (key=="automsg") if (optionsBool(&configSys.autoLargeurNotif,server.arg(i))) mem=1;
+        if (key=="btn1") if (optionsBool(&configSys.btn1,server.arg(i))) mem=1;
+        if (key=="btn2") if (optionsBool(&configSys.btn2,server.arg(i))) mem=1;
+        if (key=="dst") if (optionsBool(&configSys.DST,server.arg(i))) mem=1;
         if (key=="hostname") {
-                if (validString(server.arg(i),4,20)) {
+                if (validString(server.arg(i),2,15)) {
                           value=server.arg(i);
                           value.toLowerCase();
                           value.toCharArray(configSys.hostName,sizeof(configSys.hostName));
@@ -1330,12 +1344,13 @@ Serial.println(info);
 }
 bool verif=true;
   switch (mem) {
-    case 1 :
+    case 1 : {
         rep=createJson(configSys);
         saveConfigSys(fileconfig,rep);
         rep="OK - Modification config systéme";
         break;
-    case 2 :
+      }
+    case 2 :{
         if (hardConfig.XL && hardConfig.zoneTime*2 > hardConfig.maxDisplay) verif=false;
         if (!hardConfig.XL && hardConfig.zoneTime > hardConfig.maxDisplay) verif=false;
         if (verif) {
@@ -1345,10 +1360,12 @@ bool verif=true;
         EEPROM.end();
         rep="OK - > Modification config matrix -- Systeme reboot - Mode perso : "+String(hardConfig.perso);
         reboot=true;
+      } else  {
+        reboot=false;
+        rep="Erreur , les valeurs ne semblent pas coherentes";
       }
-        else rep="Erreur , les valeurs ne semblent pas coherentes";
         break;
-
+        }
   }
 
      server.send(200, "text/plane",rep);
@@ -1690,10 +1707,12 @@ switch (actionClick) {
       break;
       case 4 :cmdLED(!configSys.LED);
   break;
-      case 12 : // affichage / masque Minuteur
+      case 5 :  //affichage Historique
+      break;
+      case 6 : // affichage / masque Minuteur
               CR=!CR;
               break;
-      case 13 : //Lancer Minuteur
+      case 7 : //Lancer Minuteur
               minuteur = configSys.CrTime*60;
               CR=true;
       break;
@@ -1879,7 +1898,8 @@ if (configSys.DEBUG) Serial.println("time ok :"+String(now())+" offset :"+String
 infoSetup(2,"Ok ...");
  // init options
  // Initialize temperature sensor
-  // dht.setup(dhtPin, DHTType);
+// dht.setup(dhtPin, DHTType);
+//DHT_MODEL_t;
   int pin(dhtpin);
   dht.setup(pin,DHTTYPE);
   delay(500);
@@ -2114,9 +2134,10 @@ P.displayAnimate();
      if (hardConfig.XL) XLZoneTest=P.getZoneStatus(zoneXL_L) && P.getZoneStatus(zoneXL_H);
       else XLZoneTest=P.getZoneStatus(zoneTime);
 // l'animation commence
-
+//********************
+// Gestion zone XL
+//*********************
 if ( XLZoneTest) {
-
              if (Notification[zoneTime].Alert) {
                 //if (zoneMsg == zoneTime ) {
                    Serial.println("mode notification");
@@ -2166,18 +2187,21 @@ if ( XLZoneTest) {
 
         }
       else {
-       //Serial.println("clock");
+        // Permet de stopper notif lorsque horloge est désactivé.
        if ( !Notification[zoneTime].Alert && disClock) {
         displayClock();
         disClock=false;
        }
-       // affichage horloge
+       // affichage horloge si different de fix
        if (Notification[zoneTime].type!=2 ) {
        getFormatClock(msgL, flasher);
        if (hardConfig.XL) createHStringXL(msgH, msgL);
      }
-  }
+  }  // fin zone xl
   P.displayReset(zoneXL_L);
+//*************************
+// gestion des autres zones
+//*************************
  if (hardConfig.XL) P.displayReset(zoneXL_H);
  }
 
@@ -2196,7 +2220,7 @@ if ( XLZoneTest) {
      } // fin alert
    } // fin zonestatus
   } // fin if xl
-} // fin boucle
+} // fin boucle gestion zone
 
 
 } // fin loop
