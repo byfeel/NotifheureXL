@@ -15,7 +15,7 @@
             <!-- Header -->
         <div class="container ">
             <header class="page-header">
-                <h4 class="d-inline"><b>Notif'Heure XL<span id="lieu" class="text-primary"></span></b></h4><small>  Version : <span id="version" class="text-info"></span></small>
+              <h4 class="d-inline"><b>NotifHeure<span class="text-danger font-weight-bold">XL </span></b><span id="lieu" class="text-primary"></span></h1><small>  Version : <span id="version" class="text-danger"></span></small>
             </header>
         </div>
      <!-- Message -->
@@ -219,9 +219,19 @@
 <label   class="custom-control-label text-primary" for="LED"> LED / VEILLEUSE</label>
 </div>
 </div>
-<div class="mx-auto d-none" id="groupLed">
-     <input  type="range" id="BRI" name="Brillance" min="1" max="100" oninput="valbri.value = Brillance.valueAsNumber">
+
+<div class="mx-auto d-none border-left border-primary  px-3" id="groupLed">
+        <br/>
+        <label for="BRI" class="text-primary" >Intensité veilleuse</label>
+     <input  class="mx-5" type="range" id="BRI" name="Brillance" min="1" max="100" oninput="valbri.value = Brillance.valueAsNumber">
      <output class="text-primary" for="BRI"  name="valbri"></output>
+
+<div class="form-group d-none" id="groupled3" >
+
+  <label for="COLOR" class="text-primary" >Couleur veilleuse</label>
+  <select class="custom-select" id="COLOR">
+  </select>
+</div>
 </div>
 </div>
         </form>
@@ -253,6 +263,7 @@
       <table class="table table-bordered table-sm table-md">
   <tr><th scope="row" class="bg-dark text-white">Hostname</th><td id="hostname"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">Date Systéme</th><td id="ddj"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">TimeZone</th><td id="tzname"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">mDNS</th><td id="mdns"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">Demarrage</th><td id="uptime"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">Serveur NTP</th><td id="NTP"></td></tr>

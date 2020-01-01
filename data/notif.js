@@ -4,7 +4,7 @@ var init=1;
 var debug=false;
 var immp=false;
 var Actions = ['Aucune','Afficher / Masquer les Secondes', 'Activer / desactiver Horloge','Mode Manuel ( Mini ) - Manuel ( Maxi ) - Automatique','On / Off LED','Action 1','Action 2','Action 3','Action 4','Action 5','Action 6','Afficher Historique message'];
-
+var couleurs=["Blanc","Rouge","Bleue","Vert","Jaune","Orange","Violet","Rose"];
 var jours = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
 var mois = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 var typeAudio = ["Absent","Buzzer","MP3Player","Autre"];
@@ -14,6 +14,7 @@ var ZXL=["Zone XL","Zone XL haut","Zone Message","Zone Notif 2","Zone notif 3","
 var Z=["Zone Horloge","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone Notif 6","Zone Notif 7"];
 var cr=true;
 var tA,tL;
+var ajaxload=false;
 
 function IsJsonString(str) {
 try {
@@ -103,14 +104,14 @@ $.ajax({
          $("#MINUT").val(jinfo.CRTIME);
          $("#groupLum output").val(jinfo.INTENSITY);
          $('#LUM').prop('checked',jinfo.LUM);
-         checkLum();
+
          $('#BRI').val(jinfo.LEDINT);
          $("#groupLed output").val(jinfo.LEDINT);
          $('#LUM').prop('checked',jinfo.LUM);
          $('#SEC').prop('checked',jinfo.SEC);
          $('#HOR').prop('checked',jinfo.HOR);
          $('#LED').prop('checked',jinfo.LED);
-         checkLed();
+         //checkLed();
          $('#hostname').text(jinfo.HOSTNAME);
          $('#mdns').text(jinfo.MDNS);
          $('#uptime').text(up(jinfo.UPTIME));
@@ -137,14 +138,16 @@ $.ajax({
           }
           else $('#dht_box').addClass('d-none');
           tA=jinfo.TYPEAUDIO;
-          tL=jinfo.TYPELED;
+          tL=parseInt(jinfo.TYPELED);
           $('#isLED').text(typeLed[tL]);
           $('#isAUDIO').text(typeAudio[tA]);
           if (tL > 0)  {
             $('#groupLED').removeClass('d-none');
+
             $('#infoTypeLed').text(" ("+typeLed[tL]+")");
             $('#intLED').val(jinfo.LEDINT);
-        }
+            $('#COLOR').val(jinfo.COLOR);
+                  }
           if (tA > 0)  {
             $('#groupAUDIO').removeClass('d-none');
             $('#infoTypeAudio').text(" ("+typeAudio[tA]+")");
@@ -190,7 +193,9 @@ $.ajax({
         // init();
      },
      complete: function(resultat, statut){
-       // init();
+      ajaxload=true;
+      checkLum();
+      checkLed();
  }
 
  }); //fin ajax
@@ -347,12 +352,14 @@ function checkLed()
 {
   $('#BRI').rangeslider('update', true);
 if ($('#LED').prop('checked'))  {
+
   $('#groupLed').removeClass("d-none");
+if (tL==3)  $('#groupled3').removeClass("d-none");
 // Options();
     }
 else {
    $('#groupLed').addClass("d-none");
-
+if (tL==3)  $('#groupled3').addClass("d-none");
 }
 }
 
@@ -363,8 +370,8 @@ key = ((typeof cle != 'object') ? cle : key=$(this).attr('id'));
 console.log ( "valeur de key :"+$(this).attr('id')+" et type cle "+typeof cle);
 if (key=="LUM") checkLum();
 if (key=="LED") checkLed();
-if (key=="INT")   val=$(this).val();
-else if (key=="BRI")   { val=$(this).val();key="LEDINT";}
+if (key=="INT" || key=="COLOR")   val=$(this).val();
+else if (key=="BRI")   { val=$(this).val()+"&COLOR="+$("#COLOR").val();key="LEDINT";}
 else if (key=="TIMEREV")  { val=$("#blocAl h1").text()+":";}
 else if (key=="REV")   val=false;
 else val=$(this).prop('checked');
@@ -490,6 +497,7 @@ $('#INT').on('change',Options);
 $('#REV').on('change',Options);
 $('#LED').on('change',Options);
 $('#BRI').on('change',Options);
+$('#COLOR').on('change',Options);
 $('#btn_upAl').on('click',upAl);
 $('#btn_stopAl').on('click',stopAl);
 $('input[type="range"]').rangeslider({
@@ -499,6 +507,13 @@ $('input[type="range"]').rangeslider({
 $.each(buzzer, function (value, text) {
   $('#selectTheme').append($('<option>', {
           value: value+1,
+          text : text
+      }));
+});
+
+$.each(couleurs, function (value, text) {
+  $('#COLOR').append($('<option>', {
+          value: value,
           text : text
       }));
 });

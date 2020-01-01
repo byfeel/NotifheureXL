@@ -15,7 +15,7 @@
 //  n/2 ... 3  2  1  0    <- Matrice basse
 // ***************************************
 #include <ArduinoJson.h>  // compatibilité Atom
-const String ver = "0.7.3";
+const String ver = "0.7.4";
 const String hardware = "Notifheure XL";
 // Bibliotheque à inclure
 //***** Gestion reseau
@@ -86,7 +86,7 @@ const char* www_password = "notif";
 //#define DATA_PIN  13
 //#define CS_PIN    12
 // Options matériels
-#define LED_OUT 0 // 0 aucune , 1 Led interne , 2 relais ,3 Ring neopixel ,4 Digital output
+#define LED_OUT 3 // 0 aucune , 1 Led interne , 2 relais ,3 Ring neopixel ,4 Digital output
 #define AUDIO_OUT 0 // 0 aucun , 1 buzzer , 2 MP3player , 3 autres ( sortie relais ou digital)
 #define BOUTON1 true
 #define BOUTON2 true
@@ -135,9 +135,8 @@ const char* www_password = "notif";
 #define NBZONE_SUP 0
 #define MODEXL false
 #define NTPSERV "pool.ntp.org"
-#define UTC +1    // fuseau france
-#define DST_DEF false  // Ajustement heure ETE/hivee ( Daylight saving Time )
-#define DST_VALUE 60
+#define TZNAME "Europe/Paris"
+#define OFFSET_VALUE 60  // decalage en minute du fuseau horaire
 #define DEBUG_DEF true
 #define VOLUME 50 // volume audio de 0 à 15
 #define _MP3START 1
@@ -172,7 +171,7 @@ const char* Xfiles  = "Xfiles:d=4,o=5,b=125:e,b,a,b,d6,2b.,1p,e,b,a,b,e6,2b.,1p,
 
 // Constante systémes
 const unsigned long synchroNTP=3600000;
-const unsigned long MAGICEEP=13579025;
+const unsigned long MAGICEEP=12579025;
 const byte EP_VERSION = 2;
 int eeAddress = 32;
 const unsigned long _refTime=1514800000;
@@ -182,27 +181,26 @@ const unsigned long _refTimeHigh=1514800000;
 struct sHardConfig {
   unsigned long magic;
   byte EPvers;
+  bool setup;
   byte maxDisplay;
   byte zoneTime;
   byte maxZonesMsg;
   bool XL;
   bool perso;
   byte ZP[MAX];
-  bool setup;
+  int Offset;
+  char TZname[35];
+  char nom[20];              // Nom notifheure
 };
 sHardConfig hardConfig;
 
 // software config  ( sauvegarde SPIFFS )
 struct sConfigSys {
   bool setup;                // verifie si setup initial ok
-  char nom[20];              // Nom notifheure
   int pauseTime;             // Temps de pause entre chaque animation
   int scrollSpeed;           // vitesse de defliement
   byte intensity;            // Itensité par defaut matrice
   char NTPSERVER[30];        // Adresse NTPserveur
-  int timeZone;
-  bool DST;                   // Le fuseau utilise les horaires été / hiver
-  int DSTvalue;               // decalage en minute du Mode ete/hiver
   bool DEBUG;                 // si debug actif
   byte posClock;              //
   char hostName[20];          // nom reseau
@@ -214,12 +212,15 @@ struct sConfigSys {
   char msgAlarme[30];         // Message a affiché pour alarme
   char msgMinuteur[30];       // Message a affiché pour fin de minuteur
   bool LED;
-  int LEDINT;                 // Intensité de la veilleuse
+  int LEDINT;                 // Intensité par defaut de la veilleuse / notif visuelle
   byte color;                 // couleur par défaut veilleuse
   char charOff;               // caractére / symbole à afficher sur horloge eteinte
   char textnotif[20];         // texte prénotif
-  bool autoLargeurNotif;
+  bool ALN;                   // Auto Longueur Notif
+  int fxint;                  // intensité par defaut fx
+  byte fxcolor;               //colueur par defaut fx
   int CrTime;
+  byte fxCR;                  // fx minuteur par defaut
   int MP3Start;               // numero MP3 à jouer au démarrage
   int MP3Notif;               // numero MP3 a jouer pour notification
   int typeAudio;
@@ -352,7 +353,7 @@ const uint32_t couleur[]={
   ring.Color(255, 255,   0), // Jaune
   // couleur HSV
   ring.gamma32(ring.ColorHSV(5462, 255, 255)), // Orange
-  ring.gamma32(ring.ColorHSV(52000, 255, 255)), // viloet
+  ring.gamma32(ring.ColorHSV(52000, 255, 255)), // violet
   ring.gamma32(ring.ColorHSV(60080)) // rose
 };
 
@@ -368,6 +369,12 @@ struct snotifLed {
 struct snotifLed notifLed={0,BRIGHTNESS,White,50,1};
 const struct snotifLed flash={1,100,White,40,4};
 const struct snotifLed breath={2,100,White,50,2};
+const struct snotifLed rainbow={3,100,White,50,4};
+const struct snotifLed colorWipe={4,100,White,50,2};
+const struct snotifLed colorWipeFill={5,100,White,50,1};
+const struct snotifLed chaseColor={6,100,White,50,1};
+
+snotifLed FX_led[]={flash,breath,rainbow,colorWipe,colorWipeFill,chaseColor};
 
 struct snotifAudio {
   int fx;
@@ -530,9 +537,12 @@ if (err) {
  hardConfig.perso=false;
  for (int i=0;i<MAX;i++) {
  hardConfig.ZP[i]=i;
+ strlcpy(hardConfig.TZname,TZNAME,sizeof(hardConfig.TZname));
+ strlcpy(hardConfig.nom,"New",sizeof(hardConfig.nom));
+ hardConfig.Offset=OFFSET_VALUE;
  }
 }
-if (hardConfig.EPvers <2 || err) {
+if ((hardConfig.EPvers < EP_VERSION) || err) {
   writeOK=true;
   hardConfig.setup=false;
 }
@@ -549,6 +559,8 @@ Serial.println("Mode Setup  ="+String( hardConfig.setup));
 for (int i=0;i<MAX;i++) {
   Serial.println("Mode ZP-"+String(hardConfig.ZP[i]));
 }
+Serial.println("Nom TZ  ="+String(hardConfig.TZname));
+Serial.println("offset TZ ="+String(hardConfig.Offset));
 EEPROM.end();
 }
 
@@ -575,12 +587,11 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   // Initialisation des variables systémes pour configuration , si non présente valeur par defaut affecté
   strlcpy(config.NTPSERVER,docConfig["NTPSERVER"] | "pool.ntp.org",sizeof(config.NTPSERVER));
   strlcpy(config.hostName,docConfig["SUFFIXEHOST"] | "notifXL",sizeof(config.hostName));
-  strlcpy(config.nom,docConfig["NOM"] | "New",sizeof(config.nom));
   strlcpy(config.msgAlarme,docConfig["MSGALARM"] | TXTALARM,sizeof(config.msgAlarme));
   strlcpy(config.msgMinuteur,docConfig["MSGMINUT"] | TXTMINUT,sizeof(config.msgMinuteur));
-  config.timeZone = docConfig["TIMEZONE"] | UTC;
-  config.DST = docConfig["DST"] | DST_DEF;
-  config.DSTvalue = docConfig["DSTVALUE"] | DST_VALUE;
+  //config.timeZone = docConfig["TIMEZONE"] | UTC;
+  //config.DST = docConfig["DST"] | DST_DEF;
+  //config.DSTvalue = docConfig["DSTVALUE"] | DST_VALUE;
   config.DEBUG = docConfig["DEBUG"] | DEBUG_DEF;
   config.pauseTime=docConfig["PAUSE"] | 3;
   config.scrollSpeed=docConfig["SPEED"] | 30;
@@ -593,8 +604,11 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   config.timeREV[1]=docConfig["TIMEREV"][1] | 0;
   config.charOff=docConfig["CHAROFF"] | ' ';
   strlcpy(config.textnotif,docConfig["TEXTNOTIF"] | "Notif",sizeof(config.textnotif));
-  config.autoLargeurNotif=docConfig["AUTOLARGEURNOTIF"] | true;
+  config.ALN=docConfig["ALN"] | true;
   config.CrTime=docConfig["CRTIME"] | 5;
+  config.fxCR=docConfig["CRFX"] | 0;
+  config.fxint=docConfig["FXINT"] | 100;
+  config.fxcolor=docConfig["FXCOLOR"] | 0;
   config.MP3Start=docConfig["MP3START"] | _MP3START;
   config.MP3Notif=docConfig["MP3NOTIF"] | _MP3NOTIF;
   config.typeAudio=docConfig["TYPEAUDIO"] | AUDIO_OUT ;
@@ -621,7 +635,7 @@ String createJson(sConfigSys  &config) {
   //const size_t capacityConfig = 2*JSON_ARRAY_SIZE(3) + JSON_OBJECT_SIZE(41) + 1500;
   DynamicJsonDocument docConfig(capacityConfig);
   docConfig["HARDWARE"]=hardware;
-  docConfig["NOM"]=config.nom;
+  docConfig["NOM"]=hardConfig.nom;
   docConfig["SEC"]=config.SEC;
   docConfig["HOR"]=config.HOR;
   docConfig["LUM"]=config.LUM;
@@ -633,16 +647,16 @@ String createJson(sConfigSys  &config) {
   doctime.add(config.timeREV[1]);
   docConfig["NTPSERVER"]=config.NTPSERVER;
   docConfig["SUFFIXEHOST"]=config.hostName;
-  docConfig["TIMEZONE"]=config.timeZone;
-  docConfig["DST"]=config.DST;
-  docConfig["DSTVALUE"]=config.DSTvalue;
+  docConfig["TZOFFSET"]=hardConfig.Offset;
+  //docConfig["DST"]=hardConfig.DST;
+  docConfig["TZNAME"]=hardConfig.TZname;
   docConfig["DEBUG"]=config.DEBUG;
   docConfig["SPEED"] =config.scrollSpeed;
   docConfig["PAUSE"] =config.pauseTime;
   docConfig["INTENSITY"]=config.intensity;
   docConfig["CHAROFF"]=config.charOff;
   docConfig["TEXTNOTIF"]=config.textnotif;
-  docConfig["AUTOLARGEURNOTIF"]=config.autoLargeurNotif;
+  docConfig["ALN"]=config.ALN;
   //info systeme
   docConfig["MEMOJSON"]=docConfig.memoryUsage();
   docConfig["VERSION"]=ver;
@@ -685,7 +699,10 @@ String createJson(sConfigSys  &config) {
   docConfig["CR"]=CR;
   docConfig["CRSTOP"]=CRStop;
   docConfig["CRTIME"]=config.CrTime;
-  //boutons
+  docConfig["CRFX"]=config.fxCR;
+  //FX
+  docConfig["FXINT"]=config.fxint;
+  docConfig["FXCOLOR"]=config.fxcolor;
   //boutons
   docConfig["BTN1"]=config.btn1;
   docConfig["BTN2"]=config.btn2;
@@ -876,7 +893,7 @@ for (int j=0;j<Lo;j++) {  // boucle loop
 
 // fonction Ring qui allume les leds unes apres les autres de la même couleur
 //void colorWipe(uint32_t color, int speed=50,bool single=false,int loops=1) {
-void colorWipe(byte C, int speed=50,bool single=false,int loops=1) {
+void colorWipeNEO(byte C, int speed=50,bool single=false,int loops=1) {
 uint32_t color = couleur[C];
 for (int j=0;j<loops;j++) {
   for(int i=0; i<ring.numPixels(); i++) {
@@ -889,7 +906,24 @@ for (int j=0;j<loops;j++) {
 }
 }
 
-void rainbow(int rainbowLoops,int F=100,int speed=3, int S=255) {
+void chaseColorNEO(byte C, int speed=50,int loops=1) {
+uint32_t color = couleur[C];
+uint32_t black = ring.Color(0,0,0);
+for (int j=0;j<loops;j++) {
+  for(int i=0; i<ring.numPixels(); i++) {
+    ring.setPixelColor(i, color);
+    ring.show();
+    delay(speed);
+  }
+  for(int i=0; i<ring.numPixels(); i++) {
+    ring.setPixelColor(i, black);
+    ring.show();
+    delay(speed);
+  }
+}
+}
+
+void rainbowNEO(int rainbowLoops,int F=100,int speed=3, int S=255) {
   int fadeVal=0, fadeMax;
   fadeMax=constrain(F, 1, 100);
   for(uint32_t firstPixelHue = 0; firstPixelHue < rainbowLoops*65536;
@@ -933,9 +967,10 @@ void fxLED(int fx,int var1=configSys.LEDINT,int var2=50) {
 }
 */
 
-void fxLED() {
+void fxLED(byte c=configSys.fxcolor) {
   if (configSys.typeLED==1) constrain(notifLed.fx, 1, 2);
   if (configSys.typeLED==2) {notifLed.fx=1;notifLed.speed=100;}
+  if (configSys.typeLED==3) notifLed.color=c;
   switch (notifLed.fx) {
     case 1 : flashLED(notifLed.loop,notifLed.lum,notifLed.speed);
     break;
@@ -944,18 +979,27 @@ void fxLED() {
     case 3 :
     ring.clear();
     ring.show();
-    rainbow(notifLed.loop,notifLed.lum);
+    rainbowNEO(notifLed.loop,notifLed.lum);
     ring.clear();
     ring.show();
     break;
     case 4:
     //ring.clear();
     //ring.show();
-     colorWipe(notifLed.color,notifLed.speed,true);
+     colorWipeNEO(c,notifLed.speed,true,notifLed.loop);
      ring.clear();
      ring.show();
     break;
-
+    case 5: // colorWipe Full
+     colorWipeNEO(c,notifLed.speed);
+     ring.clear();
+     ring.show();
+    break;
+    case 6: //  color chase
+    chaseColorNEO(c,notifLed.speed,notifLed.loop);
+    ring.clear();
+    ring.show();
+    break;
 } //fin switch
 notifLed.fx=0;
 }
@@ -978,7 +1022,7 @@ void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_L
  if (NZO==zoneTime) L=xl*5;
  else L=5;
  maxLed=ZWP[NZO]*8;
- if (largeurMsg>floor(maxLed/L)) type=0;
+ if (largeurMsg>floor(maxLed/L) && configSys.ALN) type=0;
  // adapte la pause au millieme
  P=P*1000;
  //construction notif
@@ -1068,8 +1112,9 @@ void displayTimer(char *psz,bool f) {
       // fin minuteur
        if (minuteur==0) {
         CR=false;
-        notifLed=flash;
-        displayNotif("Fin Minuteur !");
+        //notifLed=flash;
+        notifLed=FX_led[configSys.fxCR];
+        displayNotif(configSys.msgMinuteur);
        }
 }
 
@@ -1269,9 +1314,9 @@ bool validString(String val,int s ,int e) {
 }
 
 // pour Decoupage chaine
-void optionsSplit(byte *Opt,String Val,char split) {
+void optionsSplit(byte *Opt,String Val,char split,int t=0) {
   Serial.println("valeur de function split :  "+Val);
-  int  r=0 , t=0;
+  int  r=0;
 
    for (int i=0; i < Val.length(); i++)
    {
@@ -1289,7 +1334,7 @@ void handleConfig() {
   String key,info,value;
   int maxMsg;
   bool reboot=false;
-  mem=0;
+  int mem=0;
   for (int i = 0; i < server.args(); i++) {
         key=server.argName(i);
         key.toLowerCase();
@@ -1302,15 +1347,35 @@ void handleConfig() {
           mem=2;
         }
         if (key=="perso") if (optionsBool(&hardConfig.perso,server.arg(i))) mem=2;
+        if (key=="charoff") {configSys.charOff=server.arg(i).toInt(); mem=1;}
         if (key=="setup") if (optionsBool(&hardConfig.setup,server.arg(i))) mem=2;
         if (key=="zp") {optionsSplit(hardConfig.ZP,server.arg(i),',');mem=2;}
         if (key=="speed") {optionsNum(&configSys.scrollSpeed,server.arg(i),10,100);mem=1;}
         if (key=="pause") {optionsNum(&configSys.pauseTime,server.arg(i),0,180);mem=1;}
         if (key=="debug") if (optionsBool(&configSys.DEBUG,server.arg(i))) mem=1;
-        if (key=="automsg") if (optionsBool(&configSys.autoLargeurNotif,server.arg(i))) mem=1;
+        if (key=="automsg") if (optionsBool(&configSys.ALN,server.arg(i))) mem=1;
         if (key=="btn1") if (optionsBool(&configSys.btn1,server.arg(i))) mem=1;
+        if (key=="clicbtn1") {optionsSplit(configSys.btnclic[1],server.arg(i),',',1);mem=1;}
         if (key=="btn2") if (optionsBool(&configSys.btn2,server.arg(i))) mem=1;
-        if (key=="dst") if (optionsBool(&configSys.DST,server.arg(i))) mem=1;
+        if (key=="clicbtn2") {optionsSplit(configSys.btnclic[2],server.arg(i),',',1);mem=1;}
+        if (key=="typeled") {optionsNum(&configSys.typeLED,server.arg(i),0,3);mem=1;}
+        if (key=="intled") {optionsNum(&configSys.fxint,server.arg(i),0,100);mem=1;}
+        if (key=="color") {optionsNum(&configSys.fxcolor,server.arg(i),0,7);mem=1;}
+        if (key=="fxcr") {optionsNum(&configSys.fxCR,server.arg(i),0,5);mem=1;}
+        if (key=="typeaudio") {optionsNum(&configSys.typeAudio,server.arg(i),0,4);mem=1;}
+        if (key=="tzname") { value=server.arg(i);;
+          value.toCharArray(hardConfig.TZname,sizeof(hardConfig.TZname));
+          mem=2;
+        }
+        if (key=="tzoffset") { optionsNum(&hardConfig.Offset,server.arg(i),-780,+840);mem=2;}
+        if (key=="ntpserver") {
+            if (validString(server.arg(i),4,50)) {
+                    value=server.arg(i);
+                    value.toCharArray(configSys.NTPSERVER,sizeof(configSys.NTPSERVER));
+                    mem=1;
+            }
+          }
+    //    if (key=="dstvalue") { optionsNum(&hardConfig.DSTvalue,server.arg(i),0,180);mem=2;}
         if (key=="hostname") {
                 if (validString(server.arg(i),2,15)) {
                           value=server.arg(i);
@@ -1324,14 +1389,22 @@ void handleConfig() {
                 if (validString(server.arg(i),4,20)) {
                             value=server.arg(i);
                             value.toLowerCase();
-                            value.toCharArray(configSys.nom,sizeof(configSys.nom));
+                            value.toCharArray(hardConfig.nom,sizeof(hardConfig.nom));
                             //toLowerCase();
-                            mem=1;
+                            mem=2;
                             }
-                        } // fin hostname
-        if (key=="checktime" && server.arg(i)=="true") checkTime();rep="mise a jour horloge";
+                        } // fin name
+        if (key=="crtext") {
+                if (validString(server.arg(i),1,30)) {
+                                            value=server.arg(i);
+                                            value.toCharArray(configSys.msgMinuteur,sizeof(configSys.msgMinuteur));
+                                            mem=1;
+                                            }
+                                        } // fin CR
+      if (key=="crtime") {optionsNum(&configSys.CrTime,server.arg(i),1,120);mem=1;}
+        if (key=="checktime") checkTime();rep="mise a jour horloge";
         if (key=="wifireset" && server.arg(i)=="true") wifiReset();
-        if (key=="reboot" && server.arg(i)=="true") rep="reboot en cours";reboot=true;
+        if (key=="reboot" && server.arg(i)=="true") {rep="reboot en cours";reboot=true;}
         if (key=="matrixreset" && server.arg(i)=="true") {readEConfig(true);rep="Reset config Matrices";reboot=true;}
 
 if (configSys.DEBUG) {
@@ -1347,7 +1420,7 @@ bool verif=true;
     case 1 : {
         rep=createJson(configSys);
         saveConfigSys(fileconfig,rep);
-        rep="OK - Modification config systéme";
+        rep="OK - Modification config systéme sauvegardé";
         break;
       }
     case 2 :{
@@ -1358,7 +1431,7 @@ bool verif=true;
         EEPROM.put(eeAddress,hardConfig);
         EEPROM.commit();
         EEPROM.end();
-        rep="OK - > Modification config matrix -- Systeme reboot - Mode perso : "+String(hardConfig.perso);
+        rep="OK - > Modification systéme -- Le Notifheure reboot -"+String(hardConfig.Offset);
         reboot=true;
       } else  {
         reboot=false;
@@ -1368,7 +1441,7 @@ bool verif=true;
         }
   }
 
-     server.send(200, "text/plane",rep);
+     server.send(200, "text/plane",rep+" valeur de Reboot :"+String(reboot));
      delay(2000);
      if (reboot) ESP.restart();
 }
@@ -1736,10 +1809,10 @@ if (configSys.typeLED==1)  {
 }
 else if (configSys.typeLED==3)  {
 notifLed.fx=notifLed.fx+2;
-notifLed.color=Blue;
+
 }
 else notifLed.fx=0;
-fxLED();
+fxLED(Blue);
 }
 
 void alarme() {
@@ -1836,7 +1909,7 @@ Serial.println("info maxOpenFiles : "+String(fsInfo.maxOpenFiles));
 Serial.println("info maxPathLength : "+String(fsInfo.maxPathLength));
 }
  // creation hostname wifi// Set Hostname.
-   hostname = configSys.nom;
+   hostname = hardConfig.nom;
    hostname +=configSys.hostName;
    mdnsName = hostname;
    hostname +="-"+String(ESP.getChipId(), HEX);
@@ -1879,21 +1952,21 @@ webSocket.onEvent(webSocketEvent);
    timeClient.begin();
    bool s=true;
    String MsgInfo;
-   int Offset;
-   Offset=(configSys.timeZone+(configSys.DST?1:0))*3600;
-while(!timeClient.update()) {
+   byte cpttime=0;
+while(!timeClient.update() || cpttime>60) {
 
    timeClient.forceUpdate();
    MsgInfo=(s ? "Time ..." : "Time .. ");
    infoSetup(2,MsgInfo);
    s=!s;
+   cpttime++;
  }
- timeClient.setTimeOffset(Offset);
+ timeClient.setTimeOffset(hardConfig.Offset*60);
  setTime(timeClient.getEpochTime());
  _startTime=now();
  _lastSynchro=timeClient.getEpochTime();
 
-if (configSys.DEBUG) Serial.println("time ok :"+String(now())+" offset :"+String(Offset));
+if (configSys.DEBUG) Serial.println("time ok :"+String(now())+" offset :"+String(hardConfig.Offset)+" minutes");
 
 infoSetup(2,"Ok ...");
  // init options

@@ -10,30 +10,29 @@
       <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/materia/bootstrap.min.css">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.3.2/rangeslider.min.css">
       <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
-      <link href="styles/timezone-picker.css" rel="stylesheet">
       <link rel="stylesheet" href="notifheure.css">
   </head>
   <body>
     <div class="jumbotron text-center">
       <div class="container col-lg-8">
-      <h1 class="display-4">Configuration NotifHeure</h1>
+      <h1 class="display-4">NotifHeure<span class="text-danger font-weight-bold">XL</span></h1>
       <h4 class="display-4"><span id="nom" class="text-info"></span></h4>
-      <p class="lead">Permet d'editer le fichier de configuration pour le module Notif'Heure </p>
+      <p class="lead">Permet d'editer le fichier de configuration pour le module NotifHeureXL </p>
       <hr class="my-4">
     <p>
       IP : <span id="IP" class="text-primary"></span> </p>
  <p>A modifier avec prudence !! Votre Module , peut ne plus fonctionner , si vous vous trompez</p>
 
-    <button type="button" class="btn btn-outline-primary" onclick="getconfig();">Exporter Config</button>
-    <button type="button" class="btn btn-outline-warning" onclick="window.location='/Upload'">Importer Config</button>
-    <button type="button" class="btn btn-outline-danger" onclick="Reboot();">Reboot</button>
+    <button type="button" class="btn btn-outline-primary disabled" onclick="getconfig();">Exporter Config</button>
+    <button type="button" class="btn btn-outline-warning disabled" onclick="window.location='/Upload'">Importer Config</button>
+    <button type="button" class="btn btn-outline-danger disabled" onclick="Reboot();">Reboot</button>
  <p></p>
     <button type="button" class="btn btn-secondary btn-sm" onclick="window.location='/'">Retour page Accueil</button>
   </div>
 </div>
 <div class="alert alert-primary  text-center" id="BoxInit">
   <h4 class="alert-heading">Veuillez attendre ..</h4>
-  <p class="mb-0">La fin du téléchargement de la page .... </p>
+  <p class="mb-0">Chargement info NotifHeure en cours .... </p>
 </div>
 <div class="alert alert-warning d-none text-center" id="BoxAlert">
   <h4 class="alert-heading">Attention!</h4>
@@ -45,43 +44,10 @@
      <form id="Config">
     <div class="row">
     <div class="col">
-    <h4>
-  Parametrage Systéme
-  <small class="text-muted">Nom , Multizone et options systéme</small>
-</h4>
 
-   <small id="nomlHelp" class="form-text text-muted">Personaliser nom notif'heure</small>
-    <div class="input-group">
-      <div class="input-group-prepend">
-    <div class="input-group-text text-info">Suffixe Hostname : </div>
-  </div>
-   <input type="text" class="form-control" id="inputhost" aria-describedby="hostHelp" placeholder="Notif">
-   </div>
-   <small id="hostHelp" class="form-text text-muted">Personaliser suffixe hostname</small>
-</br>
-
-
-        </br>
-
-<div class="form-group">
-    <div class="custom-control custom-checkbox">
-      <input type="checkbox" class="custom-control-input" id="impbtn"  aria-describedby="impgHelp">
-      <label class="custom-control-label text-info" for="impbtn">Historiser uniquement les messages important</label>
-    </div>
-  <small id="impHelp" class="form-text text-muted">Permet de gerder dans l'historique , uniquement les messages indiqués comme important</small>
-</div>
-
-<div class="form-group">
-    <div class="custom-control custom-checkbox">
-      <input type="checkbox" class="custom-control-input" id="DEBUG"  aria-describedby="debugHelp">
-      <label class="custom-control-label text-info" for="DEBUG">DEBUG</label>
-    </div>
-  <small id="debugHelp" class="form-text text-muted">Activer les infos de Debug sur le module ( à valider si module brancher sur port USB ) - Sinon ne pas Activer</small>
-</div>
-<h4>
-  Parametrage Matériel
+  <h2><span class="badge badge-secondary">Paramétrage Options Matériels :</span></h2>
   <small class="text-muted">Valider les options matériels disponible</small>
-</h4>
+
 <div class="form-group">
     <div class="custom-control custom-checkbox">
       <input type="checkbox" class="custom-control-input" id="bouton1"  aria-describedby="bout1Help">
@@ -89,7 +55,7 @@
     </div>
   <small id="bout1Help" class="form-text text-muted">Activer si presence bouton 1 (Qui permet affichage secondes , horloge , auto/manu ...)</small>
 </div>
-<div class="card border-success mx-auto mb-3 " style="max-width: 40rem;" id="btn1">
+<div class="card border-success mx-auto mb-3 d-none" style="max-width: 40rem;" id="btn1">
     <div class="card-header text-center bg-success text-white">Actions pour Bouton 1</div>
     <div class="card-body">
   <div class="form-group">
@@ -117,7 +83,7 @@
     </div>
   <small id="bout2Help" class="form-text text-muted">Activer si presence bouton 2 (Qui permet interaction avec jeedom ...)</small>
 </div>
-<div class="card border-danger mx-auto mb-3 " style="max-width: 40rem;" id="btn2">
+<div class="card border-danger mx-auto mb-3 d-none" style="max-width: 40rem;" id="btn2">
     <div class="card-header text-center bg-danger text-white">Actions pour Bouton 2</div>
     <div class="card-body">
   <div class="form-group">
@@ -137,57 +103,62 @@
   </div>
     </div>
 </div>
+<div class="form-group">
+      <label for="selectNotifLum" class="text-info">Type Notification Visuelle :</label>
+      <select class="form-control" id="selectNotifLum" aria-describedby="notifLumHelp">
+        <option value=0>Aucune</option>
+        <option value=1>LED</option>
+        <option value=2>Relais</option>
+        <option value=3>Neopixel Ring / Strip</option>
+      </select>
+      <small id="notifLumHelp" class="form-text text-muted">Selectionner le type de notification visuel installé.</small>
+    </div>
+    <div class="card border-primary mx-auto mb-3 d-none" style="max-width: 40rem;" id="led3">
+        <div class="card-header text-center bg-primary text-white">Parametre pour : <sapn id="infovisuel"></span></div>
+        <div class="card-body">
+          <p class="d-none" id="groupled0">Pas de parametres pour cette option</p>
+          <div class="mx-auto d-none" id="groupLED1">
+              <label for="intled" class="text-info">Inetnsité par défaut</label>
+                <input  type="range" id="intled" name="puissance" min="0" max="100" value="100" oninput="valIntLed.value = puissance.valueAsNumber">
+                <output class="text-primary" for="intled"  name="valIntLed"></output>
+    <small id="intledHelp" class="form-text text-muted">Valeur par défaut de l'intensité lumineuse de la notification visuelle</small>
+           </div>
 
-
-    </br>
-
-<h4>
-  Parametrage Horloge
-  <small class="text-muted">TimeZone ( UTC ) et gestion heure été</small>
-</h4>
+        <br />
+      <div id="groupLED3" class="d-none">
+      <div class="form-group">
+        <label for="led3_color" class="text-info">Couleur par défaut</label>
+        <select class="custom-select" id="selectled3_color">
+        </select>
+      </div>
+      <br />
+      <div class="form-group">
+      <label for="led3_fx" class="text-info">Effet par défaut ( minuteur )</label>
+      <select class="custom-select" id="selectled3_fx">
+      </select>
+      </div>
+    </div>
+  </div>
+    </div>
         </div>
 </div> <!-- fin row -->
-<div class="row">
-  <div class="col-12">
-
-  <p class="m-2 text-info">TimeZone</p>
-  <div id="map"></div>
-</div></div>
 
 <div class="row">
 
     <div class=" col-md-6">
-<div class="form-group mx-5">
-<div id="slidertimezone"></div>
-  </div>
-
-   <p class="m-2 text-primary" id="stamp"></p>
-    </div>
-    <div class=" col-md-6">
-<div class="form-group  mx-2">
-    <div class="custom-control custom-checkbox">
-      <input type="checkbox" class="custom-control-input" id="dst"  aria-describedby="dstHelp" checked="">
-      <label class="custom-control-label text-info" for="dst">Heure été / Hiver</label>
-    </div>
-  <small id="dstHelp" class="form-text text-muted">Activer ou désactiver le changement automatique a l'heure d'été et l'heure d'hiver</small>
-</div>
+      <h2><span class="badge badge-secondary">Paramétres  Notification</span></h2>
+      <small class="text-muted">Ces parametrtes demandent de redemarrer pour etres pris en compte</small>
     </div>
 </div> <!-- fin row -->
 <div class="row">
     <div class="col-md-12">
-   <div class="input-group">
-     <div class="input-group-prepend">
-   <div class="input-group-text text-info">Serveur NTP : </div>
- </div>
-<input type="text" class="form-control" id="inputNTP" aria-describedby="NTPlHelp" placeholder="pool.ntp.org">
-</div>
-<small id="NTPlHelp" class="form-text text-muted">Adresse serveur NTP non de domaine ou ip</small>
+
 <br>
-<h4>
-  Parametrage Minuteur
+
+  <h2><span class="badge badge-secondary">Paramétres Minuteur</span></h2>
   <small class="text-muted">Options pour le minuteur</small>
-</h4>
-<div class="card border-light mb-3">
+
+<div class="card border-light mb-3 d-none">
   <div class="card-header">Actions déclenchement fin de Minuteur</div>
   <div class="card-body">
     <h4 class="card-title"></h4>
@@ -203,13 +174,7 @@
       <option value=10>Action 6</option>
       </select>
     </div>
-    <div class="form-group">
-        <div class="custom-control custom-checkbox">
-          <input type="checkbox" class="custom-control-input" id="CRLED"  aria-describedby="crLedHelp">
-          <label class="custom-control-label text-info" for="CRLED">LED</label>
-        </div>
-      <small id="crLedHelp" class="form-text text-muted">Allume la Led en fin de Minuteur  ( Valider présence LED )</small>
-    </div>
+
 </div>
 </div>
 <div class="input-group">
@@ -227,38 +192,25 @@
 </div>
 <small id="crTimeHelp" class="form-text text-muted">Temps par défaut ( en minutes ) pour le minuteur . Ce temps sera celui lançé par le bouton si option Start Minuteur est sélectionné.</small>
 <br>
-<h4>
-  Parametrage Alarme
+<h2><span class="badge badge-secondary">Paramétres Alarme / Reveil</span></h2>
   <small class="text-muted">Options pour l'alarme</small>
-</h4>
-   <h4>
-  Tempo Affichage Notification
-  <small class="text-muted">vitesse défilement et pause</small>
-</h4>
-    </div>
+
+</div>
 </div> <!-- fin row -->
 <div class="row">
     <div class="col-md-6">
-    <div class="form-group  mx-2">
 
-    <div id="sliderspeedtime"></div>
-    <p class="m-1">Speed Time</p>
-    </div>
     </div>
     <div class=" col-md-6">
-        <div class="form-group mx-2">
 
-    <div id="sliderpause"></div>
-            <p class="m-2">Pause Time</p>
   </div>
-    </div>
+
 </div> <!-- fin row -->
 <div class="row">
     <div class=" col-md-12">
-      <h4>
-      Parametrage des requetes HTTP
-      <small class="text-muted">Activer les actions vers requete http( exemple enoie d'une requete vers une box domotique comm JEEDOM )</small>
-      </h4>
+    <h2><span class="badge badge-secondary">Paramétres Domotique</span></h2>
+      <small class="text-muted">Activer les actions vers requete http( exemple enoie d'une requete vers une box domotique comme JEEDOM ou NextDom )</small>
+
 
       <div class="card border-primary mx-auto mb-3 d-none" id="box">
       <div class="card-header text-center bg-primary text-white">Actions URL</div>
@@ -316,10 +268,35 @@
        </div>
       </div>
 
-    <h4>
-  Parametrage Affichage Notification
-  <small class="text-muted">Modifier que si vous avez besoin</small>
-</h4>
+
+<h2><span class="badge badge-secondary">Paramétres systeme </span></h2>
+<small class="text-muted">Ces parametrtes demandent de redemarrer pour etres pris en compte</small>
+
+<div class="input-group">
+<div class="input-group-prepend">
+<div class="input-group-text text-info">Suffixe Hostname : </div>
+</div>
+<input type="text" class="form-control" id="inputhost" aria-describedby="hostHelp" placeholder="Notif">
+</div>
+<small id="hostHelp" class="form-text text-muted">Personaliser suffixe hostname</small>
+</br>
+  </br>
+
+<div class="form-group">
+<div class="custom-control custom-checkbox">
+<input type="checkbox" class="custom-control-input" id="impbtn"  aria-describedby="impgHelp">
+<label class="custom-control-label text-info" for="impbtn">Historiser uniquement les messages important</label>
+</div>
+<small id="impHelp" class="form-text text-muted">Permet de gerder dans l'historique , uniquement les messages indiqués comme important</small>
+</div>
+
+<div class="form-group">
+<div class="custom-control custom-checkbox">
+<input type="checkbox" class="custom-control-input" id="DEBUG"  aria-describedby="debugHelp">
+<label class="custom-control-label text-info" for="DEBUG">DEBUG</label>
+</div>
+<small id="debugHelp" class="form-text text-muted">Activer les infos de Debug sur le module ( à valider si module brancher sur port USB ) - Sinon ne pas Activer</small>
+</div>
 <div class="form-group">
     <div class="custom-control custom-checkbox">
       <input type="checkbox" class="custom-control-input" id="AutoMsg"  aria-describedby="amsgHelp">
@@ -327,45 +304,28 @@
     </div>
   <small id="amsgHelp" class="form-text text-muted">Le message basculera en mode scrolling , si celui ci depasse la capacité d'affichage de la Zone Message.</small>
 </div>
-<div class="input-group">
-  <div class="input-group-prepend">
+<div class="input-group col-5">
+  <div class="input-group-prepend ">
 <div class="input-group-text text-info">Caractére par défaut : </div>
 </div>
-<input type="text" class="form-control" id="DispOff" aria-describedby="carHelp" size="2" maxlength="1">
+<input type="text" class="form-control" id="DispOff" aria-describedby="carHelp" size="2" maxlength="1" placeholder="espace">
 </div>
-<small id="carHelp" class="form-text text-muted">Caractére  par défaut sur l'ecran Off . Valeur par défaut : vide.</small>
+<small id="carHelp" class="form-text text-muted ">Sélection du Caractére  par défaut sur l'ecran Off . Valeur par défaut : vide.</small>
 <br>
-
+<div class="input-group">
+  <div class="input-group-prepend">
+<div class="input-group-text text-info">Serveur NTP : </div>
+</div>
+<input type="text" class="form-control" id="inputNTP" aria-describedby="NTPlHelp" placeholder="pool.ntp.org">
+</div>
+<small id="NTPlHelp" class="form-text text-muted">Adresse serveur NTP non de domaine ou ip</small>
 
 
 
     </div>
 </div> <!-- fin row -->
 <div class="row">
-    <div class="col-md-4">
 
-    <div class="form-group">
-
-    <div id="sliderlux"></div>
-        <p class="m-2">Photocell Timer ( Secondes )</p>
-  </div>
-    </div>
-    <div class="col-md-4">
-
-      <div class="form-group ">
-
-        <div id="sliderdht"></div>
-           <p class="m-2">DHT Timer ( Minutes )</p>
-  </div>
-    </div>
-    <div class="col-md-4">
-
-         <div class="form-group ">
-
-        <div id="sliderdebug"></div>
-               <p class="m-2">Debug Timer ( Secondes )</p>
-  </div>
-    </div>
     </div> <!-- fin row -->
     <div class="row">
         <div class="col-md-12 text-center my-4">
@@ -380,27 +340,11 @@
     <hr class="my-2">
     <h3>Fichier historique</h3>
     <p>Permet de supprimer ou exporter le fichier historique , en cas d'erreur de lecture sur le fichier.Dans le cas ou le fichier serait corrompus. Tant que le notif'heure ne redemarre pas l'historique reste en mémoire.</p>
-    <button type="button" class="btn btn-outline-warning" onclick="window.location='/config/histnotif.json';">Voir fichier Historique</button>
-    <button type="button" class="btn btn-outline-danger" onclick="Purge();">Effacer fichier Historique</button>
+    <button type="button" class="btn btn-outline-warning disabled" onclick="window.location='/config/histnotif.json';">Voir fichier Historique</button>
+    <button type="button" class="btn btn-outline-danger disabled" onclick="Purge();">Effacer fichier Historique</button>
     </div>
 </div>
- <div class="row">
-        <div class="col-md-12 text-center">
-         <hr class="my-4">
-        <div class="alert alert-dark" role="alert" id="raz">
-            <h2>Remise à Zero</h2>
-              <hr class="my-4">
-            <p>Cette action remet à zero le Notif'Heure ...</p>
-            <ul class="text-left">
-            <li>Remise à zero des identifiants wifi</li>
-            <li>Valeur configuration par défaut</li>
-            </ul>
-            <button type="button" class="btn btn-danger" onclick="Reset();">Remise à Zero</button>
-</div>
 
-
-     </div>
-    </div>
 </div>
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"   integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="   crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
@@ -408,7 +352,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.3.2/rangeslider.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.20.1/moment-with-locales.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.14/moment-timezone-with-data-2012-2022.min.js"></script>
-<script src="timezone-picker.min.js"></script>
+<script src="notify.min.js" type="text/javascript"></script>
 <script type="text/javascript" src="config.js"></script>
 
 
