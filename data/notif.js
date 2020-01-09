@@ -62,6 +62,9 @@ var output = element.parentNode.getElementsByTagName('output')[0] || element.par
 output['innerText'] = value;
 }
 
+var DEBUG=true;
+
+
 function getInfo() {
 $.ajax({
      url: "/getInfo",
@@ -111,7 +114,7 @@ $.ajax({
          $('#SEC').prop('checked',jinfo.SEC);
          $('#HOR').prop('checked',jinfo.HOR);
          $('#LED').prop('checked',jinfo.LED);
-         //checkLed();
+         $('#tzname').text(jinfo.TZNAME);
          $('#hostname').text(jinfo.HOSTNAME);
          $('#mdns').text(jinfo.MDNS);
          $('#uptime').text(up(jinfo.UPTIME));
@@ -156,8 +159,14 @@ $.ajax({
         }
           if (XL) $('#XL').text('Activé');
           else $('#XL').text('Désactivé');
-          if(jinfo.DEBUG) $('#debug').text("Actif");
-                 else $('#debug').text("inactif");
+          if(jinfo.DEBUG) {
+            $('#debug').text("Actif");
+            DEBUG=true;
+          }
+                 else {
+                   DEBUG=false;
+                   $('#debug').text("inactif");
+                 }
           if(jinfo.PHOTOCELL) $('#photocell').text("Présent");
                   else $('#photocell').text("Absent");
           if(jinfo.DHT) { $('#dht').text("Présent");
@@ -201,6 +210,26 @@ $.ajax({
  }); //fin ajax
 }
 
+function getHisto() {
+  $.getJSON( "/getInfo?HISTO", function( json ,status) {
+    console.log(json);
+    var n=1
+    $("#badgehist").text(json.index);
+    $.each(json.notif,function( key, val ) {
+      $('#histoList').append( "<tr>"
+        +"<td style='width:5%;'>"+n+"</td>"
+        +"<td>"+unixToDate(json.date[key])+"</td>"
+        +"<td style='width:60%;'>"+val+"</td>"
+        +"<td>"+String.fromCharCode(json.flag[key])+"</td>"
+
+      +"</tr>" );
+      n++;
+  });
+});
+}
+
+
+
 
 function update_Info() {
 $.ajax({
@@ -219,42 +248,31 @@ $.ajax({
 }
 
 function mdns_Info(IP,n) {
-  $.getJSON( "http://192.168.8.129/getInfo", function( data ) {
-    var items = [];
-    $.each( data, function( key, val ) {
-      items.push( "<li id='" + key + "'>" + val + "</li>" );
-    });
-
-    $( "<ul/>", {
-      "class": "my-new-list",
-      html: items.join( "" )
-    }).appendTo( "body" );
-  });
-  /*
-$.ajax({
-     url: "http://"+IP+"/getInfo",
-     xhrFields: {
-        withCredentials: true
-    },
-     type: "GET",
-     dataType:"html",
-     success: function(data) {
-       if (IsJsonString(data)){
-         var jinfo = JSON.parse(data);
-         if (jinfo.HARDWARE=="Notifheure XL") XL=jinfo.HARDAWRE;
-         else XL="Notifheure";
-         $('#mdnslist').append( "<tr>"
-           +"<td >"+n+"</th>"
-           +"<td>"+jinfo.NOM+"</th>"
-           +"<td>"+IP+"</td>"
-           +"<td>"+XL+" : "+jinfo.VERSION+"</td>"
-           +"<td>"+jinfo.UPTIME+"</td>"
-           +"<td>"+jinfo.RSSI+"</td>"
-         +"</tr>" );
-       }
+  console.log("recherche info pour ip : "+IP);
+  $.getJSON( "http://"+IP+"/getInfo", function( data ) {
+    console.log(data);
+    if(data.hasOwnProperty('Options')){
+      nom=data.system.lieu;
+      version=data.system.version;
+      uptime=data.system.uptime;
+      signal=data.system.RSSI+" dBm";
+          }
+      else {
+        nom=data.NOM;
+        version=data.VERSION;
+        uptime=up(data.UPTIME);
+        signal=data.RSSI;
       }
+        $('#mdnslist').append( "<tr>"
+          +"<td >"+n+"</td>"
+          +"<td>"+nom+"</td>"
+          +"<td>"+IP+"</td>"
+          +"<td>"+version+"</td>"
+          +"<td>"+uptime+"</td>"
+          +"<td>"+signal+"</td>"
+        +"</tr>" );
   });
-  */
+
 }
 
 
@@ -267,15 +285,17 @@ function getMdns() {
        type: "GET",
        dataType:"html",
        success: function(data) {
+         console.log("rep " + data);
          var reponse = data.split(":");
                    if (reponse[1]=="0") $('#inforafraichir').text(" ... Aucun notifheure trouvé.");
                    else {
                        listnotif=reponse[1].split(",");
                        var n=listnotif.length;
-
+                       n=n-1;
+                       console.log("il y a "+n+" notifheure");
                        for (i=0;i<n;i++) {
                           $('#inforafraichir').text(" ... Récupération ip notifheure "+listnotif[i]+"...");
-                          mdns_Info(listnotif[i],i);
+                          if (listnotif[i].length != 0 ) { mdns_Info(listnotif[i],i+1);}
                        }
                         $('#inforafraichir').text("");
                       }
@@ -490,6 +510,7 @@ $('#notifAudio').change(function() {
 
 $( document ).ready(function() {
 getInfo();
+getHisto();
 $('#LUM').on('change',Options);
 $('#SEC').on('change',Options);
 $('#HOR').on('change',Options);

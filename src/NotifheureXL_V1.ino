@@ -15,7 +15,7 @@
 //  n/2 ... 3  2  1  0    <- Matrice basse
 // ***************************************
 #include <ArduinoJson.h>  // compatibilité Atom
-const String ver = "0.7.4";
+const String ver = "0.8.0";
 const String hardware = "Notifheure XL";
 // Bibliotheque à inclure
 //***** Gestion reseau
@@ -232,7 +232,8 @@ struct sConfigSys {
 };
 sConfigSys configSys;
 
-const size_t capacityConfig = JSON_ARRAY_SIZE(8) + JSON_OBJECT_SIZE(60) + 800;
+const size_t capacityConfig = JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(6) + JSON_ARRAY_SIZE(8) + JSON_OBJECT_SIZE(80) + 1000;
+const size_t capacityHisto =3*JSON_ARRAY_SIZE(10)  + JSON_OBJECT_SIZE(4) + 500;
 const char *fileconfig = "/config/config.json";  // fichier config
 const char *fileHist = "/config/Historique.json";  // fichier config
 
@@ -339,6 +340,7 @@ struct sHistNotif {
   char flag;
 };
 sHistNotif histNotif[MAX_HIST];
+
 
 byte indexHist = 0;
 
@@ -564,7 +566,89 @@ Serial.println("offset TZ ="+String(hardConfig.Offset));
 EEPROM.end();
 }
 
+//lecture fichier Historique
+String loadHisto(const char *fileHist, sHistNotif *histo ) {
+String info;
+info="H:ok";
+  File file = SPIFFS.open(fileHist, "r");
+   if (!file) {
+     info="H:err";
+   }
+   DynamicJsonDocument docHisto(capacityHisto);
+   DeserializationError err = deserializeJson(docHisto, file);
+   if (err) {
+      info="H:new";
+     }
+// lecture fichier historique - si n'existe pas valeur par default
 
+   JsonArray notif = docHisto["notif"];
+   JsonArray stamp = docHisto["date"];
+   JsonArray flag = docHisto["flag"];
+   int index = notif.size();
+
+   for (int i=0;i<index;i++) {
+   strlcpy(histo[i].Notif,notif[i] ,sizeof(histo[i].Notif) );
+   histo[i].date=stamp[i];
+   histo[i].flag=flag[i];
+  }
+   indexHist=index;
+return info;
+}
+
+
+String createHisto ( sHistNotif *histo ) {
+  String json;
+  DynamicJsonDocument docHisto(capacityHisto);
+  docHisto["index"]=indexHist;
+  JsonArray docNotif = docHisto.createNestedArray("notif");
+  JsonArray docDate = docHisto.createNestedArray("date");
+  JsonArray docFlag = docHisto.createNestedArray("flag");
+  for (int i=0;i<indexHist;i++) {
+  docNotif.add(histo[i].Notif);
+
+  docDate.add(histo[i].date);
+
+  docFlag.add(histo[i].flag);
+}
+  // envoie config json
+  serializeJsonPretty(docHisto,json);
+  return json;
+}
+void saveHisto(const char *fileHist,String json) {
+  File  f = SPIFFS.open(fileHist, "w");
+  if (!f) {
+    //InfoDebugtInit=InfoDebugtInit+" Fichier config Jeedom absent -";
+    if (configSys.DEBUG) Serial.println("Fichier historique absent - création fichier");
+   }
+   f.print(json);  // sauvegarde de la chaine
+   f.close();
+}
+
+// gestion Historique
+void addHisto(String msg,int NZO,char flag) {
+  if (indexHist>0) {
+    //decalege tableau si plus dun enregistrement
+    for (int i=indexHist;i>0;i--)
+    {
+      memcpy( histNotif[i].Notif,histNotif[i-1].Notif, sizeof(histNotif[i].Notif) );
+      histNotif[i].date=histNotif[i-1].date;
+      histNotif[i].flag=histNotif[i-1].flag;
+    }
+  }
+  //ajout enregistrement sur index en cours
+  msg.toCharArray( histNotif[0].Notif,BUF_SIZE);
+  histNotif[0].date=now();
+  histNotif[0].flag=flag;
+  // test index
+  if (indexHist > MAX_HIST-1) {
+    indexHist=MAX_HIST-1;
+  } else indexHist++;
+}
+
+//lecture historique
+void displayHisto(int index) {
+
+}
 // JSON
 // load config JSON Suystem
 void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
@@ -1004,7 +1088,7 @@ void fxLED(byte c=configSys.fxcolor) {
 notifLed.fx=0;
 }
 
-void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_LEFT, uint16_t S=configSys.scrollSpeed ,uint16_t P=configSys.pauseTime , byte fi=1,byte fo=1) {
+void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_LEFT, uint16_t S=configSys.scrollSpeed ,uint16_t P=configSys.pauseTime , byte fi=1,byte fo=1,char flag='A') {
   if (configSys.DEBUG) {
       Serial.println("**********************");
       Serial.println("valeur Notification : ");
@@ -1014,6 +1098,7 @@ void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_L
       Serial.println("Effet fxIn : "+String(fi)+"  fxOut : "+String(fo));
       Serial.println("**********************");
     }
+  char tabflag[10]={'A','F','F','P','x','x','x','x','x','S'};
  // Verification Zones
  if (NZO >_maxZones-1 || _maxZones==xl) NZO=zoneMsg;
  // calcul largeur notif
@@ -1035,6 +1120,12 @@ void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_L
   Notification[NZO].pause=P;
   Notification[NZO].fxIn=fi;
   Notification[NZO].fxOut=fo;
+//historique
+if (flag!='I') {
+  if (type!=0) flag=tabflag[type];
+}
+addHisto(Msg,NZO,flag);
+
   //if (configSys.typeLED>0 && notifLED>0) fxLED(1,notifLED);
   if (configSys.typeLED>0 && notifLed.fx>0 ) fxLED();
   if (configSys.typeAudio>0 && notifAudio.fx>0 ) audio();
@@ -1077,6 +1168,8 @@ void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_L
     Notification[NZO].fxOut=4;
     break;
   }
+
+
 
 }
 
@@ -1261,7 +1354,7 @@ void serverMDNS( String mdnsName) {
   MDNS.addService("http", "tcp", 80);
   MDNS.addService("ws", "tcp", 81);
   MDNS.addService("notifheure", "tcp", 8800); // Announce notifeur service port 8888 TCP
-  MDNS.addServiceTxt("notifheure","tcp", "nom", configSys.hostName);
+  //MDNS.addServiceTxt("notifheure","tcp", "nom", configSys.hostName);
 }
 
 String queryMdns() {
@@ -1272,16 +1365,14 @@ String queryMdns() {
   //if (n==0) ReponseMdns+="0";
 for (int i = 0; i < n; ++i) {
     ReponseMdns+= MDNS.IP(i).toString();
-
-    if (n-1>i) ReponseMdns+=",";
+    ReponseMdns+=",";
 }
 int m = MDNS.queryService("notifeur", "tcp"); // Pour les anciennes versions
-if (n>0 && m>0 ) ReponseMdns+=",";
 for (int i = 0; i < m; ++i) {
   ReponseMdns+= MDNS.IP(i).toString();
 //  ReponseMdns+="_";
 //  ReponseMdns+= MDNS.hostname(i);
-  if (m-1>i) ReponseMdns+=",";
+ ReponseMdns+=",";
 }
 if (n==0 && m==0 ) ReponseMdns+="0";
 return ReponseMdns;
@@ -1402,10 +1493,11 @@ void handleConfig() {
                                             }
                                         } // fin CR
       if (key=="crtime") {optionsNum(&configSys.CrTime,server.arg(i),1,120);mem=1;}
-        if (key=="checktime") checkTime();rep="mise a jour horloge";
+        if (key=="checktime") {checkTime();rep="mise a jour horloge";}
         if (key=="wifireset" && server.arg(i)=="true") wifiReset();
         if (key=="reboot" && server.arg(i)=="true") {rep="reboot en cours";reboot=true;}
         if (key=="matrixreset" && server.arg(i)=="true") {readEConfig(true);rep="Reset config Matrices";reboot=true;}
+        if (key=="purge" && server.arg(i)=="true") {SPIFFS.remove(fileHist);delay(100);rep=loadHisto(fileHist,histNotif);}
 
 if (configSys.DEBUG) {
 info = "Arg n"+ String(i) + "–>";
@@ -1441,7 +1533,7 @@ bool verif=true;
         }
   }
 
-     server.send(200, "text/plane",rep+" valeur de Reboot :"+String(reboot));
+     server.send(200, "text/plane",rep);
      delay(2000);
      if (reboot) ESP.restart();
 }
@@ -1504,9 +1596,17 @@ void handleGetInfo() {
   String rep;
   if ( server.hasArg("MDNS")) {
       rep=queryMdns();
-    } else {
+    }
+else if ( server.hasArg("HISTO")) {
+
+  //   loadHisto(fileHist, histNotif,rep);
+     rep=createHisto(histNotif);
+     saveHisto(fileHist,rep);
+}
+  else {
   rep=createJson(configSys);
 }
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "application/json",rep);
 
 }
@@ -1520,6 +1620,7 @@ void handleNotif() {
   textPosition_t pos=PA_LEFT;
   int S=configSys.scrollSpeed ;
   int P=configSys.pauseTime;
+  char flag='N';
   notifLed.fx=0;
   notifLed.lum=configSys.LEDINT;
   notifLed.loop=1;
@@ -1555,6 +1656,7 @@ void handleNotif() {
     if (key=="PAUSE" ) { optionsNum(&P,server.arg(i),0,180);}
     if (key=="FI" ) { optionsNum(&fi,server.arg(i),0,28);}
     if (key=="FO" ) { optionsNum(&fo,server.arg(i),0,28);}
+    if (key=="IMPORTANT" ) { flag='I';}
   }
   /*if ( server.hasArg("msg")) {
          notif=server.arg("msg");
@@ -1562,7 +1664,7 @@ void handleNotif() {
            rep="ok";
          }
        }*/
-  if (rep=="ok") displayNotif(notif,NZO,type,pos,S,P,fi,fo);
+  if (rep=="ok") displayNotif(notif,NZO,type,pos,S,P,fi,fo,flag);
   server.send(200, "text/plane",rep);
 }
 
@@ -1967,14 +2069,18 @@ while(!timeClient.update() || cpttime>60) {
  _lastSynchro=timeClient.getEpochTime();
 
 if (configSys.DEBUG) Serial.println("time ok :"+String(now())+" offset :"+String(hardConfig.Offset)+" minutes");
+// historique
+String h=loadHisto(fileHist,histNotif );
 
-infoSetup(2,"Ok ...");
+
  // init options
  // Initialize temperature sensor
 // dht.setup(dhtPin, DHTType);
 //DHT_MODEL_t;
   int pin(dhtpin);
   dht.setup(pin,DHTTYPE);
+
+  infoSetup(2, h);
   delay(500);
   //ZONES
  // init variable  - Assignation zone
@@ -2045,6 +2151,7 @@ if (hardConfig.perso) {
  Serial.println("zone XL H "+String( zoneXL_H));
  Serial.println("zone msg "+String( zoneMsg));
 
+infoSetup(2,"Ok ...");
 // Selon modele des matrices - inversion de l'affichage ( true si Generic ou Parola )
 invertUpperZone = (HARDWARE_TYPE == MD_MAX72XX::GENERIC_HW || HARDWARE_TYPE == MD_MAX72XX::PAROLA_HW);
 

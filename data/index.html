@@ -3,6 +3,7 @@
   <head>
     <title>Notif'heure XL</title>
     <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
@@ -395,19 +396,19 @@
             <div class="card-body">
         <h5 class="card-title text-center" >
                 <button type="button" class="btn btn-primary btn-sm" onclick="getMdns();">Rafraichir</button></h5>
-        <table class="table table-hover">
+        <table class="table table-hover" >
         <thead>
         <tr>
-          <th scope="col">#</th>
+          <th scope="col" style="width:5%;">#</th>
           <th scope="col">Nom</th>
           <th scope="col">IP</th>
-          <th scope="col">Version</th>
+          <th scope="col" style="width:10%;">Version</th>
           <th scope="col">Uptime</th>
-          <th scope="col">Signal</th>
+          <th scope="col" style="width:15%;">Signal</th>
         </tr>
       </thead>
-        <tbody id="mdnslist">
-        </tbody>
+      <tbody id="mdnslist">
+      </tbody>
         </table>
             </div>
     </div>
@@ -416,7 +417,22 @@
           <div class="card-header">Historique Notification  <span class="badge badge-primary badge-pill" id="badgehist"></span><span id="imphist"></span></div>
             <div class="card-body">
         <h3 class="card-title"></h3>
-    <div id="histNotif"></div> </div>
+    <div >
+      <table class="table table-hover">
+      <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">date</th>
+        <th scope="col">Notification</th>
+        <th scope="col">Flag</th>
+      </tr>
+      </thead>
+      <tbody id="histoList">
+      </tbody>
+      </table>
+
+
+    </div> </div>
     </div>
 
 </div>
