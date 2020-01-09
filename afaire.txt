@@ -1,6 +1,0 @@
-Sauvegarde json systeme ok
-Autoluminosite ok
-historique notif
-minuteur
-boutons
-DFPlayer
