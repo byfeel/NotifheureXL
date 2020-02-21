@@ -3,6 +3,7 @@
 var init=1;
 var debug=false;
 var immp=false;
+var boutons=["Aucune","Afficher / Masquer les secondes","Afficher / Masquer l'horloge","Mode luminosite Mini / Maxi / Automatique","On / Off Veilleuse","Historique Message","Afficher / masquer Minuteur","lancer Minuteur","Action 1","Action 2"];
 var Actions = ['Aucune','Afficher / Masquer les Secondes', 'Activer / desactiver Horloge','Mode Manuel ( Mini ) - Manuel ( Maxi ) - Automatique','On / Off LED','Action 1','Action 2','Action 3','Action 4','Action 5','Action 6','Afficher Historique message'];
 var couleurs=["Blanc","Rouge","Bleue","Vert","Jaune","Orange","Violet","Rose"];
 var jours = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
@@ -12,7 +13,11 @@ var typeLed= ["Absent","LED Interne","Commande Relais","Neopixel Ring","Sortie D
 var buzzer=["The simpsons","Tetris","Arkanoid","Super Mario","Xfiles"];
 var ZXL=["Zone XL","Zone XL haut","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone notif 6"];
 var Z=["Zone Horloge","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone Notif 6","Zone Notif 7"];
-var cr=true;
+var fx=[ 'PRINT','SCROLL_LEFT','SCROLL_UP_LEFT','SCROLL_DOWN_LEFT','SCROLL_UP','GROW_UP','SCAN_HORIZ','BLINDS','WIPE','SCAN_VERTX','SLICE','FADE','OPENING_CURSOR','NO_EFFECT','SPRITE','CLOSING','SCAN_VERT','WIPE_CURSOR','SCAN_HORIZX','DISSOLVE','MESH','OPENING','CLOSING_CURSOR','GROW_DOWN','SCROLL_DOWN','SCROLL_DOWN_RIGHT','SCROLL_UP_RIGHT','SCROLL_RIGHT','RANDOM'];
+var animation=['PACMAN','fleche 1',"Roll 1","Marcheur","space invader","chevron","Coeur","Bateau vapeur","Voilier","boule de feu","rocket","ligne","vague","fantome pacman","fleche 2","roll 2"];
+var fxLed=['flash','breath','rainbow','colorWipe','colorWipeFill','chaseColor'];
+var cr=false;
+var crstp=false;
 var tA,tL;
 var ajaxload=false;
 
@@ -83,10 +88,12 @@ $.ajax({
          TZ=jinfo.TOTALZONE;
          XL=jinfo.XL;
          ZP=jinfo.ZP;
-         cr=jinfo.CR;
+         tA=jinfo.TYPEAUDIO;
+         tL=parseInt(jinfo.TYPELED);
          $('#MZM').text(MZM);
          $('#TZ').text(TZ);
-         if (MZM>0) { $("#groupZone").removeClass("d-none");
+         if (MZM>0) {
+        $("#groupZone").removeClass("d-none");
          if (XL)  Zones=ZXL;
          else Zones=Z;
          numero="<ul class='list-group list-group-flush'>";
@@ -101,6 +108,7 @@ $.ajax({
          numero=numero+"<li class='list-group-item d-flex justify-content-between align-items-center'>"+Zones[i]+"  <span class='badge badge-info badge-pill'>"+ZP[i]+"</span></li>";
        }
        numero=numero+"</ul>";
+       $("#selectZone option:contains(Zone Message)").attr("selected", "selected");
        $("#num").html(numero);
      } else $("#num").text("Zone Horloge et Msg unique");
          $("#INT").val(jinfo.INTENSITY);
@@ -113,7 +121,11 @@ $.ajax({
          $('#LUM').prop('checked',jinfo.LUM);
          $('#SEC').prop('checked',jinfo.SEC);
          $('#HOR').prop('checked',jinfo.HOR);
-         $('#LED').prop('checked',jinfo.LED);
+
+         if (tL>0) {
+          $('#LED').prop('disabled', false);
+          $('#LED').prop('checked',jinfo.LED);
+         }
          $('#tzname').text(jinfo.TZNAME);
          $('#hostname').text(jinfo.HOSTNAME);
          $('#mdns').text(jinfo.MDNS);
@@ -140,23 +152,30 @@ $.ajax({
             $('#Status').text(jinfo.DHTSTATUS);
           }
           else $('#dht_box').addClass('d-none');
-          tA=jinfo.TYPEAUDIO;
-          tL=parseInt(jinfo.TYPELED);
+
           $('#isLED').text(typeLed[tL]);
           $('#isAUDIO').text(typeAudio[tA]);
           if (tL > 0)  {
             $('#groupLED').removeClass('d-none');
-
             $('#infoTypeLed').text(" ("+typeLed[tL]+")");
             $('#intLED').val(jinfo.LEDINT);
             $('#COLOR').val(jinfo.COLOR);
                   }
+            else {
+              $('#groupLED').addClass('d-none');
+            }
           if (tA > 0)  {
             $('#groupAUDIO').removeClass('d-none');
             $('#infoTypeAudio').text(" ("+typeAudio[tA]+")");
             $('#volAUDIO').val(jinfo.VOLUME);
+            if (tA==2) {
+              $('#cardMP3').removeClass('d-none');
+              $('#MP3list').text(jinfo.TOTALMP3-jinfo.MP3_1);
+              $('#MP3sound').text(jinfo.MP3_1);
+              $('#MP3notif').text(jinfo.MP3NOTIF);
+            }
 
-        }
+        } else $('#groupAUDIO').addClass('d-none');
           if (XL) $('#XL').text('Activé');
           else $('#XL').text('Désactivé');
           if(jinfo.DEBUG) {
@@ -170,12 +189,22 @@ $.ajax({
           if(jinfo.PHOTOCELL) $('#photocell').text("Présent");
                   else $('#photocell').text("Absent");
           if(jinfo.DHT) { $('#dht').text("Présent");
-                $("#cardbtn1").removeClass('d-none');
+
         }
-                  else $('#dht').text("Absent");
-          if(jinfo.BTN1) $('#bouton1').text("Présent");
+          else $('#dht').text("Absent");
+          if(jinfo.BTN1) { $('#bouton1').text("Présent");
+                        $("#cardbtn1").removeClass('d-none');
+                        $('#btn1clic1').text(boutons[jinfo.btnclic[0]]);
+                        $('#btn1clic2').text(boutons[jinfo.btnclic[1]]);
+                        $('#btn1clic3').text(boutons[jinfo.btnclic[2]]);
+                      }
                   else $('#bouton1').text("Absent");
-          if(jinfo.BTN2) $('#bouton2').text("Présent");
+          if(jinfo.BTN2) { $('#bouton2').text("Présent");
+                  $("#cardbtn2").removeClass('d-none');
+                  $('#btn2clic1').text(boutons[jinfo.btnclic[3]]);
+                  $('#btn2clic2').text(boutons[jinfo.btnclic[4]]);
+                  $('#btn2clic3').text(boutons[jinfo.btnclic[5]]);
+        }
                   else $('#bouton2').text("Absent");
           if(jinfo.LED) $('#StatutLED').text("Présent");
                   else $('#StatutLED').text("Absent");
@@ -194,7 +223,12 @@ $.ajax({
             $("#blocAl").removeClass("text-danger");
             $("#blocAl h3").text("Alarme Inactive");
           }
-
+          cr=jinfo.CR;
+          crstp=jinfo.CRSTOP;
+          if (jinfo.CR) {
+            $('#CR').text('Masquer');
+          }
+          else $('#CR').text('Afficher');
 
         }
    },
@@ -211,6 +245,7 @@ $.ajax({
 }
 
 function getHisto() {
+    $('#histoList').html("");
   $.getJSON( "/getInfo?HISTO", function( json ,status) {
     console.log(json);
     var n=1
@@ -311,6 +346,7 @@ ledType=0;
 audioValue=0;
 ledValue=0;
 numeroPiste=0;
+animation=0;
 //Si notif led
 if ($('#notifLed').prop('checked')) {
   ledType=1;
@@ -327,6 +363,14 @@ if ($('#notifAudio').prop('checked')) {
     audioValue=$("#volAUDIO").val();
   }
 }
+typ=$("#type option:selected").val();
+if (typ==6) fio=$('#FX').val();
+else if (typ==7) {
+  fio=14;
+  animation=$('#Anim').val();
+}
+else fio=1;
+
 // Msg = escape($('#msg').val()).replace(/\+/g, "%2B");
 //Msg = Msg.replace("%u20AC", "%80");  // pour Euro
 
@@ -343,11 +387,16 @@ ledfx:ledType,
 ledlum:ledValue,
 audio:audioValue,
 num:numeroPiste,
-type:$("#type").val(),
-nzo:$("#selectZone option:selected").val()
+nzo:$("#selectZone option:selected").val(),
+fio:fio,
+anim:animation,
+type:typ
    }, function(data) {
-$("#infoSubmit").text(data);
- });
+     //$("#infoSubmit").text(data);
+     console.log(data);
+ }).done(function() {
+     getHisto();
+  });
 
 return false;
 });
@@ -456,9 +505,17 @@ if (key=="MIN") {
    cr=!cr;
    val=cr;
  }
+ else if (key=="CRSTP") {
+   crstp=!crstp;
+   val=crstp;
+ }
 console.log("info minuteur :"+key+" = "+val);
 url="/Options?"+key+"="+val;
 $.get(url);
+if (cr) {
+  $('#CR').text('Masquer');
+}
+else $('#CR').text('Afficher');
 }
 
 function majMinut() {
@@ -497,6 +554,14 @@ $('#notifAudio').change(function() {
  }
 });
 
+$('#type').change(function() {
+  if ($(this).val()==6) $('#blocFx').removeClass("d-none");
+  else {
+    $('#blocFx').addClass("d-none");
+  }
+  if ($(this).val()==7) $('#blocAn').removeClass("d-none");
+  else $('#blocAn').addClass("d-none");
+});
 //var rangeSlider = document.getElementById("range");
 //var rangeBullet = document.getElementById("rs-bullet");
 
@@ -533,10 +598,29 @@ $.each(buzzer, function (value, text) {
 });
 
 $.each(couleurs, function (value, text) {
+
   $('#COLOR').append($('<option>', {
           value: value,
           text : text
       }));
+});
+
+
+$.each(fx, function (value, text) {
+  if (value<13 || value>14) {  //no sprite  no effect
+  $('#FX').append($('<option>', {
+          value: value,
+          text : value+" - "+text
+      }));
+  }
+});
+
+$.each(animation, function (value, text) {
+  $('#Anim').append($('<option>', {
+          value: value,
+          text : value+" - "+text
+      }));
+
 });
 /*
 $('#Alarme').datetimepicker({

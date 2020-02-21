@@ -71,15 +71,22 @@
  <option value='1'>INFO</option>
  <option value='2'>FIX</option>
  <option value='3'>PAC MAN</option>
- <option value='4'>BLINDS</option>
- <option value='5'>Opening</option>
+ <option value='4'>Fleches</option>
+ <option value='5'>Rolling</option>
+ <option value='6'>Fx Perso</option>
+ <option value='7'>Animation Perso</option>
  </select>
             </div>
-    <div class="form-group" id="textfield">
-    <label for='TextType' class="text-primary">Texte pour type animation</label>
-<INPUT type='text' id='TextType' maxlength='20' placeholder='Notif' class="form-control" aria-describedby="tnhelp"/>
-<small id ="tnhelp" class="form-text text-muted">Texte pour info Animation</small>
-     </div>
+  <div id="blocFx" class="d-none">
+            <label for="FX" class="text-primary" >Selection FX </label>
+            <select class="custom-select" id="FX">
+            </select>
+    </div>
+    <div id="blocAn" class="d-none">
+              <label for="Anim" class="text-primary" >Selection Animation </label>
+              <select class="custom-select" id="Anim">
+              </select>
+      </div>
     <div class="form-group d-none" id="pausefield">
     <label for='TextType' class="text-primary">Temps de pause pour type Info</label>
 <INPUT step="1" value="3" min="0" max="60"  id='PauseType' maxlength='10' placeholder='3' class="form-control" aria-describedby="Phelp"/>
@@ -88,7 +95,7 @@
   </div>
     <div class="col-6">
       <div class="form-group d-none" id="groupZone">
-      <label class="col-form-label" for="inputZone">Zone </label>
+      <label class="col-form-label text-primary" for="inputZone">Zone </label>
       <select class="form-control" name='zone' id='selectZone'>
       </select>
       <small class="form-text text-muted">Choix de la Zone , pour affichage notif.</small>
@@ -142,8 +149,8 @@
        <br >
        <div class="text-center">
        <button type="button" class="btn btn-outline-primary m-2" onclick="Minuteur('MIN');">Start</button>
-       <button type="button" class="btn btn-outline-warning m-2" onclick="Minuteur('STP')">Stop</button>
-
+       <button type="button" class="btn btn-outline-danger m-2" onclick="Minuteur('STP')">Stop</button>
+      <button type="button" class="btn btn-outline-warning m-2" onclick="Minuteur('CRSTP')">Pause</button>
        <button type="button" class="btn btn-outline-info m-2" onclick="Minuteur('CR')"><span id="CR" >Masquer</span></button>
      </div>
   </div></div></div>
@@ -216,7 +223,7 @@
 
 <div class="form-group">
 <div class="custom-control custom-switch">
-<input name='LED' type="checkbox"  class="custom-control-input"  id="LED">
+<input name='LED' type="checkbox"  class="custom-control-input"  id="LED" disabled>
 <label   class="custom-control-label text-primary" for="LED"> LED / VEILLEUSE</label>
 </div>
 </div>
@@ -245,7 +252,7 @@
     <a class="nav-link active show" data-toggle="tab" href="#Info">Information</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link" data-toggle="tab" href="-#boutons-" id="navbtns">Module(s)</a>
+    <a class="nav-link" data-toggle="tab" href="#Options" id="navbtns">Options</a>
   </li>
   <li class="nav-item">
     <a class="nav-link " data-toggle="tab" href="-#dhtpanel-" id="navdht">DHT</a>
@@ -316,7 +323,7 @@
           </div></div>
           </div></div>
   </div>
-  <div class="tab-pane fade" id="boutons">
+  <div class="tab-pane fade" id="Options">
     <p>Ci dessous listes des actions associés aux differents modules ( Boutons , DFPlayer )- Si présent</p>
       <div class="card-deck ">
       <div class="card text-white bg-success mb-3 d-none" style="max-width: 20rem;" id="cardbtn1">
@@ -342,14 +349,14 @@
   </div>
   </div>
   <div class="card text-white bg-primary mb-3 d-none" style="max-width: 20rem;" id="cardMP3">
-   <div class="card-header text-center"><H2>DFPLayer</H2></div>
+   <div class="card-header text-center"><H2>DF PLayer</H2></div>
    <div class="card-body">
      <h4 class="card-title">Dossier MP3</h4>
      <p class="card-text">Nombre de titre : <span id="MP3list"></span></p>
          <h4 class="card-title">Dossier effet sonore</h4>
      <p class="card-text">Nombre d'effets : <span id="MP3sound"></span></p>
-         <h4 class="card-title">Triple Clic</h4>
-  <p class="card-text">Action définie : <span id=""></span></p>
+         <h4 class="card-title">Notification Par défaut</h4>
+  <p class="card-text">Effet n° : <span id="MP3notif"></span></p>
    </div>
    </div>
       </div>
@@ -416,6 +423,8 @@
     <div class="card border-secondary mb-3">
           <div class="card-header">Historique Notification  <span class="badge badge-primary badge-pill" id="badgehist"></span><span id="imphist"></span></div>
             <div class="card-body">
+              <h5 class="card-title text-center" >
+                      <button type="button" class="btn btn-secondary btn-sm" onclick="getHisto();">Rafraichir</button></h5>
         <h3 class="card-title"></h3>
     <div >
       <table class="table table-hover">
