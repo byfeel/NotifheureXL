@@ -255,7 +255,7 @@
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
 
-    <script   src="https://code.jquery.com/jquery-3.4.1.min.js"   integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="   crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"   integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="   crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js"></script>
@@ -319,6 +319,7 @@
       $("#infoSetup").text("Configuration Setup : Etape "+step+"/"+maxstep);
 
   }
+
   function prec() {
       $("#step"+step).addClass("d-none");
       if (step<=1) step=1;
@@ -331,7 +332,7 @@
       $("#infoSetup").text("Configuration Setup : Etape "+step+"/"+maxstep);
   }
 
-      function init() {
+  function init() {
 
          $('#inputNbMatrix').val(NbMatrix);
          $('#inputZoneTime').val(WZT);
@@ -346,7 +347,6 @@
            $('#inputMaxZoneMsg').removeClass("d-none");
            $('#checkPerso').prop('checked',perso);
            checkZone();
-            console.log("test perso : ");
            //if (perso) {
           //    nbz=xl+MZM;
           //   modePerso();
@@ -355,9 +355,6 @@
          }
       }
 
-      function testValid() {
-        return true;
-      }
 
       function displayControl(stepZone) {
         switch (stepZone) {
@@ -372,7 +369,7 @@
         }
       }
 
-      function checkZone() {
+  function checkZone() {
         el=$(this).attr('id');
         erreur=false;
         // nombre de cellules
@@ -446,11 +443,9 @@
             $('#inputMaxZoneMsg').removeClass("is-invalid");
             if (el=="inputMaxZoneMsg") displayControl(3);
           }
-
 //verif PERSO
+
 modePerso();
-
-
 //init
         $('#groupTime small').text("taille de la zone Horloge entre 4 et "+NbMatrix);
 
@@ -538,8 +533,7 @@ $( "#inputName" ).focus(function() {
         $(this).removeClass('is-valid is-invalid');
       });
 
-
-    function modePerso() {
+function modePerso() {
       if ($("#checkPerso").prop('checked') && $('#inputMaxZoneMsg').hasClass("is-valid") && $('#inputMaxZoneMsg').val()>=1) {
         $("#groupPerso").removeClass("d-none");
         $("#infoPerso").removeClass("d-none");
@@ -605,11 +599,12 @@ $( "#inputName" ).focus(function() {
          jQuery("#groupZP").append(html);
        }
 
-       $('#checkBtn1').change(function () {
+    $('#checkBtn1').change(function () {
                    var check = $(this).prop('checked');
                    if (check) $('#infobtn1').text("Présent");
                    else $('#infobtn1').text("Absent");
                });
+
        $('#checkBtn2').change(function () {
                    var check = $(this).prop('checked');
                    if (check) $('#infobtn2').text("Présent");
@@ -620,10 +615,12 @@ $( "#inputName" ).focus(function() {
          val=$(this).val();
              $('#infolum').text(typeLed[val]);
                });
+
        $('#selectNotifAud').change(function () {
          val=$(this).val();
              $('#infoaud').text(typeAudio[val]);
                });
+
 
 $( document ).ready(function() {
           console.log( "start!" );
@@ -652,7 +649,7 @@ $( document ).ready(function() {
                    }
                      IP=jinfo.IP;
                      $("#IP").text(jinfo.IP);
-                     $(location).attr('href', IP)
+
                      NbMatrix=jinfo.MAXDISPLAY;
                      offset=jinfo.TZOFFSET;
                      tzname=jinfo.TZNAME;
@@ -693,7 +690,7 @@ $( document ).ready(function() {
 
             // Set option selected onchange
 
-              $('#bloc-TZ').change(function(){
+          $('#bloc-TZ').change(function() {
                 value = $(this).val();
                 timezone=moment().tz(value).format('Z');
                 zone=moment.tz(value).format('zz');
