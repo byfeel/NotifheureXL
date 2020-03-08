@@ -145,11 +145,17 @@ $.ajax({
           $('#DNS').text(jinfo.DNS);
           $('#DNS2').text(jinfo.DNS2);
           if (jinfo.DHT) {
+            $("#navdht").removeClass("disabled");
             $('#dht_box').removeClass('d-none');
             $('#Temp').text(jinfo.TEMP);
             $('#Hum').text(jinfo.HUM);
             $('#Modele').text(jinfo.DHTMODEL);
             $('#Status').text(jinfo.DHTSTATUS);
+            $('#dhtdate').text(unixToDate(jinfo.STAMPDHT));
+            $('#dht_t').text(jinfo.TEMP);
+            $('#dht_h').text(jinfo.HUM);
+            $('#dht_hi').text(parseInt(jinfo.HI).toFixed(2));
+            $('#dht_p').text(parseInt(jinfo.ROSE.toFixed(2)));
           }
           else $('#dht_box').addClass('d-none');
 
@@ -229,7 +235,26 @@ $.ajax({
             $('#CR').text('Masquer');
           }
           else $('#CR').text('Afficher');
-
+          if (jinfo.BROKER) {
+            $("#cardmqtt").removeClass("d-none");
+            if (jinfo.STATEBROKER) {
+              $("#infostatemqtt").text("Connexion OK");
+              $("#infostatemqtt").removeClass("text-danger");
+            }
+            else {
+              $("#infostatemqtt").addClass("text-danger");
+              $("#infostatemqtt").text("Erreur Connexion");
+            }
+            $("#infoipmqtt").text(jinfo.SRVBROKER);
+            if (jinfo.UBROKER !="") $("#infousermqtt").text(jinfo.UBROKER);
+            else $("#infousermqtt").text("Serveur MQTT anonyme");
+            $("#infotempomqtt").text(jinfo.TEMPOBROKER);
+            $("#infotopicS").text(jinfo.TOPIC);
+            $("#infotopicP").text(jinfo.TOPICSTATE);
+          }
+          else {
+              $("#cardmqtt").addClass("d-none");
+          }
         }
    },
      error: function(resultat,statut) {
@@ -239,6 +264,7 @@ $.ajax({
       ajaxload=true;
       checkLum();
       checkLed();
+      setInterval('update_Info();',20000); /* rappel après 20 secondes  */
  }
 
  }); //fin ajax
@@ -277,6 +303,15 @@ $.ajax({
         cr=jinfo.CR;
         $('#ddj').text(unixToDate(jinfo.DATE));
          $('#uptime').text(up(jinfo.UPTIME));
+         $('#dhtdate').text(unixToDate(jinfo.STAMPDHT));
+         $('#dht_t').text(jinfo.TEMP);
+         $('#dht_h').text(jinfo.HUM);
+         $('#dht_hi').text(parseInt(jinfo.HI).toFixed(2));
+         $('#dht_p').text(parseInt(jinfo.ROSE.toFixed(2)));
+         $('#RSSI').text(jinfo.RSSI);
+         $('#last').text(unixToDate(jinfo.LASTSYNCHRO));
+         $('#Temp').text(jinfo.TEMP);
+         $('#Hum').text(jinfo.HUM);
        }
       }
   });

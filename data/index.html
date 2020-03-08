@@ -252,10 +252,13 @@
     <a class="nav-link active show" data-toggle="tab" href="#Info">Information</a>
   </li>
   <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#mqtt" id="navbtns">MQTT / Domotique</a>
+  </li>
+  <li class="nav-item">
     <a class="nav-link" data-toggle="tab" href="#Options" id="navbtns">Options</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link " data-toggle="tab" href="-#dhtpanel-" id="navdht">DHT</a>
+    <a class="nav-link disabled" data-toggle="tab" href="#dhtpanel" id="navdht">DHT</a>
   </li>
   <li class="nav-item">
     <a class="nav-link" data-toggle="tab" href="#Admin">Admin</a>
@@ -322,6 +325,52 @@
       </table>
           </div></div>
           </div></div>
+  </div>
+  <div class="tab-pane fade" id="mqtt" >
+    <p class="text-secondary"> Paramétres serveur MQTT ( si activé )</p>
+    <div class="row" id="cardmqtt" >
+    <div class="col-lg-6">
+     <div class="card border-primary mb-3 " >
+          <div class="card-header">Info Serveur MQTT</div>
+            <div class="card-body">
+        <h5 class="card-title"> Serveur MQTT : <span id="infostatemqtt" class="text-primary"></span></h5>
+        <ul class="list-group list-group-flush">
+  <li class="list-group-item">Serveur IP : <span id="infoipmqtt"></span></li>
+  <li class="list-group-item">Serveur port : <span id="infoipmqtt">1883</span></li>
+  <li class="list-group-item">Utilisateur : <span id="infousermqtt"></span></li>
+  <li class="list-group-item">Tempo des Publications : <span id="infotempomqtt"></span> secondes(s)</li>
+  <li class="list-group-item">topic souscription : <span id="infotopicS"></span></li>
+  <li class="list-group-item">topic publication : <span id="infotopicP"></span></li>
+</ul>
+ </div>
+ </div>
+</div>
+<div class="col-lg-5">
+  <div class="card text-white bg-primary mb-3">
+  <div class="card-header">JSON MQTT</div>
+  <div class="card-body">
+    <h4 class="card-title">Topic Souscription</h4>
+    <p class="card-text">Json à envoyer sous la forme : {"msg":"Hello World"}</p>
+    <p>msg : message a afficher</p>
+    <p>Possible de préciser des options  avec mot clef opt : par exemple {"msg":"Hello World","opt":"pause=0;nzo=1"}  pour une pause de 0 secondes sur la Zone 1 ( séparé par ; )</p>
+    <p>Si aucune option n'est précisé .Les paramétres par défaut sont appliqués. Envoie du message sur la zone "message" </P>
+      <h4 class="card-title">Topic Publication</h4>
+      <p class="card-text">Json  sous la forme : </p>
+    <pre class="text-white">
+    {
+    "temperature": "20.70",     // info temperature
+    "humidity": "49.30",        // info humidité
+    "sec": true,                // etat secondes
+    "hor": true,                // etat affichage horloge
+    "lum": true,                // mode luminosité
+    "rev": false                // Etat reveil
+    }
+    </pre>
+  </div>
+</div>
+</div>
+</div>
+   <p class="text-secondary"> Paramétres Domotique ( si activé )</p>
   </div>
   <div class="tab-pane fade" id="Options">
     <p>Ci dessous listes des actions associés aux differents modules ( Boutons , DFPlayer )- Si présent</p>

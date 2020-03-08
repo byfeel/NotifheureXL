@@ -45,7 +45,12 @@ $.ajax({
         $("#btn2_2").val(jinfo.btnclic[4]);
         $("#btn2_3").val(jinfo.btnclic[5]);
         $("#selectNotifLum").val(jinfo.TYPELED).change();
-
+        $('#btnMQTT').prop('checked',jinfo.BROKER).change();
+        $("#ipMQTT").val(jinfo.SRVBROKER);
+        $("#userMQTT").val(jinfo.UBROKER);
+        $("#passMQTT").val(jinfo.PBROKER);
+        $("#portMQTT").val(jinfo.PORTBROKER);
+        $("#tempoMQTT").val(jinfo.TEMPOBROKER);
         $('#DispOff').val(String.fromCharCode(jinfo.CHAROFF));
         $('#intled').val(jinfo.FXINT).trigger("input");
         $('#intled').rangeslider('update', true);
@@ -76,7 +81,10 @@ output['innerText'] = value;
 function Reboot() {
 var r = confirm("Etes vous sur de vouloir effectué un Reboot ?");
 if (r == true) {
-  Socket.send("REBOOT");
+  $.post( "/Config?reboot=true", function( data ) {
+    $("#infoconfig").text("le systéme reboot , retour vers page d'accueil dans quelques secondes");
+  setTimeout( function() {window.location.href='/';}, 10000);
+  });
 }
 };
 
@@ -102,9 +110,9 @@ $("#Config").submit(function(){
   hostname:$("#inputhost").val(),
   debug:$('#DEBUG').prop('checked'),
   automsg:$('#AutoMsg').prop('checked'),
-  btn1:$('#bouton1').prop('checked'),
-  btn2:$('#bouton2').prop('checked'),
-  typeled:$('#selectNotifLum').val(),
+  //btn1:$('#bouton1').prop('checked'),
+  //btn2:$('#bouton2').prop('checked'),
+  //typeled:$('#selectNotifLum').val(),
   ntpserver:$('#inputNTP').val(),
   charoff:$('#DispOff').val().charCodeAt(0),
   crtext:$('#CRTEXT').val(),
@@ -113,7 +121,13 @@ $("#Config").submit(function(){
   clicbtn2 : $('#btn2_1').val()+","+$('#btn2_2').val()+","+$('#btn2_3').val()+",",
   intled : $("#intled").val(),
   color : $("#selectled3_color").val(),
-  fxcr :$("#selectled3_fx").val()
+  fxcr :$("#selectled3_fx").val(),
+  broker:$("#btnMQTT").prop('checked'),
+  ipbroker:$("#ipMQTT").val(),
+  ubroker:$("#userMQTT").val(),
+  pbroker:$("#passMQTT").val(),
+  portbroker:$("#portMQTT").val(),
+  tempobroker:$("#tempoMQTT").val()
 //  nzo:$("#selectZone option:selected").val()
    }, function(data) {
     $.notify(data);
@@ -135,6 +149,16 @@ $('#bouton2').change(function () {
           var check = $(this).prop('checked');
           if (check) $('#btn2').removeClass("d-none");
           else $('#btn2').addClass("d-none");
+                });
+$('#btnMQTT').change(function () {
+          var check = $(this).prop('checked');
+          if (check) $('#MQTT').removeClass("d-none");
+          else $('#MQTT').addClass("d-none");
+                });
+$('#btnDOM').change(function () {
+          var check = $(this).prop('checked');
+          if (check) $('#box').removeClass("d-none");
+          else $('#box').addClass("d-none");
                 });
 //visuelle
 $('#selectNotifLum').change(function () {

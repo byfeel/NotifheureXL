@@ -21,13 +21,14 @@
       <hr class="my-4">
     <p>
       IP : <span id="IP" class="text-primary"></span> </p>
- <p>A modifier avec prudence !! Votre Module , peut ne plus fonctionner , si vous vous trompez</p>
 
-    <button type="button" class="btn btn-outline-primary disabled" onclick="getconfig();">Exporter Config</button>
+    <button type="button" class="btn btn-outline-primary disabled" onclick="window.location='/config/config.json';">Exporter Config</button>
     <button type="button" class="btn btn-outline-warning disabled" onclick="window.location='/Upload'">Importer Config</button>
     <button type="button" class="btn btn-outline-danger disabled" onclick="Reboot();">Reboot</button>
  <p></p>
+ <p id="infoconfig" class="text-info">Certaines modifications , necesitent un reboot pour etre pris en compte</p>
     <button type="button" class="btn btn-secondary btn-sm" onclick="window.location='/'">Retour page Accueil</button>
+
   </div>
 </div>
 <div class="alert alert-primary  text-center" id="BoxInit">
@@ -36,7 +37,7 @@
 </div>
 <div class="alert alert-warning d-none text-center" id="BoxAlert">
   <h4 class="alert-heading">Attention!</h4>
-  <p class="mb-0">Votre sauvegarde c'est bien effectué, Pour prendre en compte les changements , veuillez redemarrer </p>
+  <p class="mb-0">Vos paramétres ont bien été pris en compte, pour voir les changements , veuillez redemarrer </p>
     <button type="button" class="btn btn-warning mx-auto" onclick="Reboot();">Reboot Notif'heure</button>
 </div>
 
@@ -50,10 +51,10 @@
 
 <div class="form-group">
     <div class="custom-control custom-checkbox">
-      <input type="checkbox" class="custom-control-input" id="bouton1"  aria-describedby="bout1Help">
+      <input type="checkbox" class="custom-control-input" id="bouton1"  aria-describedby="bout1Help" disabled>
       <label class="custom-control-label text-info" for="bouton1">Bouton 1</label>
     </div>
-  <small id="bout1Help" class="form-text text-muted">Activer si presence bouton 1 (Qui permet affichage secondes , horloge , auto/manu ...)</small>
+  <small id="bout1Help" class="form-text text-muted">Activer si presence bouton 1 (Activation dans SETUP)</small>
 </div>
 <div class="card border-success mx-auto mb-3 d-none" style="max-width: 40rem;" id="btn1">
     <div class="card-header text-center bg-success text-white">Actions pour Bouton 1</div>
@@ -78,10 +79,10 @@
 
 <div class="form-group">
     <div class="custom-control custom-checkbox">
-      <input type="checkbox" class="custom-control-input" id="bouton2"  aria-describedby="bout2Help">
+      <input type="checkbox" class="custom-control-input" id="bouton2"  aria-describedby="bout2Help" disabled>
       <label class="custom-control-label text-info" for="bouton2">Bouton 2</label>
     </div>
-  <small id="bout2Help" class="form-text text-muted">Activer si presence bouton 2 (Qui permet interaction avec jeedom ...)</small>
+  <small id="bout2Help" class="form-text text-muted">Activer si presence bouton 2 (Activation dans SETUP)</small>
 </div>
 <div class="card border-danger mx-auto mb-3 d-none" style="max-width: 40rem;" id="btn2">
     <div class="card-header text-center bg-danger text-white">Actions pour Bouton 2</div>
@@ -105,7 +106,7 @@
 </div>
 <div class="form-group">
       <label for="selectNotifLum" class="text-info">Type Notification Visuelle :</label>
-      <select class="form-control" id="selectNotifLum" aria-describedby="notifLumHelp">
+      <select class="form-control" id="selectNotifLum" aria-describedby="notifLumHelp" disabled>
         <option value=0>Aucune</option>
         <option value=1>LED</option>
         <option value=2>Relais</option>
@@ -144,11 +145,57 @@
 </div> <!-- fin row -->
 
 <div class="row">
-
-    <div class=" col-md-6">
-      <h2><span class="badge badge-secondary">Paramétres  Notification</span></h2>
-      <small class="text-muted">Ces parametrtes demandent de redemarrer pour etres pris en compte</small>
+<div class="col">
+      <h2><span class="badge badge-secondary">Paramétres  MQTT</span></h2>
+      <div class="form-group">
+      <div class="custom-control custom-checkbox">
+        <input type="checkbox" class="custom-control-input" id="btnMQTT"  aria-describedby="btnMQTTHelp">
+        <label class="custom-control-label text-info" for="btnMQTT">Client MQTT</label>
+      </div>
+    <small id="btnMQTTHelp" class="form-text text-muted">Activation / désactivation protocole MQTT</small>
+  </div>
+  <div class="card border-primary mx-auto mb-3"  id="MQTT" style="max-width: 40rem;">
+      <div class="card-header text-center bg-primary text-white">Paramétrage Client MQTT</div>
+      <div class="card-body">
+        <h5 class="text-info">Pensez à redemarrez le Notifheure , afin de prendre en compte ses changements</h5>
+        <div class="input-group">
+          <div class="input-group-prepend">
+        <div class="input-group-text text-info">IP Serveur MQTT : </div>
+        </div>
+        <input type="text" class="form-control" id="ipMQTT" aria-describedby="ipMQTTHelp" placeholder="192.168.0.1">
+        </div>
+        <small id="ipMQTTHelp" class="form-text text-muted">Adresse IP du serveur MQTT</small>
+        <div class="input-group">
+          <div class="input-group-prepend">
+        <div class="input-group-text text-info">login serveur MQTT : </div>
+        </div>
+        <input type="text" class="form-control" id="userMQTT" aria-describedby="userMQTTHelp" placeholder="aucun">
+        </div>
+        <small id="userMQTTHelp" class="form-text text-muted">login utilisateur du serveur MQTT  ( laisser vide si pas utilisé )</small>
+        <div class="input-group">
+          <div class="input-group-prepend">
+        <div class="input-group-text text-info">Mot de passe serveur MQTT : </div>
+        </div>
+        <input type="password" class="form-control" id="passMQTT" aria-describedby="passMQTTHelp" placeholder="aucun">
+        </div>
+        <small id="passMQTTHelp" class="form-text text-muted">Mot de passe utilisateur du serveur MQTT  ( laisser vide si pas utilisé )</small>
+        <div class="input-group">
+          <div class="input-group-prepend">
+        <div class="input-group-text text-info">Numero port MQTT : </div>
+        </div>
+        <input type="number" class="form-control" id="portMQTT" aria-describedby="portMQTTHelp" placeholder="1883">
+        </div>
+        <small id="portMQTTHelp" class="form-text text-muted">Port du serveur MQTT  ( 1883 par défaut )</small>
+        <div class="input-group">
+          <div class="input-group-prepend">
+        <div class="input-group-text text-info">Temporisation des publications MQTT : </div>
+        </div>
+        <input type="number" class="form-control" id="tempoMQTT" aria-describedby="tempoMQTTHelp" placeholder="60">
+        </div>
+        <small id="tempoMQTTHelp" class="form-text text-muted">Temporisation publications MQTT - entre 10 et 600 secondes ( 60 secondes par défaut )</small>
+      </div>
     </div>
+</div>
 </div> <!-- fin row -->
 <div class="row">
     <div class="col-md-12">
@@ -209,62 +256,56 @@
 <div class="row">
     <div class=" col-md-12">
     <h2><span class="badge badge-secondary">Paramétres Domotique</span></h2>
-      <small class="text-muted">Activer les actions vers requete http( exemple enoie d'une requete vers une box domotique comme JEEDOM ou NextDom )</small>
-
-
-      <div class="card border-primary mx-auto mb-3 d-none" id="box">
-      <div class="card-header text-center bg-primary text-white">Actions URL</div>
+    <div class="form-group">
+    <div class="custom-control custom-checkbox">
+      <input type="checkbox" class="custom-control-input" id="btnDOM"  aria-describedby="btnDOMHelp">
+      <label class="custom-control-label text-info" for="btnDOM">Activer requete http </label>
+    </div>
+    <small class="text-muted">Activer les actions vers requete http( exemple enoie d'une requete vers une box domotique comme JEEDOM ,NextDom ou autres )</small>
+</div>
+      <div class="card border-secondary mx-auto mb-3 d-none" style="max-width: 40rem;" id="box">
+      <div class="card-header text-center secondary ">Définition des URL</div>
       <div class="card-body small">
-
+        <div class="card border-primary mx-auto mb-2 " id="boxUrlUpdate">
+        <div class="card-header text-center bg-primary text-white">URL Update</div>
+        <div class="card-body small">
       <div class="input-group">
       <div class="input-group-prepend">
       <div class="input-group-text text-info">URL Update : </div>
       </div>
       <input type="text" class="form-control " id="URL_update" aria-describedby="upHelp" placeholder="http://ipbox/update.php" style="font-size:1em;">
       </div>
-      <small id="upHelp" class="form-text text-muted">Renseigner l'URL qui servira à mettre à jour les infos du notif'heure</small>
-        <div class="input-group">
-      <div class="input-group-prepend">
-      <div class="input-group-text text-info">URL Action 1 : </div>
+      <small id="upHelp" class="form-text text-muted">Renseigner l'URL qui servira à mettre à jour une valeur , à intervalle fixe</small>
       </div>
-      <input type="text" class="form-control" id="URL_action1" aria-describedby="ac1lHelp" placeholder="http://ipbox/action.php">
-      </div>
-      <small id="ac1Help" class="form-text text-muted">Renseigner l'URL qui servira à lancer l'Action 1 sur votre domotique</small>
-            <div class="input-group">
-      <div class="input-group-prepend">
-      <div class="input-group-text text-info">URL Action 2 : </div>
-      </div>
-      <input type="text" class="form-control" id="URL_action2" aria-describedby="ac2lHelp" placeholder="http://ipbox/action.php">
-      </div>
-      <small id="ac2Help" class="form-text text-muted">Renseigner l'URL qui servira lancer l'Action 2 sur votre domotique</small>
+    </div>
+    <div class="card border-primary mx-auto mb-2 " id="boxUrlUpdate">
+    <div class="card-header text-center bg-primary text-white">URL Update</div>
+    <div class="card-body small">
       <div class="input-group">
-      <div class="input-group-prepend">
-      <div class="input-group-text text-info">URL Action 3 : </div>
-      </div>
-      <input type="text" class="form-control" id="URL_action3" aria-describedby="ac3lHelp" placeholder="http://ipbox/action.php">
-      </div>
-      <small id="ac3Help" class="form-text text-muted">Renseigner l'URL qui servira lancer l'Action 3 sur votre domotique</small>
-      <div class="input-group">
-      <div class="input-group-prepend">
-      <div class="input-group-text text-info">URL Action 4 : </div>
-      </div>
-      <input type="text" class="form-control" id="URL_action4" aria-describedby="ac4lHelp" placeholder="http://ipbox/action.php">
-      </div>
-      <small id="ac4Help" class="form-text text-muted">Renseigner l'URL qui servira lancer l'Action 4 sur votre domotique</small>
-      <div class="input-group">
-      <div class="input-group-prepend">
-      <div class="input-group-text text-info">URL Action 5 : </div>
-      </div>
-      <input type="text" class="form-control" id="URL_action5" aria-describedby="ac5lHelp" placeholder="http://ipbox/action.php">
-      </div>
-      <small id="ac5Help" class="form-text text-muted">Renseigner l'URL qui servira lancer l'Action 5 sur votre domotique</small>
-      <div class="input-group">
-      <div class="input-group-prepend">
-      <div class="input-group-text text-info">URL Action 6 : </div>
-      </div>
-      <input type="text" class="form-control" id="URL_action6" aria-describedby="ac6lHelp" placeholder="http://ipbox/action.php">
-      </div>
-      <small id="ac6Help" class="form-text text-muted">Renseigner l'URL qui servira lancer l'Action 6 sur votre domotique</small>
+    <div class="input-group-prepend">
+    <div class="input-group-text text-info">URL Action 1 : </div>
+    </div>
+    <input type="text" class="form-control" id="URL_action1" aria-describedby="ac1lHelp" placeholder="http://ipbox/action.php">
+    </div>
+    <small id="ac1Help" class="form-text text-muted">Renseigner l'URL qui servira à lancer l'Action 1 sur votre domotique</small>
+          <div class="input-group">
+    <div class="input-group-prepend">
+    <div class="input-group-text text-info">URL Action 2 : </div>
+    </div>
+    <input type="text" class="form-control" id="URL_action2" aria-describedby="ac2lHelp" placeholder="http://ipbox/action.php">
+    </div>
+    <small id="ac2Help" class="form-text text-muted">Renseigner l'URL qui servira lancer l'Action 2 sur votre domotique</small>
+    <div class="input-group">
+    <div class="input-group-prepend">
+    <div class="input-group-text text-info">URL Action 3 : </div>
+    </div>
+    <input type="text" class="form-control" id="URL_action3" aria-describedby="ac3lHelp" placeholder="http://ipbox/action.php">
+    </div>
+    <small id="ac3Help" class="form-text text-muted">Renseigner l'URL qui servira lancer l'Action 3 sur votre domotique</small>
+
+  </div>
+</div>
+
        </div>
       </div>
 
