@@ -54,6 +54,10 @@ $.ajax({
         $('#DispOff').val(String.fromCharCode(jinfo.CHAROFF));
         $('#intled').val(jinfo.FXINT).trigger("input");
         $('#intled').rangeslider('update', true);
+        $('#speed').val(jinfo.SPEED).trigger("input");
+        $('#speed').rangeslider('update', true);
+        $('#pause').val(jinfo.PAUSE).trigger("input");
+        $('#pause').rangeslider('update', true);
         $('#selectled3_color').val(jinfo.FXCOLOR);
         $('#selectled3_fx').val(jinfo.CRFX);
         var charoff =jinfo.CHAROFF;
@@ -110,8 +114,8 @@ $("#Config").submit(function(){
   hostname:$("#inputhost").val(),
   debug:$('#DEBUG').prop('checked'),
   automsg:$('#AutoMsg').prop('checked'),
-  //btn1:$('#bouton1').prop('checked'),
-  //btn2:$('#bouton2').prop('checked'),
+  pause:$('#pause').val(),
+  speed:$('#speed').val(),
   //typeled:$('#selectNotifLum').val(),
   ntpserver:$('#inputNTP').val(),
   charoff:$('#DispOff').val().charCodeAt(0),

@@ -10,7 +10,7 @@
   <!--  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"> -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/materia/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/css/select2.min.css">
-    <title>Setup NotifHeure XL</title>
+    <title>Setup NotifHeureXL</title>
   </head>
   <body>
     <!-- Header -->
@@ -25,21 +25,21 @@
 </div>
 </div>
 <div class="container">
-  <p class=" text-center mx-auto"><small id="infoSetup" class="text-dark">Configuration Setup : Etape 1/4</small></p>
+  <p class=" text-center mx-auto text-dark" id="infoSetup" >Configuration Setup : Etape 1/4</p>
   <div class="row" id="step1">
     <div class="col">
     <div class="card border-dark mb-3 shadow">
       <div class="card-header bg-dark text-white"><h2>Configuration Nom / Fuseau horaire</h2></div>
       <div class="card-body">
         <div class="form-group ">
-    <label class="col-form-label text-primary" for="inputName">Nom du Notif'heure ?</label>
+    <label class="col-form-label text-primary" for="inputName">Nom du NotifHeure ?</label>
     <input type="text" class="form-control" placeholder="exemple : salon" aria-label="exemple : salon" aria-describedby="indiquer un nom" id="inputName" >
-  <small class="card-text">lettre , chiffre ou ( _ et - ) pas d'espace</small>
+  <small class="card-text">Caractère autorisé : Lettres, Chiffres et caractère "-" ou "_"</small>
       </div>
 
         <div id="infotime" class="text-primary">Chargement TimeZone en cours...</div>
       <div id="timezone" class="d-none">
-        <p class="text-info text-center">Valeur date sur Notif'heure :
+        <p class="text-info text-center">Valeur date sur NotifHeure :
         <br /><span id="datenotif"></span></p>
         <h6 class="card-title text-primary">Selectionner timeZone</h6>
 
@@ -47,7 +47,7 @@
         <br />
         <br />
       </div>
-      <h6 class="card-title text-primary">Detail Zone sélectionné</h6>
+      <h6 class="card-title text-primary">Information Zone sélectionnée</h6>
       <p class="card-text">
         <div class="d-flex w-100 justify-content-between">
         <p class="mb-1 card-text">Nom time Zone : </p>
@@ -96,7 +96,7 @@
                 <label class="custom-control-label" for="checkXL">Activer le mode XL</label>
             </div>
             <div id="groupMsg" class="form-group d-none">
-            <label class="col-form-label" for="inputMaxZoneMsg">Nombre de Zone(s) supplementaire(s) pour les notifs.</label>
+            <label class="col-form-label" for="inputMaxZoneMsg">Zone(s) supplementaire(s) pour les notifs.</label>
             <input type="number" class="form-control" placeholder="Nombre de Zone(s)" id="inputMaxZoneMsg" value="0" min="0" max="7">
             <small class="form-text text-muted"></small>
             </div>
@@ -105,10 +105,10 @@
             <div class="w-100"></div>
               <div  class="custom-control custom-checkbox">
                   <input type="checkbox" class="custom-control-input" id="checkPerso">
-                  <label class="custom-control-label" for="checkPerso">Désactiver réglages des Zones Automatique </label>
-                  <small class="d-block">Ce mode permet de modifier l'ordre standard des Zones , ce mode est à utiliser si vous savez ce que vous faites.
-                    Par défaut les Zones sont crées dans l'ordre suivant : Zone 0 , horloge , Zone 1 : Zone message ou Zone WL haute , zone 2 , zone 3 etc ...
-                    pour les zones Notifs supplementaires.</small>
+                  <label class="custom-control-label" for="checkPerso">Désactiver réglages des Zones Automatiques </label>
+                  <small class="d-block">Ce mode permet de modifier l'ordre standard des Zones , ce mode est à utiliser avec précaution.
+                    Par défaut les Zones sont créé dans l'ordre suivant : Zone 0 , horloge , Zone 1 : Zone message ou Zone XL haute , zone 2 , zone 3 etc ...
+                    pour les zones Notifs supplémentaires.</small>
               </div>
               <div id="groupPerso" class="d-none">
                 <h6 >Configuration des Zones : </h6>
@@ -228,18 +228,18 @@
            <div class="col-md-12 text-center">
             <hr class="my-4">
            <div class="alert alert-danger" role="alert" id="raz">
-               <h2>Remise à Zero</h2>
+               <h2>Remise à Zéro</h2>
                  <hr class="my-4">
                <p>Deux actions possibles , pour la réinitialisation du NotifHeureXL</p>
                <ul class="text-left">
 
-               <li>Remise à Zéro Setup ( réinitialise uniquement les parametres SETUP) - Les paramétres WIFI sont conservés
-                 <ul><li> Parametre nom et fuseau horaire</li>
-                <li> Parametres Matrices</li>
+               <li>Remise à Zéro Setup ( réinitialisent uniquement les paramètres SETUP) - Les paramètres WIFI sont conservés
+                 <ul><li> Paramètre nom et fuseau horaire</li>
+                <li> Paramètres Matrices</li>
                 <li> Options Matérielles</li>
                  </ul></li>
-                 <li>Remise à zero WIFI - efface uniquement les paramétres WIFI</li>
-                 <li>Remise à zero Usine ( Réinitialise le module ESP dans son etat "neuf") - efface les paramétres WIFI + SETUP</li>
+                 <li>Remise à zéro WIFI - efface uniquement les paramètres WIFI</li>
+                 <li>Remise à zéro Usine ( Réinitialise le module ESP dans son état "neuf") - efface les paramètres WIFI + SETUP</li>
                </ul>
               <button type="button" class="btn btn-dark" onclick="Reset(1);">RAZ SETUP</button>
               <button type="button" class="btn btn-primary" onclick="Reset(2);">RAZ WIFI</button>
@@ -430,7 +430,7 @@
         }
           else   {
             $('#inputMaxZoneMsg').attr("min",1);
-            $('#groupMsg small').text("Nombres de Zones supplémentaires à créer pour les notifications  , entre 1 et au max "+maxZones);
+            $('#groupMsg small').text("Nombre de Zones supplémentaires à créer pour les notifications  , entre 1 et au max "+maxZones);
             if ($('#inputMaxZoneMsg').val()<=1 ) $('#inputMaxZoneMsg').val(1);
           }
         if(MZM < $('#inputMaxZoneMsg').attr("min") || (MZM>maxZones)) {
@@ -665,8 +665,8 @@ $( document ).ready(function() {
                     //dateN= moment.tz(stampN,tzname);
                     $('#checkBtn1').prop('checked',jinfo.BTN1).change();
                     $('#checkBtn2').prop('checked',jinfo.BTN2).change();
-                    $('#selectNotifLum').val(jinfo.TYPELED);
-                    $('#selectNotifAud').val(jinfo.TYPEAUDIO);
+                    $('#selectNotifLum').val(jinfo.TYPELED).change();
+                    $('#selectNotifAud').val(jinfo.TYPEAUDIO).change();
                     $("#datenotif").text(moment.tz(stampN,"UTC").format("DD-MM-YYYY  HH:MM")+" ("+moment().tz(tzname).format('Z')+" )");
                     $("#bloc-TZ").val(tzname).trigger("change");
                     }

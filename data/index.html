@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
   <head>
-    <title>Notif'heure XL</title>
+    <title>NotifHeure XL</title>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -17,6 +17,7 @@
         <div class="container ">
             <header class="page-header">
               <h4 class="d-inline"><b>NotifHeure<span class="text-danger font-weight-bold">XL </span></b><span id="lieu" class="text-primary"></span></h1><small>  Version : <span id="version" class="text-danger"></span></small>
+
             </header>
         </div>
      <!-- Message -->
@@ -53,7 +54,7 @@
              <div class="form-group ">
 <label for='msg' class="text-primary">Message </label><br />
 <INPUT type='text' name='msg' id='msg' maxlength='59' placeholder='Votre Message ...' class="form-control" aria-describedby="msghelp"/>
-<small id ="msghelp" class="form-text text-muted">Notification limité à 60 caractéres.</small>
+<small id ="msghelp" class="form-text text-muted">Notification limitée à 160 caractères.</small>
                  </div>
   <div class="form-row">
     <div class="col-12">
@@ -78,20 +79,22 @@
  </select>
             </div>
   <div id="blocFx" class="d-none">
-            <label for="FX" class="text-primary" >Selection FX </label>
+            <label for="FX" class="text-primary" >Sélection FX </label>
             <select class="custom-select" id="FX">
             </select>
     </div>
     <div id="blocAn" class="d-none">
-              <label for="Anim" class="text-primary" >Selection Animation </label>
+              <label for="Anim" class="text-primary" >Sélection Animation </label>
               <select class="custom-select" id="Anim">
               </select>
       </div>
-    <div class="form-group d-none" id="pausefield">
-    <label for='TextType' class="text-primary">Temps de pause pour type Info</label>
-<INPUT step="1" value="3" min="0" max="60"  id='PauseType' maxlength='10' placeholder='3' class="form-control" aria-describedby="Phelp"/>
-<small id ="Phelp" class="form-text text-muted">Temps de pause en secondes ( de 0 à 60 )</small>
+
+      <div class="mx-auto d-none" id="pausefield">
+            <p class="text-primary pb-1">temps de pause Info (secondes)</p>
+            <input  type="range" id="pauseInfo" name="pause_info" min="1" max="60" value="3" oninput="valPause.value = pause_info.valueAsNumber">
+            <output class="text-primary" for="pauseInfo"  name="valPause"></output>
      </div>
+
   </div>
     <div class="col-6">
       <div class="form-group d-none" id="groupZone">
@@ -281,6 +284,7 @@
   <tr><th scope="row" class="bg-dark text-white">1er Synchro</th><td id="first"></td></tr>
    <tr><th scope="row" class="bg-dark text-white">Derniére Synchro </th><td id="last"></td></tr>
    <tr><th scope="row" class="bg-dark text-white">Mode Debug </th><td id="debug"></td></tr>
+   <tr><th scope="row" class="bg-dark text-white" id="newversion">Version </th><td><a id="urlversion" href="" target="_blank"><span id="lastversion"></span></a></td></tr>
       </table>
           </div></div>
  <div class="card border-danger  m-1" style="min-width:300px;">
@@ -448,7 +452,7 @@
 
     </br>
     <div class="card border-primary mb-3">
-          <div class="card-header">Liste des Notif'Heure sur le reseau <span class="text-primary" id="inforafraichir"></span></div>
+          <div class="card-header">Presence de Notif'Heure sur le reseau <span class="text-primary" id="inforafraichir"></span></div>
             <div class="card-body">
         <h5 class="card-title text-center" >
                 <button type="button" class="btn btn-primary btn-sm" onclick="getMdns();">Rafraichir</button></h5>

@@ -20,6 +20,8 @@ var cr=false;
 var crstp=false;
 var tA,tL;
 var ajaxload=false;
+var ver;
+var pause;
 
 function IsJsonString(str) {
 try {
@@ -80,7 +82,8 @@ $.ajax({
        if (IsJsonString(data)){
          var jinfo = JSON.parse(data);
          $("#display").text(jinfo.MAXDISPLAY);
-          $('#version').text(jinfo.VERSION);
+         ver=jinfo.VERSION;
+          $('#version').text(ver);
           $('#lieu').text(jinfo.NOM);
          WZT=jinfo.ZONETIME;
          $('#WZT').text(WZT);
@@ -90,6 +93,7 @@ $.ajax({
          ZP=jinfo.ZP;
          tA=jinfo.TYPEAUDIO;
          tL=parseInt(jinfo.TYPELED);
+         pause=parseInt(jinfo.PAUSE);
          $('#MZM').text(MZM);
          $('#TZ').text(TZ);
          if (MZM>0) {
@@ -265,6 +269,7 @@ $.ajax({
       checkLum();
       checkLed();
       setInterval('update_Info();',20000); /* rappel après 20 secondes  */
+      checkGithub();
  }
 
  }); //fin ajax
@@ -382,6 +387,7 @@ audioValue=0;
 ledValue=0;
 numeroPiste=0;
 animation=0;
+P=pause;
 //Si notif led
 if ($('#notifLed').prop('checked')) {
   ledType=1;
@@ -405,6 +411,7 @@ else if (typ==7) {
   animation=$('#Anim').val();
 }
 else fio=1;
+if (typ==1) P=parseInt($('#pauseInfo').val());
 
 // Msg = escape($('#msg').val()).replace(/\+/g, "%2B");
 //Msg = Msg.replace("%u20AC", "%80");  // pour Euro
@@ -425,7 +432,8 @@ num:numeroPiste,
 nzo:$("#selectZone option:selected").val(),
 fio:fio,
 anim:animation,
-type:typ
+type:typ,
+pause:P
    }, function(data) {
      //$("#infoSubmit").text(data);
      console.log(data);
@@ -596,17 +604,31 @@ $('#type').change(function() {
   }
   if ($(this).val()==7) $('#blocAn').removeClass("d-none");
   else $('#blocAn').addClass("d-none");
+  if ($(this).val()==1) $('#pausefield').removeClass("d-none");
+  else  {
+    $('#pausefield').addClass("d-none");
+    $('#pauseInfo').val('3').change();
+  }
 });
-//var rangeSlider = document.getElementById("range");
-//var rangeBullet = document.getElementById("rs-bullet");
 
-//rangeSlider.addEventListener("input", showSliderValue, false);
-
-//function showSliderValue() {
-//  rangeBullet.innerHTML = rangeSlider.value;
-//  var bulletPosition = (rangeSlider.value /rangeSlider.max);
-//  rangeBullet.style.left = (bulletPosition * 250) + "px";
-//}
+function checkGithub() {
+  $.getJSON( "https://api.github.com/repos/byfeel/NotifheureXL/releases/latest", function( data ) {
+    if (data.hasOwnProperty('tag_name')) {
+      console.log(data);
+      var lastver=data.tag_name;
+      var urlV=data.html_url;
+      console.log("version : "+ver+" et new : "+lastver);
+      if (ver!=lastver) {
+        $("#newversion").text("nouvelle version ");
+        $("#newversion").removeClass("bg-dark");
+        $("#newversion").addClass("bg-warning");
+        $("#lastversion").addClass("text-warning");
+      }
+       $("#lastversion").text(data.tag_name);
+       $("#urlversion").attr('href',urlV);
+  }
+  });
+}
 
 $( document ).ready(function() {
 getInfo();
@@ -673,4 +695,7 @@ $(document).on('input', 'input[type="range"]', function(e) {
         valueOutput(e.target);
     });
 
-});
+//requete test version notifheure XL
+
+
+}); // fin fonction document

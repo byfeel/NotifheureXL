@@ -15,7 +15,7 @@
 //  n/2 ... 3  2  1  0    <- Matrice basse
 // ***************************************
 
-const String ver = "0.8.4";
+const String ver = "0.8.5";
 const String hardware = "NotifheureXL";
 // Bibliotheque à inclure
 //********** eeprom / SPIFFS
@@ -98,9 +98,11 @@ const char* www_password = "notif";
 
 
 // ********** DHT
+// ne pas modifier , sauf si Auto ne fonctionne pas
 #define DHTTYPE DHTesp::AUTO_DETECT
 //#define DHTTYPE DHTesp::DHT11  // si DHT11
-//#define DHTTYPE DHTesp::DHT11  // si DHT11
+//#define DHTTYPE DHTesp::DHT12  // si DHT12
+
 // **************
 // *** PIN ******
 // ***************
@@ -139,6 +141,7 @@ const char* www_password = "notif";
 #define NTPSERV "pool.ntp.org"
 #define TZNAME "Europe/Paris"
 #define OFFSET_VALUE 60  // decalage en minute du fuseau horaire
+#define OFFSET_ADJUST 0
 #define DEBUG_DEF true
 #define VOLUME 50 // volume audio de 0 à 15
 #define _MP3START 1
@@ -219,7 +222,8 @@ sHardConfig hardConfig;
 
 // software config  ( sauvegarde SPIFFS )
 struct sConfigSys {
-  bool setup;                // verifie si setup initial ok
+//  bool setup;                // verifie si setup initial ok
+  bool config;               // verifie si fichier config existe
   int pauseTime;             // Temps de pause entre chaque animation
   int scrollSpeed;           // vitesse de defliement
   byte intensity;            // Itensité par defaut matrice
@@ -259,6 +263,7 @@ struct sConfigSys {
   int typeAudio;
   int typeLED;
   int volumeAudio;             // volume audio par defaut
+  int timeAdjust;               // décalage dayLightSaving
   bool btn1;
   bool btn2;
   byte btnclic[2][3];          // valeur par defaut des boutons
@@ -926,6 +931,7 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   strlcpy(config.msgMinuteur,docConfig["MSGMINUT"] | TXTMINUT,sizeof(config.msgMinuteur));
   strlcpy(config.hflag,docConfig["HFLAG"] | HF,sizeof(config.hflag));
   //config.timeZone = docConfig["TIMEZONE"] | UTC;
+  config.config = docConfig["CONFIG"] | false;
   config.broker = docConfig["BROKER"] | BROKER_VALID;
   strlcpy(config.servbroker,docConfig["SRVBROKER"] | BROKER_IP,sizeof(config.servbroker));
   strlcpy(config.userbroker,docConfig["UBROKER"] | USERBROKER,sizeof(config.userbroker));
@@ -943,6 +949,7 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   config.timeREV[0]=docConfig["TIMEREV"][0] | 7;
   config.timeREV[1]=docConfig["TIMEREV"][1] | 0;
   config.charOff=docConfig["CHAROFF"] | ' ';
+  config.timeAdjust=docConfig["TIMEADJUST"] | OFFSET_ADJUST;
   strlcpy(config.textnotif,docConfig["TEXTNOTIF"] | "Notif",sizeof(config.textnotif));
   config.ALN=docConfig["ALN"] | true;
   config.CrTime=docConfig["CRTIME"] | 5;
@@ -973,7 +980,7 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
 
 } // fin fonction loadconfig
 
-String createJson(sConfigSys  &config) {
+String createJson(sConfigSys  &config,bool flagCreate=false) {
   String json;
   //const size_t capacityConfig = 2*JSON_ARRAY_SIZE(3) + JSON_OBJECT_SIZE(41) + 1500;
   DynamicJsonDocument docConfig(capacityConfig);
@@ -992,6 +999,7 @@ String createJson(sConfigSys  &config) {
   docConfig["NTPSERVER"]=config.NTPSERVER;
   docConfig["SUFFIXEHOST"]=config.hostName;
   docConfig["TZOFFSET"]=hardConfig.Offset;
+  docConfig["TIMEADJUST"]=config.timeAdjust;
   docConfig["IDNOTIF"]=idNotif;
   //docConfig["DST"]=hardConfig.DST;
   docConfig["TZNAME"]=hardConfig.TZname;
@@ -1090,6 +1098,7 @@ String createJson(sConfigSys  &config) {
   for (int i=0;i<MAX;i++) {
   docZP.add(hardConfig.ZP[i]);
   }
+  if (flagCreate) docConfig["CONFIG"]=true;
   // envoie config json
   serializeJsonPretty(docConfig,json);
   return json;
@@ -1397,7 +1406,8 @@ void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_L
   Notification[NZO].Alert=true;
   Notification[NZO].type=type;
   Msg.toCharArray( Notification[NZO].Notif,BUF_SIZE);
-  if (!hardConfig.XL)  utf8Ascii(Notification[NZO].Notif);
+  //if (!hardConfig.XL)
+  utf8Ascii(Notification[NZO].Notif);
   Notification[NZO].pos=pos;
   Notification[NZO].speed=S;
   Notification[NZO].pause=P;
@@ -1420,8 +1430,8 @@ if (checkFlag(flag)) addHisto(Msg,NZO,flag);
   switch (type) {
     case 0: // type message scroll
     Serial.println("mode scroll");
-     //Notification[NZO].fxIn=1;
-     //Notification[NZO].fxOut=1;
+     Notification[NZO].fxIn=1;
+     Notification[NZO].fxOut=1;
      break;
     case 1: // type info
     Serial.println("mode info");
@@ -1473,7 +1483,8 @@ if (checkFlag(flag)) addHisto(Msg,NZO,flag);
     break;
     case 6: // fx perso
     Serial.println("fx perso");
-    //Notification[NZO].speed=40;
+    if (Notification[NZO].fxIn==10) Notification[NZO].speed=10;
+    if (Notification[NZO].fxIn==11) Notification[NZO].speed=60;
     if (P<1000) Notification[NZO].pause=1000;  // minimum 1s pour voir les effets
     //Notification[NZO].pos=PA_CENTER;
     break;
@@ -1685,19 +1696,19 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
 
 //MDNS
-void serverMDNS( String mdnsName) {
+void serverMDNS( String mdnsN) {
   // Set up mDNS responder:
- if (!MDNS.begin(mdnsName)) {
+ if (!MDNS.begin(mdnsN)) {
     if (configSys.DEBUG) Serial.println("Error setting up MDNS responder!");
   }
 
-  if (configSys.DEBUG) Serial.println("mDNS responder started : "+mdnsName);
+  if (configSys.DEBUG) Serial.println("mDNS responder started : "+mdnsN);
 
   //mdns.register("fishtank", { description="Top Fishtank", service="http", port=80, location='Living Room' })
   // Add service to MDNS-SD
   MDNS.addService("http", "tcp", 80);
   MDNS.addService("ws", "tcp", 81);
-  MDNS.addService("notifheure", "tcp", 8800); // Announce notifeur service port 8888 TCP
+  MDNS.addService("notifheure", "tcp", 8888); // Announce notifeur service port 8888 TCP
   //MDNS.addServiceTxt("notifheure","tcp", "nom", configSys.hostName);
 }
 
@@ -1788,7 +1799,7 @@ void handleConfig() {
         if (key=="charoff") {configSys.charOff=server.arg(i).toInt(); mem=1;}
         if (key=="setup") if (optionsBool(&hardConfig.setup,server.arg(i))) mem=2;
         if (key=="zp") {optionsSplit(hardConfig.ZP,server.arg(i),',');mem=2;}
-        if (key=="speed") {optionsNum(&configSys.scrollSpeed,server.arg(i),10,100);mem=1;}
+        if (key=="speed") {optionsNum(&configSys.scrollSpeed,server.arg(i),5,100);mem=1;}
         if (key=="pause") {optionsNum(&configSys.pauseTime,server.arg(i),0,180);mem=1;}
         if (key=="debug") if (optionsBool(&configSys.DEBUG,server.arg(i))) mem=1;
         if (key=="automsg") if (optionsBool(&configSys.ALN,server.arg(i))) mem=1;
@@ -1885,7 +1896,7 @@ bool verif=true;
     case 1 : {
         rep=createJson(configSys);
         saveConfigSys(fileconfig,rep);
-        rep="OK - Modification config systéme sauvegardé";
+        rep="OK - Modification config System ";
         break;
       }
     case 2 :{
@@ -1896,7 +1907,7 @@ bool verif=true;
         if (verif) {
         writeEEPROM();
         if (configSys.DEBUG) debugEeprom();
-        rep="OK - > Modification systéme -- Le Notifheure reboot -";
+        rep="OK - > Modification System -- Le Notifheure REBOOT -";
         reboot=true;
       } else  {
         reboot=false;
@@ -1919,6 +1930,7 @@ void handleOptions() {
   for (int i = 0; i < server.args(); i++) {
     key=server.argName(i);
     key.toUpperCase();
+    if (configSys.DEBUG) Serial.println("option : "+key+" - "+server.arg(i));
     if (key=="LED") if (optionsBool(&configSys.LED,server.arg(i))) {mem=1;rep="LED:"+String(configSys.LED);cmdLED(configSys.LED);}
     if (key=="COLOR") { optionsNum(&configSys.color,server.arg(i),0,7);mem=1;rep="COLOR :"+String(configSys.color);cmdLED(configSys.LED);}
     if (key=="LEDINT") {
@@ -1961,7 +1973,7 @@ void handleOptions() {
 
   if (mem==1) {
     String json="";
-    json=createJson(configSys);
+    json=createJson(configSys,true);
     saveConfigSys(fileconfig,json);
   }
   if ( mem==1 || mem==2 ) {
@@ -2029,10 +2041,9 @@ String prepNotif(String key,String val) {
         if (notifLed.fx==1) notifLed.loop=3;
       }
   if (key=="LEDLUM") { optionsNum(&notifLed.lum,val,0,100);}
-  //if (key=="FLASH") notifLed=flash;
+  if (key=="FLASH") notifLed=flash;
   if (key=="BREATH") notifLed=breath;
   if (key=="NZO" ) { Nz=val.toInt();}
-
   if (key=="SPEED" ) { optionsNum(&Sc,val,10,100);}
   if (key=="PAUSE" ) { optionsNum(&Pa,val,0,180);}
   if (key=="ANIM" ) { optionsNum(&An,val,0,15);optionsNum(&Ntype,"7",0,9);}

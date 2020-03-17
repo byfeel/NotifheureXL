@@ -23,7 +23,7 @@
       IP : <span id="IP" class="text-primary"></span> </p>
 
     <button type="button" class="btn btn-outline-primary disabled" onclick="window.location='/config/config.json';">Exporter Config</button>
-    <button type="button" class="btn btn-outline-warning disabled" onclick="window.location='/Upload'">Importer Config</button>
+    <button type="button" class="btn btn-outline-warning disabled d-none" onclick="window.location='/Upload'">Importer Config</button>
     <button type="button" class="btn btn-outline-danger disabled" onclick="Reboot();">Reboot</button>
  <p></p>
  <p id="infoconfig" class="text-info">Certaines modifications , necesitent un reboot pour etre pris en compte</p>
@@ -345,14 +345,13 @@
     </div>
   <small id="amsgHelp" class="form-text text-muted">Le message basculera en mode scrolling , si celui ci depasse la capacité d'affichage de la Zone Message.</small>
 </div>
-<div class="input-group col-5">
+<div class="input-group">
   <div class="input-group-prepend ">
 <div class="input-group-text text-info">Caractére par défaut : </div>
 </div>
-<input type="text" class="form-control" id="DispOff" aria-describedby="carHelp" size="2" maxlength="1" placeholder="espace">
+<input type="text" class="form-control col-2" id="DispOff" aria-describedby="carHelp" size="2" maxlength="1" placeholder="vide" >
 </div>
 <small id="carHelp" class="form-text text-muted ">Sélection du Caractére  par défaut sur l'ecran Off . Valeur par défaut : vide.</small>
-<br>
 <div class="input-group">
   <div class="input-group-prepend">
 <div class="input-group-text text-info">Serveur NTP : </div>
@@ -360,7 +359,18 @@
 <input type="text" class="form-control" id="inputNTP" aria-describedby="NTPlHelp" placeholder="pool.ntp.org">
 </div>
 <small id="NTPlHelp" class="form-text text-muted">Adresse serveur NTP non de domaine ou ip</small>
-
+<div class="mx-auto my-2" >
+    <label for="speed" class="text-info">Vitesse par défaut</label>
+      <input  type="range" id="speed" name="vitesse" min="5" max="100" value="40" oninput="valspeed.value = vitesse.valueAsNumber">
+      <output class="text-primary" for="speed"  name="valspeed"></output>
+<small id="speedHelp" class="form-text text-muted">Valeur par défaut de la vitesse d'affichage ( la valeur la plus petite et la plus rapide )</small>
+ </div>
+ <div class="mx-auto my-2" >
+     <label for="pause" class="text-info">Pause par défaut ( secondes )</label>
+       <input  type="range" id="pause" name="pose" min="0" max="180" value="0" oninput="valposevalue = pose.valueAsNumber">
+       <output class="text-primary" for="pause"  name="valpose"></output>
+ <small id="pauseHelp" class="form-text text-muted">Valeur par défaut de la pause , en fin d'affichage.( entre 0 et 180 secondes )</small>
+  </div>
 
 
     </div>
