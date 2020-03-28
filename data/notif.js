@@ -3,14 +3,14 @@
 var init=1;
 var debug=false;
 var immp=false;
-var boutons=["Aucune","Afficher / Masquer les secondes","Afficher / Masquer l'horloge","Mode luminosite Mini / Maxi / Automatique","On / Off Veilleuse","Historique Message","Afficher / masquer Minuteur","lancer Minuteur","Action 1","Action 2"];
+var boutons=["Aucune","Afficher / Masquer les secondes","Afficher / Masquer l'horloge","Mode luminosite Mini / Maxi / Automatique","On / Off Veilleuse","Historique Message","Afficher / masquer Minuteur","lancer Minuteur","Action 1","Action 2","Action 3"];
 var Actions = ['Aucune','Afficher / Masquer les Secondes', 'Activer / desactiver Horloge','Mode Manuel ( Mini ) - Manuel ( Maxi ) - Automatique','On / Off LED','Action 1','Action 2','Action 3','Action 4','Action 5','Action 6','Afficher Historique message'];
 var couleurs=["Blanc","Rouge","Bleue","Vert","Jaune","Orange","Violet","Rose"];
 var jours = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
 var mois = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
-var typeAudio = ["Absent","Buzzer","MP3Player","Autre"];
+var typeAudio = ["Absent","HP / Buzzer","MP3Player","Autre"];
 var typeLed= ["Absent","LED Interne","Commande Relais","Neopixel Ring","Sortie Digitale"];
-var buzzer=["The simpsons","Tetris","Arkanoid","Super Mario","Xfiles"];
+var buzMusic=["Mission Impossible","Star Wars","Indiana Jones","Panthere Rose","Famille Adam's","l'exorciste","The simpsons","Tetris","Arkanoid","Super Mario","Xfiles","AxelF","PacMan","dambuste","Muppet show","James Bond","Take On Me","Agence tout risque","Top Gun","les Schtroumpfs","l'arnaque","looney Tunes","20 century fox","Le bon, la brute ...","Retour vers le futur"];
 var ZXL=["Zone XL","Zone XL haut","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone notif 6"];
 var Z=["Zone Horloge","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone Notif 6","Zone Notif 7"];
 var fx=[ 'PRINT','SCROLL_LEFT','SCROLL_UP_LEFT','SCROLL_DOWN_LEFT','SCROLL_UP','GROW_UP','SCAN_HORIZ','BLINDS','WIPE','SCAN_VERTX','SLICE','FADE','OPENING_CURSOR','NO_EFFECT','SPRITE','CLOSING','SCAN_VERT','WIPE_CURSOR','SCAN_HORIZX','DISSOLVE','MESH','OPENING','CLOSING_CURSOR','GROW_DOWN','SCROLL_DOWN','SCROLL_DOWN_RIGHT','SCROLL_UP_RIGHT','SCROLL_RIGHT','RANDOM'];
@@ -160,6 +160,7 @@ $.ajax({
             $('#dht_h').text(jinfo.HUM);
             $('#dht_hi').text(parseInt(jinfo.HI).toFixed(2));
             $('#dht_p').text(parseInt(jinfo.ROSE.toFixed(2)));
+            $('#DDHT').prop('checked',jinfo.DDHT);
           }
           else $('#dht_box').addClass('d-none');
 
@@ -259,6 +260,10 @@ $.ajax({
           else {
               $("#cardmqtt").addClass("d-none");
           }
+          //Jours
+          for (i=1;i<8;i++) {
+            $("#alday"+i).prop('checked',jinfo.ALDAY[i]);
+          }
         }
    },
      error: function(resultat,statut) {
@@ -294,6 +299,12 @@ function getHisto() {
 });
 }
 
+function infoJson() {
+  $.getJSON( "/info.json", function(json) {
+    console.log(json);
+    console.log(json.version);
+});
+}
 
 
 
@@ -380,7 +391,7 @@ function getMdns() {
 }
 
 $("#FormMsg").submit(function(){
-Msg=$('#msg').val();
+Message=$('#inputMsg').val();
 // valeur par défaut
 ledType=0;
 audioValue=0;
@@ -413,18 +424,13 @@ else if (typ==7) {
 else fio=1;
 if (typ==1) P=parseInt($('#pauseInfo').val());
 
-// Msg = escape($('#msg').val()).replace(/\+/g, "%2B");
+// Message = escape($('#msg').val()).replace(/\+/g, "%2B");
 //Msg = Msg.replace("%u20AC", "%80");  // pour Euro
 
-//type = $('#type').val();
-//  int=$('#intensity').val();
-//  if ($('#checkInt').prop('checked')) {
-//      postInt='';
-//    } else postInt='&intnotif='+int;
 
 $.post('/Notification',
      {
-msg:Msg,
+msg:Message,
 ledfx:ledType,
 ledlum:ledValue,
 audio:audioValue,
@@ -633,6 +639,7 @@ function checkGithub() {
 $( document ).ready(function() {
 getInfo();
 getHisto();
+infoJson();
 $('#LUM').on('change',Options);
 $('#SEC').on('change',Options);
 $('#HOR').on('change',Options);
@@ -641,16 +648,17 @@ $('#REV').on('change',Options);
 $('#LED').on('change',Options);
 $('#BRI').on('change',Options);
 $('#COLOR').on('change',Options);
+$('#DDHT').on('change',Options);
 $('#btn_upAl').on('click',upAl);
 $('#btn_stopAl').on('click',stopAl);
 $('input[type="range"]').rangeslider({
  polyfill: false
 });
 //remplissage select
-$.each(buzzer, function (value, text) {
+$.each(buzMusic, function (value, text) {
   $('#selectTheme').append($('<option>', {
           value: value+1,
-          text : text
+          text : (value+1)+" - "+text
       }));
 });
 

@@ -157,7 +157,7 @@
   <div class="card border-primary mx-auto mb-3"  id="MQTT" style="max-width: 40rem;">
       <div class="card-header text-center bg-primary text-white">Paramétrage Client MQTT</div>
       <div class="card-body">
-        <h5 class="text-info">Pensez à redemarrez le Notifheure , afin de prendre en compte ses changements</h5>
+        <h6 class="text-info">L'activation du client MQTT, nécessite le redémarrage du notifHeure</h6>
         <div class="input-group">
           <div class="input-group-prepend">
         <div class="input-group-text text-info">IP Serveur MQTT : </div>
@@ -194,7 +194,16 @@
         </div>
         <small id="tempoMQTTHelp" class="form-text text-muted">Temporisation publications MQTT - entre 10 et 600 secondes ( 60 secondes par défaut )</small>
       </div>
+      <div class="form-group">
+      <div class="custom-control custom-checkbox">
+        <input type="checkbox" class="custom-control-input" id="btnMQTT"  aria-describedby="btnMQTTHelp">
+        <label class="custom-control-label text-info" for="btnMQTT">Client MQTT</label>
+      </div>
+      <small id="btnMQTTHelp" class="form-text text-muted">Activation / désactivation protocole MQTT</small>
+      </div>
+
     </div>
+
 </div>
 </div> <!-- fin row -->
 <div class="row">
@@ -205,25 +214,7 @@
   <h2><span class="badge badge-secondary">Paramétres Minuteur</span></h2>
   <small class="text-muted">Options pour le minuteur</small>
 
-<div class="card border-light mb-3 d-none">
-  <div class="card-header">Actions déclenchement fin de Minuteur</div>
-  <div class="card-body">
-    <h4 class="card-title"></h4>
-    <div class="form-group">
-      <label for="CRACT">Action Domotique pour fin Minuteur</label><small> ( Actif si option domotique activé )</small>
-      <select class="custom-select" id="CRACT">
-      <option selected value=0>Auncune</option>
-      <option value=5>Action 1</option>
-      <option value=6>Action 2</option>
-      <option value=7>Action 3</option>
-      <option value=8>Action 4</option>
-      <option value=9>Action 5</option>
-      <option value=10>Action 6</option>
-      </select>
-    </div>
 
-</div>
-</div>
 <div class="input-group">
   <div class="input-group-prepend">
 <div class="input-group-text text-info">Message fin Minuteur : </div>
@@ -241,7 +232,18 @@
 <br>
 <h2><span class="badge badge-secondary">Paramétres Alarme / Reveil</span></h2>
   <small class="text-muted">Options pour l'alarme</small>
-
+  <div class="input-group">
+    <div class="input-group-prepend">
+  <div class="input-group-text text-info">Heure par défaut : </div>
+  </div>
+  <input type="time" class="form-control" id="ALTIME" aria-describedby="altimeHelp" placeholder="06:00" style="max-width:50px">
+  </div>
+  <div class="input-group">
+    <div class="input-group-prepend">
+  <div class="input-group-text text-info">Jours de la semaine : </div>
+  </div>
+  <input type="time" class="form-control" id="ALTIME" aria-describedby="altimeHelp" placeholder="06:00" style="max-width:50px">
+  </div>
 </div>
 </div> <!-- fin row -->
 <div class="row">
@@ -263,23 +265,10 @@
     </div>
     <small class="text-muted">Activer les actions vers requete http( exemple enoie d'une requete vers une box domotique comme JEEDOM ,NextDom ou autres )</small>
 </div>
-      <div class="card border-secondary mx-auto mb-3 d-none" style="max-width: 40rem;" id="box">
-      <div class="card-header text-center secondary ">Définition des URL</div>
-      <div class="card-body small">
-        <div class="card border-primary mx-auto mb-2 " id="boxUrlUpdate">
-        <div class="card-header text-center bg-primary text-white">URL Update</div>
-        <div class="card-body small">
-      <div class="input-group">
-      <div class="input-group-prepend">
-      <div class="input-group-text text-info">URL Update : </div>
-      </div>
-      <input type="text" class="form-control " id="URL_update" aria-describedby="upHelp" placeholder="http://ipbox/update.php" style="font-size:1em;">
-      </div>
-      <small id="upHelp" class="form-text text-muted">Renseigner l'URL qui servira à mettre à jour une valeur , à intervalle fixe</small>
-      </div>
-    </div>
-    <div class="card border-primary mx-auto mb-2 " id="boxUrlUpdate">
-    <div class="card-header text-center bg-primary text-white">URL Update</div>
+      <div id="box" class="d-none">
+
+    <div class="card border-primary mx-auto mb-2 " id="boxUrlActions" style="max-width: 40rem;">
+    <div class="card-header text-center bg-primary text-white">URL Actions</div>
     <div class="card-body small">
       <div class="input-group">
     <div class="input-group-prepend">
@@ -302,12 +291,50 @@
     <input type="text" class="form-control" id="URL_action3" aria-describedby="ac3lHelp" placeholder="http://ipbox/action.php">
     </div>
     <small id="ac3Help" class="form-text text-muted">Renseigner l'URL qui servira lancer l'Action 3 sur votre domotique</small>
-
   </div>
 </div>
 
+
+       <div class="card border-primary mx-auto mb-3 " style="max-width: 40rem;">
+         <div class="card-header text-center bg-primary text-white">Actions déclenchement par défaut</div>
+         <div class="card-body">
+           <h4 class="card-title"></h4>
+           <div class="form-group">
+             <label for="CRACT" class="text-info">Action URL pour fin Minuteur</label>
+             <select class="custom-select" id="CRACT">
+             <option selected value=0>Auncune</option>
+             <option value=8>Action 1</option>
+             <option value=9>Action 2</option>
+             <option value=10>Action 3</option>
+             </select>
+           </div>
+           <div class="form-group">
+             <label for="ALACT" class="text-info">Action URL pour Alarme</label>
+             <select class="custom-select" id="ALACT">
+             <option selected value=0>Auncune</option>
+             <option value=8>Action 1</option>
+             <option value=9>Action 2</option>
+             <option value=10>Action 3</option>
+             </select>
+           </div>
        </div>
-      </div>
+       </div>
+
+       <div class="card border-dark mx-auto mb-2 " id="boxUrlUpdate" style="max-width: 40rem;">
+       <div class="card-header text-center bg-dark text-light">URL Update</div>
+       <div class="card-body small">
+     <div class="input-group">
+     <div class="input-group-prepend">
+     <div class="input-group-text text-info">URL Update : </div>
+     </div>
+     <input type="text" class="form-control " id="URL_update" aria-describedby="upHelp" placeholder="http://ipbox/update.php" style="font-size:1em;">
+     </div>
+     <small id="upHelp" class="form-text text-muted">Renseigner l'URL qui servira à mettre à jour une valeur , à intervalle fixe</small>
+     </div>
+   </div>
+
+</div>  <!-- fin box dom -->
+
 
 
 <h2><span class="badge badge-secondary">Paramétres systeme </span></h2>

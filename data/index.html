@@ -53,7 +53,7 @@
         <form action='/Notification' method='post' id="FormMsg" >
              <div class="form-group ">
 <label for='msg' class="text-primary">Message </label><br />
-<INPUT type='text' name='msg' id='msg' maxlength='59' placeholder='Votre Message ...' class="form-control" aria-describedby="msghelp"/>
+<INPUT type='text'  id='inputMsg' maxlength='59' placeholder='Votre Message ...' class="form-control" aria-describedby="msghelp"/>
 <small id ="msghelp" class="form-text text-muted">Notification limitée à 160 caractères.</small>
                  </div>
   <div class="form-row">
@@ -175,6 +175,36 @@
                    </div>
                    <button type="button" class="btn btn-outline-dark" id="btn_stopAl"><i class="fas fa-power-off h3"></i></button>
                    <button type="button" class="btn btn-outline-danger" id="btn_upAl"><i class="fas fa-bell h3" ></i></button>
+</div>
+<div class="text-primary mx-auto">
+<div class="form-check  form-check-inline">
+  <input class="form-check-input" type="checkbox" id="alday2" value=2>
+  <label class="form-check-label" for="alday2">Lun</label>
+</div>
+<div class="form-check form-check-inline">
+  <input class="form-check-input" type="checkbox" id="alday3" value=3>
+  <label class="form-check-label" for="alday3">Mar</label>
+</div>
+<div class="form-check form-check-inline">
+  <input class="form-check-input" type="checkbox" id="alday4" value=4>
+  <label class="form-check-label" for="alday4">Mer</label>
+</div>
+<div class="form-check form-check-inline">
+  <input class="form-check-input" type="checkbox" id="alday5" value=5>
+  <label class="form-check-label" for="alday5">Jeu</label>
+</div>
+<div class="form-check form-check-inline">
+  <input class="form-check-input" type="checkbox" id="alday6" value=6>
+  <label class="form-check-label" for="alday6">Ven</label>
+</div>
+<div class="form-check form-check-inline">
+  <input class="form-check-input" type="checkbox" id="alday7" value=7>
+  <label class="form-check-label" for="alday7">Sam</label>
+</div>
+<div class="form-check form-check-inline">
+<input class="form-check-input" type="checkbox" id="alday1" value=1>
+<label class="form-check-label" for="alday1">Dim</label>
+</div>
 </div>
 </div>
 </div></div></div>
@@ -429,8 +459,8 @@
     <div class="row">
         <div class=" col-lg-4">
       <div class="form-check">
-  <input class="form-check-input" type="checkbox" value="" id="check_ddht" aria-describedby="ddhtHelp">
-  <label class="form-check-label" for="check_ddht">
+  <input class="form-check-input" type="checkbox" value="" id="DDHT" aria-describedby="ddhtHelp">
+  <label class="form-check-label" for="DDHT">
     Afficher Info temperature sur Notif'heure
   </label>
 <small id="ddhtHelp" class="form-text text-muted">Permet l'affichage des infos températures , relevé par le DHT , directement sur l'écran du notif'heure.Les infos sont affichés à chaque relevé de la température ( Programmé sur page configuration ). </small>

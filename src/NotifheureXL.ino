@@ -15,7 +15,7 @@
 //  n/2 ... 3  2  1  0    <- Matrice basse
 // ***************************************
 
-const String ver = "0.8.5";
+const String ver = "0.8.5.3";
 const String hardware = "NotifheureXL";
 // Bibliotheque à inclure
 //********** eeprom / SPIFFS
@@ -46,6 +46,7 @@ const String hardware = "NotifheureXL";
 #include <WebSocketsServer.h>
 #include <WiFiManager.h>
 #include <ESP8266mDNS.h>
+#include <ESP8266HTTPClient.h>
 #include <PubSubClient.h>  //mqtt
 //*************************
 // Options
@@ -80,8 +81,9 @@ const char* www_password = "notif";
 // Branchement des matrices
 #define CLK_PIN   14  // SCK (D5 wemos D1R1 ou mini )
 #define DATA_PIN  13  // MOSI ( D7 wemos D1R1 ou mini )
-#define CS_PIN    15  // SS ( D10 sur D1R1  ou D8 sur Mini )
-//#define CS_PIN    12  // SS ( D10 sur D1R1  ou D8 sur Mini )  ---- Pour NOtifheure 1
+#define CS_PIN    15  // SS ou CS ( D10 sur D1R1  ou D8 sur Mini )
+//#define CS_PIN    12  // SS ( D10 sur D1R1  ou D6  sur Mini )  ---- Pour NOtifheure 1
+// si modif CS_PÏN modifier AUDIOPINRX 15
 // Pour info ancienne version NotifHeure
 //#define CLK_PIN   14
 //#define DATA_PIN  13
@@ -91,11 +93,17 @@ const char* www_password = "notif";
 #define AUDIO_OUT 0 // 0 aucun , 1 buzzer , 2 MP3player , 3 autres ( sortie relais ou digital)
 #define BOUTON1 false
 #define BOUTON2 false
-
+// PIN AUDIO ( AUDIOPINTX = MP3PLAYER TX ou Sortie Buzzer ou sortie RElais ou sortie Digital)
+// PINAUDIORX : uniquement our MP3player
+// PIN qui serviront pour la communication série sur le WEMOS
+#define AUDIOPINRX 12   // Entree pour DFP audio uniquement
+//#define AUDIOPINRX 15   // Entree pour DFP audio uniquement  si CS_PIN sur 12
+#define AUDIOPINTX 4    // Sortie principale pour AUdio
 //option NeoPixel
 // Nombre de led si Ring ou strip neopixel en place
 #define LED_COUNT  12
-
+// LED PIN ou Relais Lum
+#define LEDPIN 5    // Sortie dédié notification lumineuse
 
 // ********** DHT
 // ne pas modifier , sauf si Auto ne fonctionne pas
@@ -110,13 +118,7 @@ const char* www_password = "notif";
 // Entree analogique pour auto luminosité
 // PIN Analogique
 #define PINAUTO_LUM A0
-// PIN AUDIO ( AUDIOPINTX = MP3PLAYER TX ou Sortie Buzzer ou sortie RElais ou sortie Digital)
-// PINAUDIORX : uniquement our MP3player
-// PIN qui serviront pour la communication série sur le WEMOS
-#define AUDIOPINRX 12   // Entree pour DFP audio uniquement
-#define AUDIOPINTX 4    // Sortie principale pour AUdio
-// LED PIN ou Relais Lum
-#define LEDPIN 5    // Sortie dédié notification lumineuse
+
 //Boutons
 #define PIN_BTN1 2
 #define PIN_BTN2 0
@@ -178,12 +180,55 @@ const char* www_password = "notif";
 //****************************************
 //********** AUDIO OUT BUZZER ************
 //****************************************
-int frequence[] = {262, 294, 330, 349, 370, 392, 440, 494};      // (moi) tableau de fréquence des notes
-const char* The_Simpsons = "The_Simpsons:d=4,o=5,b=160:c.6,e6,f#6,8a6,g.6,e6,c6,8a,8f#,8f#,8f#,2g,8p,8p,8f#,8f#,8f#,8g,a#.,8c6,8c6,8c6,c6";
-const char* tetris = "tetris:d=4,o=5,b=160:e6,8b,8c6,8d6,16e6,16d6,8c6,8b,a,8a,8c6,e6,8d6,8c6,b,8b,8c6,d6,e6,c6,a,2a,8p,d6,8f6,a6,8g6,8f6,e6,8e6,8c6,e6,8d6,8c6,b,8b,8c6,d6,e6,c6,a,a";
-const char* arkanoid = "Arkanoid:d=4,o=5,b=140:8g6,16p,16g.6,2a#6,32p,8a6,8g6,8f6,8a6,2g6";
-const char* mario = "mario:d=4,o=5,b=100:16e6,16e6,32p,8e6,16c6,8e6,8g6,8p,8g,8p,8c6,16p,8g,16p,8e,16p,8a,8b,16a#,8a,16g.,16e6,16g6,8a6,16f6,8g6,8e6,16c6,16d6,8b,16p,8c6,16p,8g,16p,8e,16p,8a,8b,16a#,8a,16g.,16e6,16g6,8a6,16f6,8g6,8e6,16c6,16d6,8b,8p,16g6,16f#6,16f6,16d#6,16p,16e6,16p,16g#,16a,16c6,16p,16a,16c6,16d6,8p,16g6,16f#6,16f6,16d#6,16p,16e6,16p,16c7,16p,16c7,16c7,p,16g6,16f#6,16f6,16d#6,16p,16e6,16p,16g#,16a,16c6,16p,16a,16c6,16d6,8p,16d#6,8p,16d6,8p,16c6";
-const char* Xfiles  = "Xfiles:d=4,o=5,b=125:e,b,a,b,d6,2b.,1p,e,b,a,b,e6,2b.,1p,g6,f#6,e6,d6,e6,2b.,1p,g6,f#6,e6,d6,f#6,2b.,1p,e,b,a,b,d6,2b.,1p,e,b,a,b,e6,2b.,1p,e6,2b.";
+//int frequence[] = {262, 294, 330, 349, 370, 392, 440, 494};      // (moi) tableau de fréquence des notes
+/*int frequence[] = { 0,
+262, 277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494,
+523, 554, 587, 622, 659, 698, 740, 784, 831, 880, 932, 988,
+1047, 1109, 1175, 1245, 1319, 1397, 1480, 1568, 1661, 1760, 1865, 1976,
+2093, 2217, 2349, 2489, 2637, 2794, 2960, 3136, 3322, 3520, 3729, 3951
+};
+*/
+const char* buzMusic[] = {
+  "",
+  "MissionImp:d=16,o=6,b=95:32d,32d#,32d,32d#,32d,32d#,32d,32d#,32d,32d,32d#,32e,32f,32f#,32g,g,8p,g,8p,a#,p,c7,p,g,8p,g,8p,f,p,f#,p,g,8p,g,8p,a#,p,c7,p,g,8p,g,8p,f,p,f#,p,a#,g,2d,32p,a#,g,2c#,32p,a#,g,2c,a#5,8c,2p,32p,a#5,g5,2f#,32p,a#5,g5,2f,32p,a#5,g5,2e,d#,8d",
+  "StarWars:d=4,o=5,b=45:32p,32f#,32f#,32f#,8b.,8f#.6,32e6,32d#6,32c#6,8b.6,16f#.6,32e6,32d#6,32c#6,8b.6,16f#.6,32e6,32d#6,32e6,8c#.6,32f#,32f#,32f#,8b.,8f#.6,32e6,32d#6,32c#6,8b.6,16f#.6,32e6,32d#6,32c#6,8b.6,16f#.6,32e6,32d#6,32e6,8c#6",
+  "Indiana:d=4,o=5,b=250:e,8p,8f,8g,8p,1c6,8p.,d,8p,8e,1f,p.,g,8p,8a,8b,8p,1f6,p,a,8p,8b,2c6,2d6,2e6,e,8p,8f,8g,8p,1c6,p,d6,8p,8e6,1f.6,g,8p,8g,e.6,8p,d6,8p,8g,e.6,8p,d6,8p,8g,f.6,8p,e6,8p,8d6,2c6",
+  "PinkPante:d=4,o=6,b=100:8g_5,2a5,8b5,2c,8g_5,8a5,8b5,8c,8f,8e,8a5,8c,8e,2d_,16d,16c,16a5,8g5,1a5,8g_5,2a5,8b5,2c,8g_5,8a5,8b5,8c,8f,8e,8c,8e,8a,1g_,8g_5,2a5,8b5,2c,16g_5,8a5,8b5,8c,8f,8e,8a5,8c,8e,2d_,8d,16c,16a5",
+  "AdamsFami:d=4,o=6,b=127:8c,f,8a,f,8c,b5,2g,8f,e,8g,e,8e5,a5,2f,8c,f,8a,f,8c,b5,2g,8f,e,8c,d,8e,1f,8c,8d,8e,8f,1p,8d,8e,8f_,8g,1p,8d,8e,8f_,8g,p,8d,8e,8f_,8g,p,c,8e,1f",
+  "TheExo:d=4,o=6,b=160:8e5,8a5,8e5,8b5,8e5,8g5,8a5,8e5,8c,8e5,8d,8e5,8b5,8c,8e5,8a5,8e5,8b5,8e5,8g5,8a5,8e5,8c,8e5,8d,8e5,8b5,8c",
+  "The_Simpsons:d=4,o=5,b=160:c.6,e6,f#6,8a6,g.6,e6,c6,8a,8f#,8f#,8f#,2g,8p,8p,8f#,8f#,8f#,8g,a#.,8c6,8c6,8c6,c6",
+  "tetris:d=4,o=5,b=160:e6,8b,8c6,8d6,16e6,16d6,8c6,8b,a,8a,8c6,e6,8d6,8c6,b,8b,8c6,d6,e6,c6,a,2a,8p,d6,8f6,a6,8g6,8f6,e6,8e6,8c6,e6,8d6,8c6,b,8b,8c6,d6,e6,c6,a,a",
+  "Arkanoid:d=4,o=5,b=140:8g6,16p,16g.6,2a#6,32p,8a6,8g6,8f6,8a6,2g6",
+  "mario:d=4,o=5,b=100:16e6,16e6,32p,8e6,16c6,8e6,8g6,8p,8g,8p,8c6,16p,8g,16p,8e,16p,8a,8b,16a#,8a,16g.,16e6,16g6,8a6,16f6,8g6,8e6,16c6,16d6,8b,16p,8c6,16p,8g,16p,8e,16p,8a,8b,16a#,8a,16g.,16e6,16g6,8a6,16f6,8g6,8e6,16c6,16d6,8b,8p,16g6,16f#6,16f6,16d#6,16p,16e6,16p,16g#,16a,16c6,16p,16a,16c6,16d6,8p,16g6,16f#6,16f6,16d#6,16p,16e6,16p,16c7,16p,16c7,16c7,p,16g6,16f#6,16f6,16d#6,16p,16e6,16p,16g#,16a,16c6,16p,16a,16c6,16d6,8p,16d#6,8p,16d6,8p,16c6",
+  "Xfiles:d=4,o=5,b=125:e,b,a,b,d6,2b.,1p,e,b,a,b,e6,2b.,1p,g6,f#6,e6,d6,e6,2b.,1p,g6,f#6,e6,d6,f#6,2b.,1p,e,b,a,b,d6,2b.,1p,e,b,a,b,e6,2b.,1p,e6,2b.",
+  "AxelF:d=4,o=5,b=125:32p,8g,8p,16a#.,8p,16g,16p,16g,8c6,8g,8f,8g,8p,16d.6,8p,16g,16p,16g,8d#6,8d6,8a#,8g,8d6,8g6,16g,16f,16p,16f,8d,8a#,2g,p,SS,16f6,8d6,8c6,8a#,g,8a#.,16g,16p,16g,8c6,8g,8f,g,8d.6,16g,16p,16g,8d#6,8d6,8a#,8g,8d6,8g6,16g,16f,16p,16f,8d,8a#,2g",
+  "PacMan:b=160:32b,32p,32b6,32p,32f#6,32p,32d#6,32p,32b6,32f#6,16p,16d#6,16p,32c6,32p,32c7,32p,32g6,32p,32e6,32p,32c7,32g6,16p,16e6,16p,32b,32p,32b6,32p,32f#6,32p,32d#6,32p,32b6,32f#6,16p,16d#6,16p,32d#6,32e6,32f6,32p,32f6,32f#6,32g6,32p,32g6,32g#6,32a6,32p,32b.6",
+  "Dambuste:d=4,o=5,b=63:4f6,8a#6,8f6,8f6,16d#6,16d6,8d#6,8f6,4d6,8f6,8d6,8d6,16c6,16a#,8a,8c6,8a#.,16c6,8d6,8g6,8f.6,16d6,4f6,8c6,8f6,16g6,16a6,8a#6,4a6,4p",
+  "Muppets:d=4,o=5,b=250:c6,c6,a,b,8a,b,g,p,c6,c6,a,8b,8a,8p,g.,p,e,e,g,f,8e,f,8c6,8c,8d,e,8e,8e,8p,8e,g,2p,c6,c6,a,b,8a,b,g,p,c6,c6,a,8b,a,g.,p,e,e,g,f,8e,f,8c6,8c,8d,e,8e,d,8d,c",
+  "Bond:d=4,o=5,b=80:32p,16c#6,32d#6,32d#6,16d#6,8d#6,16c#6,16c#6,16c#6,16c#6,32e6,32e6,16e6,8e6,16d#6,16d#6,16d#6,16c#6,32d#6,32d#6,16d#6,8d#6,16c#6,16c#6,16c#6,16c#6,32e6,32e6,16e6,8e6,16d#6,16d6,16c#6,16c#7,c.7,16g#6,16f#6,g#.6",
+  "TakeOnMe:d=4,o=4,b=160:8f#5,8f#5,8f#5,8d5,8p,8b,8p,8e5,8p,8e5,8p,8e5,8g#5,8g#5,8a5,8b5,8a5,8a5,8a5,8e5,8p,8d5,8p,8f#5,8p,8f#5,8p,8f#5,8e5,8e5,8f#5,8e5,8f#5,8f#5,8f#5,8d5,8p,8b,8p,8e5,8p,8e5,8p,8e5,8g#5,8g#5,8a5,8b5,8a5,8a5,8a5,8e5,8p,8d5,8p,8f#5,8p,8f#5,8p,8f#5,8e5,8e5",
+  "A-Team:d=8,o=5,b=125:4d#6,a#,2d#6,16p,g#,4a#,4d#.,p,16g,16a#,d#6,a#,f6,2d#6,16p,c#.6,16c6,16a#,g#.,2a#",
+  "TopGun:d=4,o=4,b=31:32p,16c#,16g#,16g#,32f#,32f,32f#,32f,16d#,16d#,32c#,32d#,16f,32d#,32f,16f#,32f,32c#,16f,d#,16c#,16g#,16g#,32f#,32f,32f#,32f,16d#,16d#,32c#,32d#,16f,32d#,32f,16f#,32f,32c#,g#",
+  "Smurfs:d=32,o=5,b=200:4c#6,16p,4f#6,p,16c#6,p,8d#6,p,8b,p,4g#,16p,4c#6,p,16a#,p,8f#,p,8a#,p,4g#,4p,g#,p,a#,p,b,p,c6,p,4c#6,16p,4f#6,p,16c#6,p,8d#6,p,8b,p,4g#,16p,4c#6,p,16a#,p,8b,p,8f,p,4f#",
+  "Entertainer:d=4,o=5,b=140:8d,8d#,8e,c6,8e,c6,8e,2c.6,8c6,8d6,8d#6,8e6,8c6,8d6,e6,8b,d6,2c6,p,8d,8d#,8e,c6,8e,c6,8e,2c.6,8p,8a,8g,8f#,8a,8c6,e6,8d6,8c6,8a,2d6",
+  "Looney:d=4,o=5,b=140:32p,c6,8f6,8e6,8d6,8c6,a.,8c6,8f6,8e6,8d6,8d#6,e.6,8e6,8e6,8c6,8d6,8c6,8e6,8c6,8d6,8a,8c6,8g,8a#,8a,8f",
+  "20thCenFox:d=16,o=5,b=140:b,8p,b,b,2b,p,c6,32p,b,32p,c6,32p,b,32p,c6,32p,b,8p,b,b,b,32p,b,32p,b,32p,b,32p,b,32p,b,32p,b,32p,g#,32p,a,32p,b,8p,b,b,2b,4p,8e,8g#,8b,1c#6,8f#,8a,8c#6,1e6,8a,8c#6,8e6,1e6,8b,8g#,8a,2b",
+  "GoodBad:d=4,o=5,b=56:32p,32a#,32d#6,32a#,32d#6,8a#.,16f#.,16g#.,d#,32a#,32d#6,32a#,32d#6,8a#.,16f#.,16g#.,c#6,32a#,32d#6,32a#,32d#6,8a#.,16f#.,32f.,32d#.,c#,32a#,32d#6,32a#,32d#6,8a#.,16g#.,d#",
+  "BackToTh:d=4,o=6,b=180:2c,8b5,8a5,b5,a5,g5,1a5,p,d,2c,8b5,8a5,b5,a5,g5,1a5"
+};
+/*
+const char* The_Simpsons PROGMEM = "The_Simpsons:d=4,o=5,b=160:c.6,e6,f#6,8a6,g.6,e6,c6,8a,8f#,8f#,8f#,2g,8p,8p,8f#,8f#,8f#,8g,a#.,8c6,8c6,8c6,c6";
+const char* tetris PROGMEM = "tetris:d=4,o=5,b=160:e6,8b,8c6,8d6,16e6,16d6,8c6,8b,a,8a,8c6,e6,8d6,8c6,b,8b,8c6,d6,e6,c6,a,2a,8p,d6,8f6,a6,8g6,8f6,e6,8e6,8c6,e6,8d6,8c6,b,8b,8c6,d6,e6,c6,a,a";
+const char* arkanoid PROGMEM = "Arkanoid:d=4,o=5,b=140:8g6,16p,16g.6,2a#6,32p,8a6,8g6,8f6,8a6,2g6";
+const char* mario PROGMEM = "mario:d=4,o=5,b=100:16e6,16e6,32p,8e6,16c6,8e6,8g6,8p,8g,8p,8c6,16p,8g,16p,8e,16p,8a,8b,16a#,8a,16g.,16e6,16g6,8a6,16f6,8g6,8e6,16c6,16d6,8b,16p,8c6,16p,8g,16p,8e,16p,8a,8b,16a#,8a,16g.,16e6,16g6,8a6,16f6,8g6,8e6,16c6,16d6,8b,8p,16g6,16f#6,16f6,16d#6,16p,16e6,16p,16g#,16a,16c6,16p,16a,16c6,16d6,8p,16g6,16f#6,16f6,16d#6,16p,16e6,16p,16c7,16p,16c7,16c7,p,16g6,16f#6,16f6,16d#6,16p,16e6,16p,16g#,16a,16c6,16p,16a,16c6,16d6,8p,16d#6,8p,16d6,8p,16c6";
+const char* Xfiles PROGMEM = "Xfiles:d=4,o=5,b=125:e,b,a,b,d6,2b.,1p,e,b,a,b,e6,2b.,1p,g6,f#6,e6,d6,e6,2b.,1p,g6,f#6,e6,d6,f#6,2b.,1p,e,b,a,b,d6,2b.,1p,e,b,a,b,e6,2b.,1p,e6,2b";
+const char* Axel PROGMEM = "AxelF:d=4,o=5,b=125:32p,8g,8p,16a#.,8p,16g,16p,16g,8c6,8g,8f,8g,8p,16d.6,8p,16g,16p,16g,8d#6,8d6,8a#,8g,8d6,8g6,16g,16f,16p,16f,8d,8a#,2g,p,SS,16f6,8d6,8c6,8a#,g,8a#.,16g,16p,16g,8c6,8g,8f,g,8d.6,16g,16p,16g,8d#6,8d6,8a#,8g,8d6,8g6,16g,16f,16p,16f,8d,8a#,2g";
+const char* Ghostbusters PROGMEM = "Ghostbusters:d=4,o=5,b=180:4c5,4c5,8e5,8f5,8g5,8p, 4a#5,4a#5,4f5,4f5,4c5,4c5,8e5,8f5,8g5,8p,4a#5,4a#5,4f5";
+const char* dkong PROGMEM = "dkong_level:d=4,o=5,b=200:c6,32p,8d6,8p,f6,8p,8d6,16p,8c6,16p,8d6,16p,a#";
+const char* pacman PROGMEM = "PacMan:b=160:32b,32p,32b6,32p,32f#6,32p,32d#6,32p,32b6,32f#6,16p,16d#6,16p,32c6,32p,32c7,32p,32g6,32p,32e6,32p,32c7,32g6,16p,16e6,16p,32b,32p,32b6,32p,32f#6,32p,32d#6,32p,32b6,32f#6,16p,16d#6,16p,32d#6,32e6,32f6,32p,32f6,32f#6,32g6,32p,32g6,32g#6,32a6,32p,32b.6";
+const char* donkey PROGMEM = "DonkeyKong:d=4,o=5,b=200:8a#,8p,8d6,16p,16f.6,16g.6,16f.6,8a#,8p,8d6,16p,16f.6,16g.6,16f.6,8a#,8p,8d6,16p,16f.6,16g.6,16f.6,8a#,8p,8d6,16p,16f.6,16g.6,16f.6";
+const char* dambuste PROGMEM = "Dambuste:d=4,o=5,b=63:4f6,8a#6,8f6,8f6,16d#6,16d6,8d#6,8f6,4d6,8f6,8d6,8d6,16c6,16a#,8a,8c6,8a#.,16c6,8d6,8g6,8f.6,16d6,4f6,8c6,8f6,16g6,16a6,8a#6,4a6,4p";
+*/
 //***************************************
 
 //******************
@@ -195,7 +240,7 @@ const unsigned long synchroNTP=600000;
 const unsigned long MAGICEEP=12379025;
 const uint32_t MAGICEP=0xAABBCCDD;
 const byte EP_VERSION = 1;
-int eeAddress = 64;
+const int eeAddress = 64;
 const unsigned long _refTime=1514800000;
 const unsigned long _refTimeHigh=2081030400;
 #define BUFFEEP 280
@@ -241,6 +286,7 @@ struct sConfigSys {
   bool HOR;
   bool LUM;
   bool REV;
+  bool DHT;                   //affichage temperature sur notifheure si DHT
   byte timeREV[2];            // Heure reveil
   char msgAlarme[30];         // Message a affiché pour alarme
   char msgMinuteur[30];       // Message a affiché pour fin de minuteur
@@ -250,6 +296,11 @@ struct sConfigSys {
   char charOff;               // caractére / symbole à afficher sur horloge eteinte
   char textnotif[20];         // texte prénotif
   bool ALN;                   // Auto Longueur Notif
+  bool box;                    // si urltobox actif
+  char URL_Action1[130];
+  char URL_Action2[130];
+  char URL_Action3[130];
+  bool alDay[7];              // jour alarme
   int fxint;                  // intensité par defaut fx
   byte fxcolor;               //colueur par defaut fx
   char hflag[5];              // flag autorisé pour historique
@@ -270,7 +321,7 @@ struct sConfigSys {
 };
 sConfigSys configSys;
 const size_t capacityMQTT = JSON_OBJECT_SIZE(10) + 200;
-const size_t capacityConfig = JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(6) + JSON_ARRAY_SIZE(8) + JSON_OBJECT_SIZE(80) + 1000;
+const size_t capacityConfig = JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(6) + JSON_ARRAY_SIZE(8) + JSON_OBJECT_SIZE(96) + 1800;
 const size_t capacityHisto =3*JSON_ARRAY_SIZE(10)  + JSON_OBJECT_SIZE(4) + 500;
 const char *fileconfig = "/config/config.json";  // fichier config
 const char *fileHist = "/config/Historique.json";  // fichier config
@@ -278,6 +329,7 @@ const char *fileHist = "/config/Historique.json";  // fichier config
 // init network (wifi , broker )
 WiFiUDP ntpUDP;
 WiFiClient espClient;
+HTTPClient http;
 PubSubClient MQTTclient(espClient);
 
 // By default 'pool.ntp.org' is used with 60 seconds update interval and
@@ -373,6 +425,7 @@ struct sNotif {
   byte AnOut;
   bool Alert;
   int type;
+  int intensity;
 };
 
 sNotif Notification[7];
@@ -381,7 +434,7 @@ sNotif fxNotif;
 
 //variable notif
 int Nz,Sc,Pa;
-byte Ntype,Fi,Fo,An;
+byte Ntype,Fi,Fo,An,LuN;
 textPosition_t Npos;
 char Nflag;
 /*
@@ -435,8 +488,10 @@ struct snotifAudio {
   int fx;
   int piste;
   byte volume;
+  byte nzo;
+  bool state;
 };
-struct snotifAudio notifAudio={0,_MP3START,VOLUME};
+struct snotifAudio notifAudio;
 //const struct snotifAudio audioBuz={};
 
 //******** fx *******
@@ -946,8 +1001,17 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   config.HOR=docConfig["HOR"] | true;
   config.LUM=docConfig["LUM"] | true;
   config.REV=docConfig["REV"] | false;
+  config.DHT=docConfig["DDHT"] | false;
   config.timeREV[0]=docConfig["TIMEREV"][0] | 7;
   config.timeREV[1]=docConfig["TIMEREV"][1] | 0;
+  config.alDay[0]=docConfig["ALDAY"][0] | false;
+  config.alDay[1]=docConfig["ALDAY"][1] | false;
+  config.alDay[2]=docConfig["ALDAY"][2] | true;
+  config.alDay[3]=docConfig["ALDAY"][3] | true;
+  config.alDay[4]=docConfig["ALDAY"][4] | true;
+  config.alDay[5]=docConfig["ALDAY"][5] | true;
+  config.alDay[6]=docConfig["ALDAY"][6] | true;
+  config.alDay[7]=docConfig["ALDAY"][7] | false;
   config.charOff=docConfig["CHAROFF"] | ' ';
   config.timeAdjust=docConfig["TIMEADJUST"] | OFFSET_ADJUST;
   strlcpy(config.textnotif,docConfig["TEXTNOTIF"] | "Notif",sizeof(config.textnotif));
@@ -976,20 +1040,28 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   config.btnclic[2][1] = docConfig["btnclic"][3] | 6;
   config.btnclic[2][2] = docConfig["btnclic"][4] | 7;
   config.btnclic[2][3] = docConfig["btnclic"][5] | 4;
+  config.box=docConfig["BOX"] | false;
+  strlcpy(config.URL_Action1, docConfig["URL_ACT1"] | "N/A", sizeof(config.URL_Action1));
+  strlcpy(config.URL_Action2, docConfig["URL_ACT2"] | "N/A", sizeof(config.URL_Action2));
+  strlcpy(config.URL_Action3, docConfig["URL_ACT3"] | "N/A", sizeof(config.URL_Action3));
   file.close();
 
 } // fin fonction loadconfig
 
 String createJson(sConfigSys  &config,bool flagCreate=false) {
   String json;
+
   //const size_t capacityConfig = 2*JSON_ARRAY_SIZE(3) + JSON_OBJECT_SIZE(41) + 1500;
   DynamicJsonDocument docConfig(capacityConfig);
   docConfig["HARDWARE"]=hardware;
+  if (flagCreate) docConfig["CONFIG"]=true;
+  else docConfig["CONFIG"]=config.config;
   docConfig["NOM"]=hardConfig.nom;
   docConfig["SEC"]=config.SEC;
   docConfig["HOR"]=config.HOR;
   docConfig["LUM"]=config.LUM;
   docConfig["REV"]=config.REV;
+  docConfig["DDHT"]=config.DHT;
   docConfig["MSGALARM"]=config.msgAlarme;
   docConfig["MSGMINUT"]=config.msgMinuteur;
   docConfig["HFLAG"]=config.hflag;
@@ -1076,6 +1148,11 @@ String createJson(sConfigSys  &config,bool flagCreate=false) {
   docConfig["TOPICSTATE"]=topicName+TOPIC_STATE;
   docConfig["TEMPOBROKER"]=config.tempobroker;
   docConfig["STATEBROKER"]=statebroker;
+  //box
+  docConfig["BOX"]=config.box;
+  docConfig["URL_ACT1"]=config.URL_Action1;
+  docConfig["URL_ACT2"]=config.URL_Action2;
+  docConfig["URL_ACT3"]=config.URL_Action3;
   //boutons
   docConfig["BTN1"]=hardConfig.btn1;
   docConfig["BTN2"]=hardConfig.btn2;
@@ -1086,6 +1163,16 @@ String createJson(sConfigSys  &config,bool flagCreate=false) {
     btnclic.add(config.btnclic[2][1]);
     btnclic.add(config.btnclic[2][2]);
     btnclic.add(config.btnclic[2][3]);
+  // alarme jours
+  JsonArray aday = docConfig.createNestedArray("ALDAY");
+    aday.add(config.alDay[0]);
+    aday.add(config.alDay[1]);
+    aday.add(config.alDay[2]);
+    aday.add(config.alDay[3]);
+    aday.add(config.alDay[4]);
+    aday.add(config.alDay[5]);
+    aday.add(config.alDay[6]);
+    aday.add(config.alDay[7]);
   //donnee hardConfig
   docConfig["XL"]=hardConfig.XL;
   docConfig["MAXDISPLAY"]=hardConfig.maxDisplay;
@@ -1158,26 +1245,23 @@ void GetTemp() {
 void audio(char action='P')
 {
 switch (hardConfig.typeAudio) {
-  case 1 : // Buzzer
+  case 1 : // Buzzer - HP
+          if (notifAudio.fx>0)
           {
-            switch (notifAudio.fx) {
-              case 1 :rtttl::begin(AUDIOPINTX, The_Simpsons);
-                break;
-                case 2:rtttl::begin(AUDIOPINTX, tetris);
-                break;
-                case 3 :rtttl::begin(AUDIOPINTX, arkanoid);
-                  break;
-                case 4:rtttl::begin(AUDIOPINTX, mario);
-                break;
-              case 5:rtttl::begin(AUDIOPINTX, Xfiles);
-                break;
+          //  String song= "AdamsFami:d=4,o=6,b=127:8c,f,8a,f,8c,b5,2g,8f,e,8g,e,8e5,a5,2f,8c,f,8a,f,8c,b5,2g,8f,e,8c,d,8e,1f,8c,8d,8e,8f,1p,8d,8e,8f_,8g,1p,8d,8e,8f_,8g,p,8d,8e,8f_,8g,p,c,8e,1f";
+                notifAudio.state=true;
 
-            }
-            while( !rtttl::done() )
-             {
-                  rtttl::play();
-               }
-        } // fin 1
+                rtttl::begin(AUDIOPINTX, buzMusic[notifAudio.fx]);
+            //    rtttl::begin(AUDIOPINTX, song);
+                rtttl::play();
+             }
+          else if (action=='S') {
+            rtttl::stop();
+            notifAudio.fx=0;
+            notifAudio.state=false;
+            Serial.println("fonction stop");
+          }
+      // fin 1
         break;
       case 2: // MP3 player
       {
@@ -1388,8 +1472,11 @@ void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_L
       Serial.println("Position: "+String(pos)+" Speed = "+String(S)+" Pause : "+String(P));
       Serial.println("Effet fxIn : "+String(fi)+"  fxOut : "+String(fo)+"  Anim : "+String(An));
       Serial.println("Flag : "+String(flag));
+      Serial.println("Intensité : "+String(LuN));
       Serial.println("**********************");
     }
+
+
   char tabflag[10]={'A','F','F','P','B','O','X','x','x','S'};
  // Verification Zones
  if (NZO >_maxZones-1 || _maxZones==xl) NZO=zoneMsg;
@@ -1399,29 +1486,32 @@ void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_L
  if (NZO==zoneTime) L=xl*5;
  else L=5;
  maxLed=ZWP[NZO]*8;
- if (largeurMsg>floor(maxLed/L) && configSys.ALN ) type=0;
+ if (largeurMsg>floor(maxLed/L) && configSys.ALN && type!=9 && type!=10) type=0;
  // adapte la pause au millieme
  P=P*1000;
+ if (P==0) P=1;  // bug sur scroll si egale à zero
+ //historique
+ if (flag!='I') {
+   if (type!=0) flag=tabflag[type];
+ }
+ if (checkFlag(flag)) addHisto(Msg,NZO,flag);
  //construction notif
+ //transfert message
+ Msg.toCharArray( Notification[NZO].Notif,BUF_SIZE);
+ utf8Ascii(Notification[NZO].Notif);
   Notification[NZO].Alert=true;
   Notification[NZO].type=type;
-  Msg.toCharArray( Notification[NZO].Notif,BUF_SIZE);
-  //if (!hardConfig.XL)
-  utf8Ascii(Notification[NZO].Notif);
   Notification[NZO].pos=pos;
   Notification[NZO].speed=S;
   Notification[NZO].pause=P;
   Notification[NZO].fxIn=fi;
   Notification[NZO].fxOut=fo;
-//historique
-if (flag!='I') {
-  if (type!=0) flag=tabflag[type];
-}
-if (checkFlag(flag)) addHisto(Msg,NZO,flag);
+  Notification[NZO].intensity=LuN;
 
   //if (configSys.typeLED>0 && notifLED>0) fxLED(1,notifLED);
   if (hardConfig.typeLED>0 && notifLed.fx>0 ) fxLED();
   if (hardConfig.typeAudio>0 && notifAudio.fx>0 ) {
+      notifAudio.nzo=NZO;
       audio();
       delay(500);
     }
@@ -1504,12 +1594,21 @@ if (checkFlag(flag)) addHisto(Msg,NZO,flag);
     Notification[NZO].fxIn=24;
     Notification[NZO].fxOut=4;
     break;
+    case 10 : // affichage DHT
+    Serial.println("mode Print dHT");
+    Notification[NZO].speed=20;
+    Notification[NZO].pause=3000;
+    Notification[NZO].pos=PA_CENTER;
+    Notification[NZO].fxIn=24;
+    Notification[NZO].fxOut=15;
+    break;
   }
 
 }  // fin displaynotif
 
 //lecture historique
 void displayHisto() {
+LuN=configSys.intensity;
 String msgHisto;
 char djh[5];
 static int iH=0;
@@ -1562,6 +1661,7 @@ void displayTimer(char *psz,bool f) {
         CR=false;
         //notifLed=flash;
         notifLed=FX_led[configSys.fxCR];
+        LuN=configSys.intensity;
         displayNotif(configSys.msgMinuteur);
        }
 }
@@ -1601,9 +1701,25 @@ if (CR) displayTimer(psz,f);
 //sprintf(psz, "%02d%c%02d", timeClient.getHours(), (f ? ':' : ' '), timeClient.getMinutes());
 }
 
+void displayDHT() {
+  String printDHT;
+  LuN=configSys.intensity;
+  GetTemp();
+  printDHT=String(temperature,1)+" °C";
+    displayNotif(printDHT,zoneMsg,10);
+}
 
-
-
+void ToBox(char *Url) {
+  String url = Url;
+  int httpCode;
+  if (configSys.DEBUG) Serial.println("valeur de URL dans tobox : " + url);
+  http.begin(url);
+  httpCode = http.GET();
+  if (configSys.DEBUG) Serial.println("valeur httpcode : " + httpCode);
+  http.end();
+  //if (httpCode != 200 ) return false;
+  //else return true;
+}
 
 // luminosite auto
 // fonction reglage auto luminosite
@@ -1647,7 +1763,7 @@ void cmdLum(bool val,byte I=configSys.intensity) {
       break;
     }
   }
-
+  LuN=configSys.intensity;
   displayNotif(msgInfo,zoneMsg,9);
 }
 
@@ -1696,13 +1812,13 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
 
 //MDNS
-void serverMDNS( String mdnsN) {
+void serverMDNS( String Nom_MDNS) {
   // Set up mDNS responder:
- if (!MDNS.begin(mdnsN)) {
+ if (!MDNS.begin(Nom_MDNS.c_str())) {
     if (configSys.DEBUG) Serial.println("Error setting up MDNS responder!");
   }
 
-  if (configSys.DEBUG) Serial.println("mDNS responder started : "+mdnsN);
+  if (configSys.DEBUG) Serial.println("mDNS responder started : "+Nom_MDNS);
 
   //mdns.register("fishtank", { description="Top Fishtank", service="http", port=80, location='Living Room' })
   // Add service to MDNS-SD
@@ -1737,12 +1853,13 @@ return ReponseMdns;
 bool optionsBool( bool *pOpt, String val) {
   bool result=true;
   bool newval;
-  Serial.println("valeur ="+String(val));
+  if (configSys.DEBUG) Serial.println("Debug valeur bool ="+String(val));
   if (val == "true" || val =="1")   newval=true; //*pOpt=true;
   else if (val == "false" || val =="0")  newval=false;  //*pOpt=false;
   else result=false;
   if (newval != *pOpt) *pOpt=newval;
   else result=false;
+  if (configSys.DEBUG)  Serial.println("valeur test = "+String(result));
   return result;
 }
 // pour objet type byte
@@ -1803,14 +1920,28 @@ void handleConfig() {
         if (key=="pause") {optionsNum(&configSys.pauseTime,server.arg(i),0,180);mem=1;}
         if (key=="debug") if (optionsBool(&configSys.DEBUG,server.arg(i))) mem=1;
         if (key=="automsg") if (optionsBool(&configSys.ALN,server.arg(i))) mem=1;
+        if (key=="box") if (optionsBool(&configSys.box,server.arg(i))) mem=1;
+        if (key=="url1") if(validString(server.arg(i),7,130)) {
+          value=server.arg(i);
+            value.toCharArray(configSys.URL_Action1,sizeof(configSys.URL_Action1));
+            mem=1;
+        }
+        if (key=="url2") if(validString(server.arg(i),7,130)) {
+          value=server.arg(i);
+            value.toCharArray(configSys.URL_Action2,sizeof(configSys.URL_Action2));
+            mem=1;
+        }
+        if (key=="url3") if(validString(server.arg(i),7,130)) {
+          value=server.arg(i);
+            value.toCharArray(configSys.URL_Action3,sizeof(configSys.URL_Action3));
+            mem=1;
+        }
         if (key=="broker") if (optionsBool(&configSys.broker,server.arg(i))) {mem=1;reboot=true;}
-        if (key=="ipbroker") {
-        if (validString(server.arg(i),8,50))
+        if (key=="ipbroker") if (validString(server.arg(i),8,50))
             {  value=server.arg(i);
               value.toCharArray(configSys.servbroker,sizeof(configSys.servbroker));
               mem=1;
-
-            }}
+            }
         if (key=="ubroker") {
               if (validString(server.arg(i),3,20))
                   {  value=server.arg(i);
@@ -1938,6 +2069,7 @@ void handleOptions() {
       cmdLED(configSys.LED,configSys.LEDINT);
       rep="LEDINT : "+String(configSys.LEDINT);
     }
+    if (key=="DDHT") if (optionsBool(&configSys.DHT,server.arg(i))) {mem=1;rep="DHT:"+String(configSys.DHT);}
     if (key=="REV") if (optionsBool(&configSys.REV,server.arg(i))) {mem=1;rep="REV:"+String(configSys.REV);}
     if (key=="SEC") if (optionsBool(&configSys.SEC,server.arg(i))) {mem=1;rep="SEC:"+String(configSys.SEC);}
     if (key=="HOR") if (optionsBool(&configSys.HOR,server.arg(i))) {mem=1;rep="HOR:"+String(configSys.HOR);}
@@ -2021,6 +2153,7 @@ void initNotif() {
   Fi=1;
   Fo=1;
   An=0;
+  LuN=configSys.intensity;
 }
 
 String prepNotif(String key,String val) {
@@ -2028,12 +2161,16 @@ String prepNotif(String key,String val) {
   //displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_LEFT, uint16_t S=configSys.scrollSpeed ,uint16_t P=configSys.pauseTime , byte fi=1,byte fo=1)
   key.toUpperCase();
   if (key=="MSG" && val!="") { rep=val;}
+  if (key=="NZO" ) { Nz=val.toInt();}
   if (key=="AUDIO") {
     optionsNum(&notifAudio.volume,val,0,100);
     if (notifAudio.volume>0) notifAudio.fx=1;
   }
   if (key=="NUM") {
-    if (hardConfig.typeAudio==1) optionsNum(&notifAudio.fx,val,0,10);
+    if (hardConfig.typeAudio==1) {
+            optionsNum(&notifAudio.fx,val,0,30);
+
+          }
     else if (hardConfig.typeAudio==2) optionsNum(&notifAudio.piste,val,0,totalMP3);
   }
   if (key=="LEDFX") {
@@ -2041,15 +2178,26 @@ String prepNotif(String key,String val) {
         if (notifLed.fx==1) notifLed.loop=3;
       }
   if (key=="LEDLUM") { optionsNum(&notifLed.lum,val,0,100);}
+  if (key=="INTNOTIF") { optionsNum(&LuN,val,0,15);}
   if (key=="FLASH") notifLed=flash;
   if (key=="BREATH") notifLed=breath;
-  if (key=="NZO" ) { Nz=val.toInt();}
+
   if (key=="SPEED" ) { optionsNum(&Sc,val,10,100);}
   if (key=="PAUSE" ) { optionsNum(&Pa,val,0,180);}
+  if (key=="FX" ) { optionsNum(&Fo,val,0,28);optionsNum(&Fi,val,0,28);optionsNum(&Ntype,"6",0,9);}
   if (key=="ANIM" ) { optionsNum(&An,val,0,15);optionsNum(&Ntype,"7",0,9);}
-  if (key=="TYPE") { optionsNum(&Ntype,val,0,9);}
-  if (key=="FI" ) { optionsNum(&Fi,val,0,28);}
-  if (key=="FO" ) { optionsNum(&Fo,val,0,28);}
+
+  if (key=="TYPE") {
+          if (val=="INFO") val=1;
+          else if (val=="FIX") val=2;
+          else if (val=="PAC") val=3;
+          else if (val=="ARROW") val=4;
+          else if (val=="ROLL") val=5;
+          optionsNum(&Ntype,val,0,9);
+        }
+  //if (key=="FIX") Ntype=2;
+if (key=="FI" ) { optionsNum(&Fi,val,0,28);}
+if (key=="FO" ) { optionsNum(&Fo,val,0,28);}
 if (key=="FIO" ) { optionsNum(&Fo,val,0,28);optionsNum(&Fi,val,0,28);}
 
 if (key=="IMPORTANT" ) { Nflag='I';}
@@ -2060,6 +2208,7 @@ void handleNotif() {
   String notif,rep,key,value;
   initNotif();
   rep="";
+  notif="";
 
   //parcours argument http
   for (int i = 0; i < server.args(); i++) {
@@ -2071,6 +2220,7 @@ void handleNotif() {
 
   if (notif!="") {
     displayNotif(notif,Nz,Ntype,Npos,Sc,Pa,Fi,Fo,Nflag,An);
+    rep=notif;
     //rep+=": type="+String(Ntype)+" - fi = "+String(Fi)+" - Anim:"+String(An);
   }
   server.send(200, "text/plane","Message : "+rep);
@@ -2293,7 +2443,10 @@ switch (actionClick) {
   break;
       case 5 :  //affichage Historique
       if (indexHist>0) displayHisto();
-      else displayNotif("Aucun historique");
+      else {
+        LuN=configSys.intensity;
+        displayNotif("Aucun historique");
+      }
       break;
       case 6 : // affichage / masque Minuteur
               CR=!CR;
@@ -2301,6 +2454,15 @@ switch (actionClick) {
       case 7 : //Lancer Minuteur
               minuteur = configSys.CrTime*60;
               CR=true;
+      break;
+      case 8 : //URL Action 1
+                ToBox(configSys.URL_Action1);
+      break;
+      case 9 : //URL Action 1
+                ToBox(configSys.URL_Action2);
+      break;
+      case 10 : //URL Action 1
+                ToBox(configSys.URL_Action3);
       break;
     default:
 
@@ -2329,14 +2491,23 @@ fxLED(Blue);
 }
 
 void alarme() {
-  notifLed=flash;
-  displayNotif("Alarme !");
+  // detection jour weelday()
+  bool okDay=false;
+  for (int i=1;i<8;i++) {
+    if (configSys.alDay[i]==true && weekday()==i )  okDay=true;
+  }
+  // Si jour ok
+  if (okDay==true) {
+        LuN=configSys.intensity;
+        notifLed=flash;
+        displayNotif("Alarme !");
+      }
 }
 
 //mqtt
 void MQTTsend() {
   String t;
-  char topicS[80];
+//  char topicS[80];
   char buffer[512];
   DynamicJsonDocument docMqtt(capacityConfig);
   docMqtt["temperature"] = (String)temperature;
@@ -2349,14 +2520,14 @@ void MQTTsend() {
   Serial.println("envoie publication MQTT");
   //docMqtt["temperature"]=String(temperature);
   size_t n = serializeJson(docMqtt, buffer);
-  t=topicName+TOPIC_STATE;
+  t=topicName+String(TOPIC_STATE);
   Serial.println(t);
-  t.toCharArray(topicS,80);
-  MQTTclient.publish(topicS, buffer, n);
+  //t.toCharArray(topicS,80);
+  MQTTclient.publish(t.c_str(), buffer, n);
 }
 
+
 void MQTTcallback(char* topic, byte* payload, unsigned int length) {
-  //char msgmqtt[50];
   Serial.print("Message MQTT [");
   Serial.print(topic);
   Serial.print("] ");
@@ -2402,7 +2573,7 @@ if (msg!="") {
 }  // fin rx message
 }
 
-bool MQTTconnect() {
+boolean MQTTconnect() {
     char topicN[80];
   String t="";
   //while (!MQTTclient.connected()) {
@@ -2426,14 +2597,14 @@ bool MQTTconnect() {
       // formatage de l'envoie
       t=topicName+"/config";
       t.toCharArray(topicN,80);
-      MQTTclient.publish(topicN, buffer,true);
+      MQTTclient.publish(topicN, buffer,n);
       // Souscription pour reception des messages
 
-      t=topicName+TOPIC_SOUSCRIPTION;
+      t=topicName+String(TOPIC_SOUSCRIPTION);
       t.toCharArray(topicN,80);
       Serial.print("topic souscription : ");
       Serial.println(topicN);
-      if (MQTTclient.subscribe(topicN)) {
+      if (MQTTclient.subscribe(topicN,1)) {
           if (configSys.DEBUG) Serial.println("souscription ok");
       } else   if (configSys.DEBUG) Serial.println("Erreur souscription");
 
@@ -2460,7 +2631,9 @@ void setup() {
  // Eeprom lecture config
  readEConfig();
  // ******************** init screen --- Start
+
  initPrintSystem();
+
  infoSetup(0,"Start ...");
 
  // ******************* chargement donnée systémes
@@ -2519,6 +2692,7 @@ void setup() {
     }
     break;
   }
+
 // ************************ Etape 2
 infoSetup(2,"Net ...");
 // Debug fsinfo
@@ -2536,7 +2710,8 @@ Serial.println("info pagesize: "+String(fsInfo.pageSize));
 Serial.println("info maxOpenFiles : "+String(fsInfo.maxOpenFiles));
 Serial.println("info maxPathLength : "+String(fsInfo.maxPathLength));
 }
- // creation hostname wifi// Set Hostname.
+//MakeName - creation hostname wifi
+// Set Hostname.
    idNotif=String(ESP.getChipId(), HEX);;
    hostname = hardConfig.nom;
    hostname +=configSys.hostName;
@@ -2688,6 +2863,8 @@ if (hardConfig.perso) {
  Serial.println("zone XL L "+String( zoneXL_L));
  Serial.println("zone XL H "+String( zoneXL_H));
  Serial.println("zone msg "+String( zoneMsg));
+ //init variable Audio
+ notifAudio={0,_MP3START,VOLUME,zoneMsg,false};
 
 infoSetup(2,"Ok ...");
 // Selon modele des matrices - inversion de l'affichage ( true si Generic ou Parola )
@@ -2701,6 +2878,7 @@ for (int i=0;i<MAX;i++) {
 
   // initialisation des Zones
   P.begin(_maxZones);
+  configSys.intensity=lumAuto();
   P.setIntensity(configSys.intensity);
   if (_maxZones==1) {
       P.setZone(zoneXL_L , 0, hardConfig.maxDisplay-1);
@@ -2752,11 +2930,10 @@ for (int i=0;i<MAX;i++) {
 P.setSpriteData(pacman1, W_PMAN1, F_PMAN1,pacman2, W_PMAN2, F_PMAN2);   // chargement animation en memoire
 
 //prepa zone horloge
+configSys.intensity=lumAuto();
+LuN=configSys.intensity;
 if (_maxZones==xl) zoneMsg=zoneTime;
 displayClock();
-
-configSys.intensity=lumAuto();
-
 //fin setup
 String infoSys="OK IP : ";
 infoSys += WiFi.localIP().toString();
@@ -2778,33 +2955,15 @@ void finNotif() {
 
 
 void loop() {
-  // Verifie connexion serveur MQTT
-  if (configSys.broker) {
-      if (!MQTTclient.connected()) {
-
-          long nowmqtt = millis();
-          if (nowmqtt - lastReconnectAttempt > 5000) {
-          lastReconnectAttempt = nowmqtt;
-          // Attempt to reconnect
-          if (MQTTconnect()) {
-            lastReconnectAttempt = 0;
-          }
-
-          }
-        } else {
-
-        // Client connected  - ecoute MQTT active
-        MQTTclient.loop();
-        }
-      }
-
   static bool XLZoneTest=true;
   static bool disClock=false;
   static uint32_t  lastTime = 0; // millis() memory
   static uint32_t  lastTimeLumAuto = 0; // millis() memory
-  //static uint32_t  lastTimeSystem= 0; // millis() system / synchro
+  static uint32_t  lastTimePrintDHT= 0; // millis() system / synchro
   static uint32_t  lastTimeMqtt= 0; // millis() system / synchro
   static bool flasher = false;  // seconds passing flasher
+  static uint32_t  startAudio;
+  static bool dispNotif=true;
    //  ****** Page WEb :   traite les requetes http et ws
   server.handleClient();
   webSocket.loop();  // ecoute websocket
@@ -2832,16 +2991,12 @@ void loop() {
        lastTimeLumAuto = millis();
        if (configSys.LUM) configSys.intensity=lumAuto();
      }
-// si broker actif
-if (configSys.broker)  {
-     if (millis() - lastTimeMqtt >= (configSys.tempobroker*1000))
+     if (millis() - lastTimePrintDHT >= 300000)
       {
-        Serial.println("tempo broker : "+String(configSys.tempobroker*1000));
-        lastTimeMqtt = millis();
-        GetTemp();
-        MQTTsend();
+        lastTimePrintDHT = millis();
+        if (configSys.DHT) displayDHT();
       }
-}
+
      /*
   if (millis() - lastTimeSystem >= synchroNTP+500)
      {
@@ -2877,42 +3032,179 @@ if (configSys.REV) {
   if (hour()==configSys.timeREV[0]) {
     Serial.println("Mode heure alarme");
     if (minute()==configSys.timeREV[1]) {
-      if (second() <5 ) {
-      alarme();
-      }
+      if (second() <5 ) {  alarme(); }
     }
   }
 }
+//********************************
 
 
 //********************************
 // Affichage display *************
 // *******************************
-P.setIntensity(configSys.intensity);
 P.displayAnimate();
-     if (hardConfig.XL) XLZoneTest=P.getZoneStatus(zoneXL_L) && P.getZoneStatus(zoneXL_H);
-      else XLZoneTest=P.getZoneStatus(zoneTime);
+ //*************************
+ // gestion des zones
+ //*************************
+ for (int i=0;i<_maxZones;i++) {
+   //test si zone xl et zone haute
+   if (!hardConfig.XL || i!=zoneXL_H ) {
+  // debut traitement zone libre
+   if (P.getZoneStatus(i)) {
+      if (!Notification[i].Alert)
+            {
+           if (i==zoneTime) {
+             //**********************
+             // Mode affichage horloge
+             //**********************
+             dispNotif=false;
+           // affichage horloge si different de fix
+           if (Notification[zoneTime].type!=2 ) {
+           P.setIntensity(zoneTime,configSys.intensity);
+           if (hardConfig.XL) P.setIntensity(zoneXL_H,configSys.intensity);
+           displayClock();
+           getFormatClock(msgL, flasher);
+           if (hardConfig.XL) createHStringXL(msgH, msgL);
+          }
+        } // fin test zone horloge
+      } // fin display horloge
+else
+    {
+      // affichage des notifications
+      Serial.println("notif boucle zone ="+String(i)+" msg ="+String(Notification[i].Notif));
+      dispNotif=true;
+      if (Notification[i].fxIn==14 || Notification[i].fxOut==14) {
+            P.setSpriteData(sprite[Notification[i].AnIn].data, sprite[Notification[i].AnIn].width, sprite[Notification[i].AnIn].frames,  //intro sprite
+              sprite[Notification[i].AnOut].data, sprite[Notification[i].AnOut].width, sprite[Notification[i].AnOut].frames); // exit sprite
+            }
+      P.displayClear(i);
+      P.setIntensity(i,Notification[i].intensity);
+    // Si mode XL
+    if (hardConfig.XL && i==zoneTime) {
+        Serial.println("mode XL");
+        //prepa zone superieur
+        P.displayClear(zoneXL_H);
+        P.setIntensity(zoneXL_H,Notification[zoneTime].intensity);
+        // Chargement police Double
+        P.setFont(zoneXL_L, BigFontLower);
+        P.setFont(zoneXL_H, BigFontUpper);
+        //chargement et preparation de l'affichage notification
+        if (invertUpperZone)
+          {
+            textPosition_t position;
+            P.displayZoneText(zoneXL_L, Notification[zoneTime].Notif, Notification[zoneTime].pos, Notification[zoneTime].speed, Notification[zoneTime].pause, effect[Notification[zoneTime].fxIn],effect[Notification[zoneTime].fxIn]);
+            if (Notification[zoneTime].pos==PA_LEFT) position=PA_RIGHT;
+            else position=PA_LEFT;
+            P.displayZoneText(zoneXL_H,Notification[zoneTime].Notif, position, Notification[zoneTime].speed,Notification[zoneTime].pause, effect[28-Notification[zoneTime].fxIn], effect[28-Notification[zoneTime].fxIn]);
+          }
+          else
+          {
+            byte fi,fo;
+            //inversion effet pour type INFO
+            if (Notification[zoneTime].type==1 ) {
+                fi=Notification[zoneTime].fxOut;
+                fo=Notification[zoneTime].fxIn;
+            } else {
+                fo=Notification[zoneTime].fxOut;
+                fi=Notification[zoneTime].fxIn;
+            }
+           P.displayZoneText(zoneXL_H,Notification[zoneTime].Notif,Notification[zoneTime].pos,Notification[zoneTime].speed, Notification[zoneTime].pause,effect[fi], effect[fo]);
+           P.displayZoneText(zoneXL_L,Notification[zoneTime].Notif,Notification[zoneTime].pos,Notification[zoneTime].speed, Notification[zoneTime].pause,effect[Notification[zoneTime].fxIn], effect[Notification[zoneTime].fxOut]);
+          }
+          // Affichage synchronisé
+          P.synchZoneStart();
+          P.displayReset(zoneXL_H);
+        }   // fin notif XL
+        else {
+        // affichage simple
+          P.setFont(i, ExtASCII);
+          P.displayZoneText(i,Notification[i].Notif,Notification[i].pos, Notification[i].speed,Notification[i].pause, effect[Notification[i].fxIn], effect[Notification[i].fxOut]);
+          }
+      // fin de préparation pour affichage suivant
+        P.displayReset(i);
+        Notification[i].Alert=false;
+     } // fin display notif
+   } // fin zone innactif
+  else  // zone en cours
+    {
+      //*************************
+      //***** Gestion notif Audio
+      //*************************
+      if (i==notifAudio.nzo && notifAudio.fx>0 && hardConfig.typeAudio==1)
+      {
+        if (i==zoneTime && dispNotif ) rtttl::play();
+        else if (i!=zoneTime) rtttl::play();
+      }
+    } // fin zone en lecture
+  } // if XL
+  } // fin boucle for
+//********************************
+// service MQTT
+// Verifie connexion serveur MQTT
+if (configSys.broker) {
+    if (!MQTTclient.connected()) {
+        long nowmqtt = millis();
+        if (nowmqtt - lastReconnectAttempt > 5000) {
+        lastReconnectAttempt = nowmqtt;
+        // Attempt to reconnect
+        if (MQTTconnect()) {
+          lastReconnectAttempt = 0;
+        }
+      }
+  } else {
+      // Client connected  - ecoute MQTT active
+      MQTTclient.loop();
+      }
+    }
+    // si broker actif
+    if (configSys.broker)  {
+         if (millis() - lastTimeMqtt >= (configSys.tempobroker*1000))
+          {
+            Serial.println("tempo broker : "+String(configSys.tempobroker*1000));
+            lastTimeMqtt = millis();
+            GetTemp();
+            MQTTsend();
+          }
+    }
+    //***************************
+    //***************************
+/*if (hardConfig.typeAudio==1 ) {
+  if (!P.getZoneStatus(notifAudio.nzo) && notifAudio.fx>0)  {
+    if (dispNotif && notififAudio.nzo!=zoneTime) {
+    rtttl::play();
+    Serial.print(".");
+  }
+  }
+}*/
 // l'animation commence
 //********************
 // Gestion zone XL
 //*********************
-if ( XLZoneTest) {
-             if (Notification[zoneTime].Alert) {
-                //if (zoneMsg == zoneTime ) {
-                   Serial.println("mode notification");
-                 //display notif
+/*
+ //if ( XLZoneTest) {  // si aucune animation en cours
+  if ( P.getZoneStatus(zoneTime)) {  // si aucune animation en cours) {  // si aucune animation en cours
+   if (Notification[zoneTime].Alert) {
+                dispNotif=true;
+                Serial.println("mode notification");
+
                 P.displayClear(zoneTime);
+                P.setIntensity(zoneTime,Notification[zoneTime].intensity);
+                // prepa animation si demandé
                 if (Notification[zoneTime].fxIn==14 || Notification[zoneTime].fxOut==14) {
                   P.setSpriteData(sprite[Notification[zoneTime].AnIn].data, sprite[Notification[zoneTime].AnIn].width, sprite[Notification[zoneTime].AnIn].frames,  //intro sprite
                     sprite[Notification[zoneTime].AnOut].data, sprite[Notification[zoneTime].AnOut].width, sprite[Notification[zoneTime].AnOut].frames); // exit sprite
                   }
-              if (hardConfig.XL) {
-                Serial.println("mode XL");
-                P.displayClear(zoneXL_H);
-                  // affichage double
-                     P.setFont(zoneXL_L, BigFontLower);
-                     P.setFont(zoneXL_H, BigFontUpper);
-                     if (invertUpperZone)
+                // mode XL
+                if (hardConfig.XL) {
+                    Serial.println("mode XL");
+                    //prepa zone superieur
+                    P.displayClear(zoneXL_H);
+                    P.setIntensity(zoneXL_H,Notification[zoneTime].intensity);
+                    // Chargement police Double
+                    P.setFont(zoneXL_L, BigFontLower);
+                    P.setFont(zoneXL_H, BigFontUpper);
+                    //chargement et preparation de l'affichage notification
+                    if (invertUpperZone)
                       {
                         textPosition_t position;
                         P.displayZoneText(zoneXL_L, Notification[zoneTime].Notif, Notification[zoneTime].pos, Notification[zoneTime].speed, Notification[zoneTime].pause, effect[Notification[zoneTime].fxIn],effect[Notification[zoneTime].fxIn]);
@@ -2922,74 +3214,75 @@ if ( XLZoneTest) {
                       }
                       else
                       {
-                          byte fi,fo;
+                        byte fi,fo;
                         if (Notification[zoneTime].type==1 ) {
-                          fi=Notification[zoneTime].fxOut;
-                          fo=Notification[zoneTime].fxIn;
-                        } else
-                        {
-                          fo=Notification[zoneTime].fxOut;
-                          fi=Notification[zoneTime].fxIn;
-                        }
+                            fi=Notification[zoneTime].fxOut;
+                            fo=Notification[zoneTime].fxIn;
+                            } else
+                            {
+                            fo=Notification[zoneTime].fxOut;
+                            fi=Notification[zoneTime].fxIn;
+                            }
                        P.displayZoneText(zoneXL_H,Notification[zoneTime].Notif,Notification[zoneTime].pos,Notification[zoneTime].speed, Notification[zoneTime].pause,effect[fi], effect[fo]);
                        P.displayZoneText(zoneXL_L,Notification[zoneTime].Notif,Notification[zoneTime].pos,Notification[zoneTime].speed, Notification[zoneTime].pause,effect[Notification[zoneTime].fxIn], effect[Notification[zoneTime].fxOut]);
                       }
+                      // Affichage synchronisé
                       P.synchZoneStart();
-                      Serial.println("valeur de fx dans affichage : "+String(Notification[zoneTime].fxOut));
-                 } else {
+                    }   // fin notif XL
+              else {
                   // affichage simple
                   Serial.println("mode simple");
-
                   P.setFont(zoneXL_L, ExtASCII);
-                   P.displayZoneText(zoneXL_L,Notification[zoneTime].Notif,Notification[zoneTime].pos,Notification[zoneTime].speed, Notification[zoneTime].pause,effect[Notification[zoneTime].fxIn], effect[Notification[zoneTime].fxOut]);
+                  P.displayZoneText(zoneXL_L,Notification[zoneTime].Notif,Notification[zoneTime].pos,Notification[zoneTime].speed, Notification[zoneTime].pause,effect[Notification[zoneTime].fxIn], effect[Notification[zoneTime].fxOut]);
                 }
-        //}
-          Notification[zoneTime].Alert=false;
-          finNotif();
-        //  if (Notification[zoneTime].type==2) Notification[zoneTime].Alert=true;
-          if (Notification[zoneTime].type!=2 ) disClock=true;
+        //  Notification[zoneTime].Alert=false;
+        // si different de FIX autorise affichage horloge
+      //  if (Notification[zoneTime].type!=2 ) disClock=true;
+      //  Notification[zoneTime].Alert=false;
+        // preparation pour nouvel affichage
 
-        }
+        }  // fin alert
       else {
+          // Mode affichage horloge
+          dispNotif=false;
+          P.setIntensity(zoneTime,configSys.intensity);
+          if (hardConfig.XL) P.setIntensity(zoneXL_H,configSys.intensity);
+
         // Permet de stopper notif lorsque horloge est désactivé.
-       if ( !Notification[zoneTime].Alert && disClock) {
-        displayClock();
-        disClock=false;
-       }
+      /*  if ( !Notification[zoneTime].Alert && disClock) {
+              displayClock();
+              disClock=false;
+            }
        // affichage horloge si different de fix
        if (Notification[zoneTime].type!=2 ) {
+       displayClock();
        getFormatClock(msgL, flasher);
        if (hardConfig.XL) createHStringXL(msgH, msgL);
-     }
-  }  // fin zone xl
+              }
+
+  }  // fin affichage horloge
+  // preparation pour nouvel affichage
   P.displayReset(zoneXL_L);
-//*************************
-// gestion des autres zones
-//*************************
- if (hardConfig.XL) P.displayReset(zoneXL_H);
+  if (hardConfig.XL) P.displayReset(zoneXL_H);
+}
+ // Si animation en cours sur zone
+ else {
+   // test quel type d'animation en cours ( horloge ou notification )
+   if (dispNotif) {
+       Notification[zoneTime].Alert=false;
+     // si mode hp/buzzer et fx contunue a jouer
+//     if (hardConfig.typeAudio==1 && notifAudio.fx>0) rtttl::play();
+
+   } else
+   {
+     // Si fin animation et lecture en cours - stop the music
+    // if (hardConfig.typeAudio==1 && rtttl::isPlaying()) rtttl::stop();
+   }
+
  }
 
- //if (_maxZones >xl) {
- for (int i=0;i<_maxZones;i++) {
-    if (i!=zoneTime) {
-      if (P.getZoneStatus(i)) {
-              if (Notification[i].Alert) {
-                if (Notification[i].fxIn==14 || Notification[i].fxOut==14) {
-                  P.setSpriteData(sprite[Notification[i].AnIn].data, sprite[Notification[i].AnIn].width, sprite[Notification[i].AnIn].frames,  //intro sprite
-                    sprite[Notification[i].AnOut].data, sprite[Notification[i].AnOut].width, sprite[Notification[i].AnOut].frames); // exit sprite
-                  }
-                 P.displayClear(i);
-      Serial.println("notif boucle zone ="+String(i)+" msg ="+String(Notification[i].Notif));
- // affichage simple
-                  P.setFont(i, ExtASCII);
-                 P.displayZoneText(i,Notification[i].Notif,Notification[i].pos, Notification[i].speed,Notification[i].pause, effect[Notification[i].fxIn], effect[Notification[i].fxOut]);
-           P.displayReset(i);
-       Notification[i].Alert=false;
-     } // fin alert
-   } // fin zonestatus
-  } // fin if xl
-} // fin boucle gestion zone
-
+}
+*/
 
 } // fin loop
 

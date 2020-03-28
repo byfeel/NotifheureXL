@@ -2,7 +2,7 @@
 
 var debug=true;
 var maxdisplay;
-var boutons=["Aucune","Afficher / Masquer les secondes","Afficher / Masquer l'horloge","Mode luminosite Mini / Maxi / Automatique","On / Off Veilleuse","Historique Message","Afficher / masquer Minuteur","lancer Minuteur","Action 1","Action 2"];
+var boutons=["Aucune","Afficher / Masquer les secondes","Afficher / Masquer l'horloge","Mode luminosite Mini / Maxi / Automatique","On / Off Veilleuse","Historique Message","Afficher / masquer Minuteur","lancer Minuteur","Action 1","Action 2","Action 3"];
 var couleurs=["Blanc","Rouge","Bleue","Vert","Jaune","Orange","Violet","Rose"];
 var optLed=["Aucune","Led","Relais","Neopixel Ring/Strip"];
 var fx=['flash','fade','raimbow','colorWipe ( Single LED )','colorWipe ( Full LED )','color chase'];
@@ -46,6 +46,10 @@ $.ajax({
         $("#btn2_3").val(jinfo.btnclic[5]);
         $("#selectNotifLum").val(jinfo.TYPELED).change();
         $('#btnMQTT').prop('checked',jinfo.BROKER).change();
+        $('#btnDOM').prop('checked',jinfo.BOX).change();
+        $('#URL_action1').val(jinfo.URL_ACT1);
+        $('#URL_action2').val(jinfo.URL_ACT2);
+        $('#URL_action3').val(jinfo.URL_ACT3);
         $("#ipMQTT").val(jinfo.SRVBROKER);
         $("#userMQTT").val(jinfo.UBROKER);
         $("#passMQTT").val(jinfo.PBROKER);
@@ -116,7 +120,10 @@ $("#Config").submit(function(){
   automsg:$('#AutoMsg').prop('checked'),
   pause:$('#pause').val(),
   speed:$('#speed').val(),
-  //typeled:$('#selectNotifLum').val(),
+  box:$('#btnDOM').prop('checked'),
+  url1:$('#URL_action1').val(),
+  url2:$('#URL_action2').val(),
+  url3:$('#URL_action3').val(),
   ntpserver:$('#inputNTP').val(),
   charoff:$('#DispOff').val().charCodeAt(0),
   crtext:$('#CRTEXT').val(),
