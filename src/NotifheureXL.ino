@@ -15,7 +15,7 @@
 //  n/2 ... 3  2  1  0    <- Matrice basse
 // ***************************************
 
-const String ver = "0.8.5.6";
+const String ver = "0.8.6";
 const String hardware = "NotifheureXL";
 const String vInterface="";
 // Bibliotheque à inclure
