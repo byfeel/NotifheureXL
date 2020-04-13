@@ -5,8 +5,17 @@ var maxdisplay;
 var boutons=["Aucune","Afficher / Masquer les secondes","Afficher / Masquer l'horloge","Mode luminosite Mini / Maxi / Automatique","On / Off Veilleuse","Historique Message","Afficher / masquer Minuteur","lancer Minuteur","Action 1","Action 2","Action 3"];
 var couleurs=["Blanc","Rouge","Bleue","Vert","Jaune","Orange","Violet","Rose"];
 var optLed=["Aucune","Led","Relais","Neopixel Ring/Strip"];
-var fx=['flash','fade','raimbow','colorWipe ( Single LED )','colorWipe ( Full LED )','color chase'];
+var fx=['Aucun','on','flash','breath','raimbow','colorWipe ( Single LED )','colorWipe ( Full LED )','color chase'];
+var fx1=['Aucun','on','flash','breath'];
+var fx2=['Aucun','on'];
+var flag={"I":"Important","F":"Fix ou Info","N":"Notifications","Q":"Notification MQTT","J":"Notification Jeedom / nextDom","A":"Avec Animation","X":"Avec effets","S":"notification systéme","D":"notification défaut"};
+var buzMusic=["Aucun","Mission Impossible","Star Wars","Indiana Jones","Panthere Rose","Famille Adam's","l'exorciste","The simpsons","Tetris","Arkanoid","Super Mario","Xfiles","AxelF","PacMan","dambuste","Muppet show","James Bond","Take On Me","Agence tout risque","Top Gun","les Schtroumpfs","l'arnaque","looney Tunes","20 century fox","Le bon, la brute ...","Retour vers le futur"];
 var nbClic=3;
+var tabFlag=[];
+var validflag;
+var tL;
+var fxcr;
+var fxal;
 
 function IsJsonString(str) {
     try {
@@ -29,6 +38,7 @@ $.ajax({
        if (IsJsonString(data)){
          var jinfo = JSON.parse(data);
         $("#IP").text(jinfo.IP);
+        $("#nom").text(jinfo.NOM);
         $("#inputhost").val(jinfo.SUFFIXEHOST);
         $('#DEBUG').prop('checked',jinfo.DEBUG);
         $('#AutoMsg').prop('checked',jinfo.ALN);
@@ -38,13 +48,16 @@ $.ajax({
         $("#inputNTP").val(jinfo.NTPSERVER);
         $("#CRTIME").val(jinfo.CRTIME);
         $("#CRTEXT").val(jinfo.MSGMINUT);
+        $("#ALTEXT").val(jinfo.MSGALARM);
         $("#btn1_1").val(jinfo.btnclic[0]);
         $("#btn1_2").val(jinfo.btnclic[1]);
         $("#btn1_3").val(jinfo.btnclic[2]);
         $("#btn2_1").val(jinfo.btnclic[3]);
         $("#btn2_2").val(jinfo.btnclic[4]);
         $("#btn2_3").val(jinfo.btnclic[5]);
+        tL=jinfo.TYPELED;
         $("#selectNotifLum").val(jinfo.TYPELED).change();
+        $("#selectNotifAud").val(jinfo.TYPEAUDIO).change();
         $('#btnMQTT').prop('checked',jinfo.BROKER).change();
         $('#btnDOM').prop('checked',jinfo.BOX).change();
         $('#URL_action1').val(jinfo.URL_ACT1);
@@ -56,14 +69,22 @@ $.ajax({
         $("#portMQTT").val(jinfo.PORTBROKER);
         $("#tempoMQTT").val(jinfo.TEMPOBROKER);
         $('#DispOff').val(String.fromCharCode(jinfo.CHAROFF));
-        $('#intled').val(jinfo.FXINT).trigger("input");
+        $('#intled').val(jinfo.LEDINT).trigger("input");
         $('#intled').rangeslider('update', true);
+        $('#fxintled').val(jinfo.FXINT).trigger("input");
+        $('#fxintled').rangeslider('update', true);
         $('#speed').val(jinfo.SPEED).trigger("input");
         $('#speed').rangeslider('update', true);
         $('#pause').val(jinfo.PAUSE).trigger("input");
         $('#pause').rangeslider('update', true);
         $('#selectled3_color').val(jinfo.FXCOLOR);
-        $('#selectled3_fx').val(jinfo.CRFX);
+        fxcr=jinfo.CRFX;
+        fxal=jinfo.ALFX;
+        $('#CRAudio').val(jinfo.CRFXSOUND);
+        $('#ALAudio').val(jinfo.ALFXSOUND);
+        $('#CRACT').val(jinfo.ACTION[0]);
+        $('#ALACT').val(jinfo.ACTION[1]);
+        validflag=jinfo.HFLAG;
         var charoff =jinfo.CHAROFF;
         if ( charoff == 32 ) $('#DispOff').attr("placeholder", "Espace");
         else if (cahroff == 0 ) $('#DispOff').attr("placeholder", "Vide");
@@ -74,7 +95,31 @@ $.ajax({
          // init();
       },
       complete: function(resultat, statut){
-
+        cpt=0;
+        $.each( flag, function( key, value ) {
+        if (validflag.indexOf(key)>=0) {
+          tabFlag[cpt]=key;
+          cpt++;
+        }
+        });
+        if (tL==1) fx=fx1;
+        if (tL==2) fx=fx2;
+        $.each(fx, function (value, text) {
+          $('#selectled3_fxAL').append($('<option>', {
+                  value: value,
+                  text : text
+              }));
+        });
+        $.each(fx, function (value, text) {
+          $('#selectled3_fx').append($('<option>', {
+                  value: value,
+                  text : text
+              }));
+        });
+        console.log(tabFlag);
+      $("#selectFlag").val(tabFlag);
+      $('#selectled3_fx').val(fxcr);
+      $('#selectled3_fxAL').val(fxal);
   }
   }); //fin ajax
 }
@@ -113,6 +158,13 @@ if (r == true) {
 };
 
 $("#Config").submit(function(){
+  TFlag=$('#selectFlag').val();
+  strFlag="";
+  TFlag.forEach(function(item){
+  strFlag+=item;
+  });
+  console.log($("#btnMQTT").prop('checked'));
+
   $.post('/Config',
        {
   hostname:$("#inputhost").val(),
@@ -127,18 +179,25 @@ $("#Config").submit(function(){
   ntpserver:$('#inputNTP').val(),
   charoff:$('#DispOff').val().charCodeAt(0),
   crtext:$('#CRTEXT').val(),
+  altext:$('#ALTEXT').val(),
   crtime:$('#CRTIME').val(),
   clicbtn1 : $('#btn1_1').val()+","+$('#btn1_2').val()+","+$('#btn1_3').val()+",",
   clicbtn2 : $('#btn2_1').val()+","+$('#btn2_2').val()+","+$('#btn2_3').val()+",",
   intled : $("#intled").val(),
+  fxint : $("#fxintled").val(),
   color : $("#selectled3_color").val(),
   fxcr :$("#selectled3_fx").val(),
+  fxal : $("#selectled3_fxAL").val(),
+  aucr :$("#CRAudio").val(),
+  aual : $("#ALAudio").val(),
   broker:$("#btnMQTT").prop('checked'),
   ipbroker:$("#ipMQTT").val(),
   ubroker:$("#userMQTT").val(),
   pbroker:$("#passMQTT").val(),
   portbroker:$("#portMQTT").val(),
-  tempobroker:$("#tempoMQTT").val()
+  tempobroker:$("#tempoMQTT").val(),
+  action:$('#CRACT').val()+","+$('#ALACT').val()+",",
+  flag:strFlag
 //  nzo:$("#selectZone option:selected").val()
    }, function(data) {
     $.notify(data);
@@ -171,12 +230,17 @@ $('#btnDOM').change(function () {
           if (check) $('#box').removeClass("d-none");
           else $('#box').addClass("d-none");
                 });
+
+$('#selectFlag').change(function() {
+  console.log($(this).val());
+});
 //visuelle
 $('#selectNotifLum').change(function () {
           var check = $(this).val();
 
           if (check>0)  {
             $('#led3').removeClass("d-none");
+            $('#groupLEDFonctions').removeClass("d-none");
             $("#infovisuel").text(optLed[check]);
               if (check==1 || check==3 ) $('#groupLED1').removeClass("d-none");
               else $('#groupLED1').addClass("d-none");
@@ -185,8 +249,19 @@ $('#selectNotifLum').change(function () {
               if (check==2) $("#groupled0").removeClass("d-none");
               else $("#groupled0").addClass("d-none");
           }
-          else $('#led3').addClass("d-none");
+          else {
+            $('#led3').addClass("d-none");
+            $('#groupLEDFonctions').addClass("d-none");
+          }
                 });
+
+  $('#selectNotifAud').change(function () {
+            var check = $(this).val();
+            if (check>0)  {
+              if (check==1) $('#groupAUDIO1').removeClass("d-none");
+            }
+            else $('#groupAUDIO1').addClass("d-none");
+});
 //remplissage select
 $.each(boutons, function (value, text) {
 //  console.log("valeur :"+text);
@@ -211,12 +286,33 @@ $.each(couleurs, function (value, text) {
       }));
 });
 
-$.each(fx, function (value, text) {
-  $('#selectled3_fx').append($('<option>', {
+
+
+
+
+$.each(buzMusic, function (value, text) {
+  $('#CRAudio').append($('<option>', {
           value: value,
           text : text
       }));
 });
+
+$.each(buzMusic, function (value, text) {
+  $('#ALAudio').append($('<option>', {
+          value: value,
+          text : text
+      }));
+});
+
+$.each( flag, function( key, value ) {
+  $('#selectFlag').append($('<option>', {
+          value: key,
+          text : value
+      }));
+
+});
+
+
 
 // activation range
 $('input[type="range"]').rangeslider({

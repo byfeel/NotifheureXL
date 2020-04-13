@@ -13,42 +13,55 @@
       <link rel="stylesheet" href="notifheure.css">
   </head>
   <body>
-    <div class="jumbotron text-center">
-      <div class="container col-lg-8">
-      <h1 class="display-4">NotifHeure<span class="text-danger font-weight-bold">XL</span></h1>
-      <h4 class="display-4"><span id="nom" class="text-info"></span></h4>
-      <p class="lead">Permet d'editer le fichier de configuration pour le module NotifHeureXL </p>
-      <hr class="my-4">
-    <p>
-      IP : <span id="IP" class="text-primary"></span> </p>
+    <div class="bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <h3 class="display-4 text-white ">NotifHeure<span class="text-danger font-weight-bold">XL </span></h3>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor02" aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarColor02">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="#Config">Options <span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Fonctions</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Communications</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Configurations</a>
+          </li>
 
-    <button type="button" class="btn btn-outline-primary disabled" onclick="window.location='/config/config.json';">Exporter Config</button>
-    <button type="button" class="btn btn-outline-warning disabled d-none" onclick="window.location='/Upload'">Importer Config</button>
-    <button type="button" class="btn btn-outline-danger disabled" onclick="Reboot();">Reboot</button>
- <p></p>
- <p id="infoconfig" class="text-info">Certaines modifications , necesitent un reboot pour etre pris en compte</p>
-    <button type="button" class="btn btn-secondary btn-sm" onclick="window.location='/'">Retour page Accueil</button>
+        </ul>
 
-  </div>
+      <button type="button" class="btn btn-warning mx-2 btn-sm" onclick="window.location='/config/config.json';">Exporter Config</button>
+      <button type="button" class="btn btn-success btn-sm" onclick="window.location='/'">Retour NotifHeure</button>
+</div>
+    </nav>
+</div>
+<div class="alert alert-white text-center" id="BoxAlert">
+<h4 class="alert-heading text-warning"><span id="nom" class="text-primary">...</span><span class="small"> ( IP : <span id="IP" class="text-primary">127.0.0.1</span> )</span></h4>
+<p id="infoconfig" class=""></p>
 </div>
 <div class="alert alert-primary  text-center" id="BoxInit">
   <h4 class="alert-heading">Veuillez attendre ..</h4>
   <p class="mb-0">Chargement info NotifHeure en cours .... </p>
 </div>
-<div class="alert alert-warning d-none text-center" id="BoxAlert">
-  <h4 class="alert-heading">Attention!</h4>
-  <p class="mb-0">Vos paramétres ont bien été pris en compte, pour voir les changements , veuillez redemarrer </p>
-    <button type="button" class="btn btn-warning mx-auto" onclick="Reboot();">Reboot Notif'heure</button>
-</div>
+
+
 
 <div class="container col-md-8 ">
+
+
      <form id="Config">
     <div class="row">
     <div class="col">
 
-  <h2><span class="badge badge-secondary">Paramétrage Options Matériels :</span></h2>
-  <small class="text-muted">Valider les options matériels disponible</small>
-
+  <div class="alert alert-dark"><h4 >Options Matériels :</h4>
+  <small class="text-muted">Permets de configurer les options matérielles disponibles</small>
+</div>
 <div class="form-group">
     <div class="custom-control custom-checkbox">
       <input type="checkbox" class="custom-control-input" id="bouton1"  aria-describedby="bout1Help" disabled>
@@ -60,17 +73,17 @@
     <div class="card-header text-center bg-success text-white">Actions pour Bouton 1</div>
     <div class="card-body">
   <div class="form-group">
-    <label for="btn1_1">Action Pour Simple Clic</label>
+    <label for="btn1_1" class="text-success">Action Pour Simple Clic</label>
     <select class="custom-select" id="btn1_1">
     </select>
   </div>
     <div class="form-group">
-    <label for="btn1_2">Action Pour Double Clic</label>
+    <label for="btn1_2"  class="text-success">Action Pour Double Clic</label>
     <select class="custom-select" id="btn1_2">
     </select>
   </div>
     <div class="form-group">
-    <label for="btn1_3">Action Pour Triple Clic</label>
+    <label for="btn1_3"  class="text-success">Action Pour Triple Clic</label>
     <select class="custom-select" id="btn1_3">
     </select>
   </div>
@@ -88,17 +101,17 @@
     <div class="card-header text-center bg-danger text-white">Actions pour Bouton 2</div>
     <div class="card-body">
   <div class="form-group">
-    <label for="btn1_2">Action Pour Simple Clic</label>
+    <label for="btn1_2" class="text-danger">Action Pour Simple Clic</label>
     <select class="custom-select" id="btn2_1">
     </select>
   </div>
     <div class="form-group">
-    <label for="btn2_2">Action Pour Double Clic</label>
+    <label for="btn2_2" class="text-danger">Action Pour Double Clic</label>
     <select class="custom-select" id="btn2_2">
     </select>
   </div>
     <div class="form-group">
-    <label for="btn2_3">Action Pour Triple Clic</label>
+    <label for="btn2_3" class="text-danger">Action Pour Triple Clic</label>
     <select class="custom-select" id="btn2_3">
     </select>
   </div>
@@ -112,106 +125,91 @@
         <option value=2>Relais</option>
         <option value=3>Neopixel Ring / Strip</option>
       </select>
-      <small id="notifLumHelp" class="form-text text-muted">Selectionner le type de notification visuel installé.</small>
+      <small id="notifLumHelp" class="form-text text-muted">Le type de notification visuel installé. ( Modifiable dans SETUP )</small>
     </div>
     <div class="card border-primary mx-auto mb-3 d-none" style="max-width: 40rem;" id="led3">
         <div class="card-header text-center bg-primary text-white">Parametre pour : <sapn id="infovisuel"></span></div>
         <div class="card-body">
           <p class="d-none" id="groupled0">Pas de parametres pour cette option</p>
           <div class="mx-auto d-none" id="groupLED1">
-              <label for="intled" class="text-info">Inetnsité par défaut</label>
-                <input  type="range" id="intled" name="puissance" min="0" max="100" value="100" oninput="valIntLed.value = puissance.valueAsNumber">
+            <div>
+              <label for="intled" class="text-primary">Inetnsité par défaut ( pour veilleuse )</label>
+                <input  type="range" id="intled" name="puissance" min="0" max="100" value="30" oninput="valIntLed.value = puissance.valueAsNumber">
                 <output class="text-primary" for="intled"  name="valIntLed"></output>
-    <small id="intledHelp" class="form-text text-muted">Valeur par défaut de l'intensité lumineuse de la notification visuelle</small>
+    <small id="intledHelp" class="form-text text-muted">Valeur par défaut de l'intensité lumineuse pour le mode LED / veilleuse</small>
+</div>
+<div>
+  <label for="fxintled" class="text-primary">Inetnsité par défaut ( pour les effets visuels )</label>
+    <input  type="range" id="fxintled" name="puissancefx" min="0" max="100" value="100" oninput="valfxIntLed.value = puissancefx.valueAsNumber">
+    <output class="text-primary" for="fxintled"  name="valfxIntLed"></output>
+<small id="fxintledHelp" class="form-text text-muted">Valeur par défaut de l'intensité lumineuse de la notification visuelle</small>
+</div>
            </div>
 
         <br />
       <div id="groupLED3" class="d-none">
       <div class="form-group">
-        <label for="led3_color" class="text-info">Couleur par défaut</label>
+        <label for="led3_color" class="text-primary">Couleur par défaut</label>
         <select class="custom-select" id="selectled3_color">
         </select>
       </div>
-      <br />
-      <div class="form-group">
-      <label for="led3_fx" class="text-info">Effet par défaut ( minuteur )</label>
-      <select class="custom-select" id="selectled3_fx">
-      </select>
-      </div>
+    </br>
+    </div>
+    <div id="groupLEDFonctions" class="d-none">
+    <div class="form-group">
+    <label for="led3_fx" class="text-primary">Effet par défaut ( minuteur )</label>
+    <select class="custom-select" id="selectled3_fx">
+    </select>
+    </div>
+    <div class="form-group">
+    <label for="led3_fxAL" class="text-primary">Effet par défaut ( Alarme )</label>
+    <select class="custom-select" id="selectled3_fxAL">
+    </select>
     </div>
   </div>
-    </div>
-        </div>
-</div> <!-- fin row -->
-
-<div class="row">
-<div class="col">
-      <h2><span class="badge badge-secondary">Paramétres  MQTT</span></h2>
-      <div class="form-group">
-      <div class="custom-control custom-checkbox">
-        <input type="checkbox" class="custom-control-input" id="btnMQTT"  aria-describedby="btnMQTTHelp">
-        <label class="custom-control-label text-info" for="btnMQTT">Client MQTT</label>
-      </div>
-    <small id="btnMQTTHelp" class="form-text text-muted">Activation / désactivation protocole MQTT</small>
   </div>
-  <div class="card border-primary mx-auto mb-3"  id="MQTT" style="max-width: 40rem;">
-      <div class="card-header text-center bg-primary text-white">Paramétrage Client MQTT</div>
-      <div class="card-body">
-        <h6 class="text-info">L'activation du client MQTT, nécessite le redémarrage du notifHeure</h6>
-        <div class="input-group">
-          <div class="input-group-prepend">
-        <div class="input-group-text text-info">IP Serveur MQTT : </div>
-        </div>
-        <input type="text" class="form-control" id="ipMQTT" aria-describedby="ipMQTTHelp" placeholder="192.168.0.1">
-        </div>
-        <small id="ipMQTTHelp" class="form-text text-muted">Adresse IP du serveur MQTT</small>
-        <div class="input-group">
-          <div class="input-group-prepend">
-        <div class="input-group-text text-info">login serveur MQTT : </div>
-        </div>
-        <input type="text" class="form-control" id="userMQTT" aria-describedby="userMQTTHelp" placeholder="aucun">
-        </div>
-        <small id="userMQTTHelp" class="form-text text-muted">login utilisateur du serveur MQTT  ( laisser vide si pas utilisé )</small>
-        <div class="input-group">
-          <div class="input-group-prepend">
-        <div class="input-group-text text-info">Mot de passe serveur MQTT : </div>
-        </div>
-        <input type="password" class="form-control" id="passMQTT" aria-describedby="passMQTTHelp" placeholder="aucun">
-        </div>
-        <small id="passMQTTHelp" class="form-text text-muted">Mot de passe utilisateur du serveur MQTT  ( laisser vide si pas utilisé )</small>
-        <div class="input-group">
-          <div class="input-group-prepend">
-        <div class="input-group-text text-info">Numero port MQTT : </div>
-        </div>
-        <input type="number" class="form-control" id="portMQTT" aria-describedby="portMQTTHelp" placeholder="1883">
-        </div>
-        <small id="portMQTTHelp" class="form-text text-muted">Port du serveur MQTT  ( 1883 par défaut )</small>
-        <div class="input-group">
-          <div class="input-group-prepend">
-        <div class="input-group-text text-info">Temporisation des publications MQTT : </div>
-        </div>
-        <input type="number" class="form-control" id="tempoMQTT" aria-describedby="tempoMQTTHelp" placeholder="60">
-        </div>
-        <small id="tempoMQTTHelp" class="form-text text-muted">Temporisation publications MQTT - entre 10 et 600 secondes ( 60 secondes par défaut )</small>
-      </div>
-      <div class="form-group">
-      <div class="custom-control custom-checkbox">
-        <input type="checkbox" class="custom-control-input" id="btnMQTT"  aria-describedby="btnMQTTHelp">
-        <label class="custom-control-label text-info" for="btnMQTT">Client MQTT</label>
-      </div>
-      <small id="btnMQTTHelp" class="form-text text-muted">Activation / désactivation protocole MQTT</small>
-      </div>
-
     </div>
 
+
+        <div class="form-group">
+              <label for="selectNotifAud" class="text-info">Type Notification Audio :</label>
+              <select class="form-control" id="selectNotifAud" aria-describedby="notifAudHelp" disabled>
+                <option value=0>Aucune</option>
+                <option value=1>Buzzer / HP</option>
+                <option value=2>DFPlayer MP3</option>
+                <option value=3>Autre / Relais</option>
+              </select>
+              <small id="notifAudHelp" class="form-text text-muted">Le type de notification visuel installé.( modifiable dans SETUP )</small>
+            </div>
+            <div class="card border-info mx-auto mb-3" style="max-width: 40rem;" id="AUD0">
+                <div class="card-header text-center bg-info text-white">Parametre pour : <sapn id="infovisuelaudio"></span></div>
+                <div class="card-body">
+                  <div id="groupAUDIO1" class="d-none">
+                  <div class="form-group">
+                  <label for="CRAudio" class="text-info">Musique par défaut ( minuteur )</label>
+                  <select class="custom-select" id="CRAudio">
+                  </select>
+                  </div>
+                  <div class="form-group">
+                  <label for="ALAudioL" class="text-info">Musique par défaut ( Alarme )</label>
+                  <select class="custom-select" id="ALAudio">
+                  </select>
+                  </div>
+                </div>
+                </div>
+              </div>  <!-- fin carte audio-->
 </div>
 </div> <!-- fin row -->
+
+
 <div class="row">
     <div class="col-md-12">
-
+      <div class="alert alert-dark"><h4 >Fonctions :</h4>
+      <small class="text-muted">Permets de configurer les fonctions : Minuteur / Alarme </small>
+    </div>
 <br>
 
-  <h2><span class="badge badge-secondary">Paramétres Minuteur</span></h2>
+  <h4 class="text-primary">Minuteur</h4>
   <small class="text-muted">Options pour le minuteur</small>
 
 
@@ -230,34 +228,85 @@
 </div>
 <small id="crTimeHelp" class="form-text text-muted">Temps par défaut ( en minutes ) pour le minuteur . Ce temps sera celui lançé par le bouton si option Start Minuteur est sélectionné.</small>
 <br>
-<h2><span class="badge badge-secondary">Paramétres Alarme / Reveil</span></h2>
-  <small class="text-muted">Options pour l'alarme</small>
+<h4 class="text-primary">Alarme / Reveil</h4>
+<small class="text-muted">Options pour l'alarme</small>
+<div class="input-group">
+  <div class="input-group-prepend">
+<div class="input-group-text text-info">Message fin Alarme : </div>
+</div>
+<input type="text" class="form-control" id="ALTEXT" aria-describedby="inpalHelp" placeholder="Fin Alarme !">
+</div>
+  <small id="impalHelp" class="form-text text-muted">Texte à afficher en fin d'alarme'.</small>
   <div class="input-group">
     <div class="input-group-prepend">
   <div class="input-group-text text-info">Heure par défaut : </div>
   </div>
   <input type="time" class="form-control" id="ALTIME" aria-describedby="altimeHelp" placeholder="06:00" style="max-width:50px">
   </div>
-  <div class="input-group">
-    <div class="input-group-prepend">
-  <div class="input-group-text text-info">Jours de la semaine : </div>
-  </div>
-  <input type="time" class="form-control" id="ALTIME" aria-describedby="altimeHelp" placeholder="06:00" style="max-width:50px">
-  </div>
+
 </div>
 </div> <!-- fin row -->
 <div class="row">
-    <div class="col-md-6">
+<div class="col">
+  <div class="alert alert-dark"><h4 >Communication :</h4>
+  <small class="text-muted">Permets de configurer les fonctionnalités de communication : MQTT / URL vers BOX </small>
+</div>
+      <h4 class="text-primary">Communication MQTT</h4>
+      <div class="form-group">
+      <div class="custom-control custom-checkbox">
+        <input type="checkbox" class="custom-control-input" id="btnMQTT"  aria-describedby="btnMQTTHelp">
+        <label class="custom-control-label text-info" for="btnMQTT">Client MQTT</label>
+      </div>
+    <small id="btnMQTTHelp" class="form-text text-muted">Activation / désactivation protocole MQTT</small>
+  </div>
+  <div class="card border-warning mx-auto mb-3"  id="MQTT" style="max-width: 40rem;">
+      <div class="card-header text-center bg-warning text-white">Paramétrage Client MQTT</div>
+      <div class="card-body">
+        <h6 class="text-info">L'activation du client MQTT, entraine le redémarrage du notifHeure</h6>
+        <div class="input-group">
+          <div class="input-group-prepend">
+        <div class="input-group-text text-info">IP Serveur MQTT : </div>
+        </div>
+        <input type="text" class="form-control" id="ipMQTT" aria-describedby="ipMQTTHelp" placeholder="192.168.0.1">
+        </div>
+        <small id="ipMQTTHelp" class="form-text text-muted">Adresse IP du serveur MQTT</small>
+        <div class="input-group">
+          <div class="input-group-prepend">
+        <div class="input-group-text text-warning">login serveur MQTT : </div>
+        </div>
+        <input type="text" class="form-control" id="userMQTT" aria-describedby="userMQTTHelp" placeholder="aucun">
+        </div>
+        <small id="userMQTTHelp" class="form-text text-muted">login utilisateur du serveur MQTT  ( laisser vide si pas utilisé )</small>
+        <div class="input-group">
+          <div class="input-group-prepend">
+        <div class="input-group-text text-warning">Mot de passe serveur MQTT : </div>
+        </div>
+        <input type="password" class="form-control" id="passMQTT" aria-describedby="passMQTTHelp" placeholder="aucun">
+        </div>
+        <small id="passMQTTHelp" class="form-text text-muted">Mot de passe utilisateur du serveur MQTT  ( laisser vide si pas utilisé )</small>
+        <div class="input-group">
+          <div class="input-group-prepend">
+        <div class="input-group-text text-warning">Numero port MQTT : </div>
+        </div>
+        <input type="number" class="form-control" id="portMQTT" aria-describedby="portMQTTHelp" placeholder="1883">
+        </div>
+        <small id="portMQTTHelp" class="form-text text-muted">Port du serveur MQTT  ( 1883 par défaut )</small>
+        <div class="input-group">
+          <div class="input-group-prepend">
+        <div class="input-group-text text-warning">Temporisation des publications MQTT : </div>
+        </div>
+        <input type="number" class="form-control" id="tempoMQTT" aria-describedby="tempoMQTTHelp" placeholder="60">
+        </div>
+        <small id="tempoMQTTHelp" class="form-text text-muted">Temporisation publications MQTT - entre 10 et 600 secondes ( 60 secondes par défaut )</small>
+      </div>
 
     </div>
-    <div class=" col-md-6">
 
-  </div>
-
+</div>
 </div> <!-- fin row -->
 <div class="row">
     <div class=" col-md-12">
-    <h2><span class="badge badge-secondary">Paramétres Domotique</span></h2>
+    <h4 class="text-primary">URL Action Domotique</h4>
     <div class="form-group">
     <div class="custom-control custom-checkbox">
       <input type="checkbox" class="custom-control-input" id="btnDOM"  aria-describedby="btnDOMHelp">
@@ -272,21 +321,21 @@
     <div class="card-body small">
       <div class="input-group">
     <div class="input-group-prepend">
-    <div class="input-group-text text-info">URL Action 1 : </div>
+    <div class="input-group-text text-primary">URL Action 1 : </div>
     </div>
     <input type="text" class="form-control" id="URL_action1" aria-describedby="ac1lHelp" placeholder="http://ipbox/action.php">
     </div>
     <small id="ac1Help" class="form-text text-muted">Renseigner l'URL qui servira à lancer l'Action 1 sur votre domotique</small>
           <div class="input-group">
     <div class="input-group-prepend">
-    <div class="input-group-text text-info">URL Action 2 : </div>
+    <div class="input-group-text text-primary">URL Action 2 : </div>
     </div>
     <input type="text" class="form-control" id="URL_action2" aria-describedby="ac2lHelp" placeholder="http://ipbox/action.php">
     </div>
     <small id="ac2Help" class="form-text text-muted">Renseigner l'URL qui servira lancer l'Action 2 sur votre domotique</small>
     <div class="input-group">
     <div class="input-group-prepend">
-    <div class="input-group-text text-info">URL Action 3 : </div>
+    <div class="input-group-text text-primary">URL Action 3 : </div>
     </div>
     <input type="text" class="form-control" id="URL_action3" aria-describedby="ac3lHelp" placeholder="http://ipbox/action.php">
     </div>
@@ -300,7 +349,7 @@
          <div class="card-body">
            <h4 class="card-title"></h4>
            <div class="form-group">
-             <label for="CRACT" class="text-info">Action URL pour fin Minuteur</label>
+             <label for="CRACT" class="text-primary">Action URL pour fin Minuteur</label>
              <select class="custom-select" id="CRACT">
              <option selected value=0>Auncune</option>
              <option value=8>Action 1</option>
@@ -309,7 +358,7 @@
              </select>
            </div>
            <div class="form-group">
-             <label for="ALACT" class="text-info">Action URL pour Alarme</label>
+             <label for="ALACT" class="text-primary">Action URL pour Alarme</label>
              <select class="custom-select" id="ALACT">
              <option selected value=0>Auncune</option>
              <option value=8>Action 1</option>
@@ -319,7 +368,7 @@
            </div>
        </div>
        </div>
-
+<!--
        <div class="card border-dark mx-auto mb-2 " id="boxUrlUpdate" style="max-width: 40rem;">
        <div class="card-header text-center bg-dark text-light">URL Update</div>
        <div class="card-body small">
@@ -332,14 +381,17 @@
      <small id="upHelp" class="form-text text-muted">Renseigner l'URL qui servira à mettre à jour une valeur , à intervalle fixe</small>
      </div>
    </div>
+ -->
 
 </div>  <!-- fin box dom -->
+</div>
+</div> <!-- fin row -->
 
-
-
-<h2><span class="badge badge-secondary">Paramétres systeme </span></h2>
-<small class="text-muted">Ces parametrtes demandent de redemarrer pour etres pris en compte</small>
-
+<div class="row">
+<div class="col">
+  <div class="alert alert-dark"><h4 >Configuration :</h4>
+  <small class="text-muted">Permets de configurer les paramétres systémes </small>
+</div>
 <div class="input-group">
 <div class="input-group-prepend">
 <div class="input-group-text text-info">Suffixe Hostname : </div>
@@ -350,13 +402,11 @@
 </br>
   </br>
 
-<div class="form-group">
-<div class="custom-control custom-checkbox">
-<input type="checkbox" class="custom-control-input" id="impbtn"  aria-describedby="impgHelp">
-<label class="custom-control-label text-info" for="impbtn">Historiser uniquement les messages important</label>
-</div>
-<small id="impHelp" class="form-text text-muted">Permet de gerder dans l'historique , uniquement les messages indiqués comme important</small>
-</div>
+  <div class="form-group">
+        <label for="selectFlag" class="text-info">Choix des Notifications à historiser</label>
+        <select multiple="" class="form-control" id="selectFlag" multiple size="8">
+        </select>
+      </div>
 
 <div class="form-group">
 <div class="custom-control custom-checkbox">
@@ -402,27 +452,34 @@
 
     </div>
 </div> <!-- fin row -->
-<div class="row">
 
-    </div> <!-- fin row -->
-    <div class="row">
+
+<div class="row">
+  <div class="col">
         <div class="col-md-12 text-center my-4">
 
      <button type="submit" class="btn btn-primary">Sauvegarder</button>
               </div>
+</div>
 </div>  <!-- fin row -->
   </form>
 
 <div class="row">
-    <div class="col-md-12 text-center">
-    <hr class="my-2">
-    <h3>Fichier historique</h3>
-    <p>Permet de supprimer ou exporter le fichier historique , en cas d'erreur de lecture sur le fichier.Dans le cas ou le fichier serait corrompus. Tant que le notif'heure ne redemarre pas l'historique reste en mémoire.</p>
-    <button type="button" class="btn btn-outline-warning disabled" onclick="window.location='/config/histnotif.json';">Voir fichier Historique</button>
-    <button type="button" class="btn btn-outline-danger disabled" onclick="Purge();">Effacer fichier Historique</button>
+    <div class="col-md-12 text-center bg-dark text-white mb-3 p-4">
+    <h3>Outils avancées de  configuration</h3>
+        <hr class="my-2">
+    <p>Ces outils, permettent de modifier la configuration matérielle du notifheure.</p>
+    <ul class="text-left">
+      <li>Setup : pour aller à la page du SETUP initial.</li>
+      <li>Importer config : permet d'importer les paramétres de configuration concernant cette page.</li>
+      <li>Reboot : redémarre le notifheure si besoin.</li>
+    </ul>
+    <button type="button" class="btn btn-danger " onclick="window.location='/setup.html';">SETUP</button>
+    <button type="button" class="btn btn-warning disabled mx-2" onclick="window.location='/Upload'">Importer Config</button>
+    <button type="button" class="btn btn-info " onclick="Reboot();" >Reboot</button>
     </div>
 </div>
-
+</br>
 </div>
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"   integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="   crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>

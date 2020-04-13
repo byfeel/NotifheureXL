@@ -53,7 +53,7 @@
         <form action='/Notification' method='post' id="FormMsg" >
              <div class="form-group ">
 <label for='msg' class="text-primary">Message </label><br />
-<INPUT type='text'  id='inputMsg' maxlength='59' placeholder='Votre Message ...' class="form-control" aria-describedby="msghelp"/>
+<INPUT type='text'  id='inputMsg' maxlength='160' placeholder='Votre Message ...' class="form-control" aria-describedby="msghelp"/>
 <small id ="msghelp" class="form-text text-muted">Notification limitée à 160 caractères.</small>
                  </div>
   <div class="form-row">
@@ -110,17 +110,36 @@
       </div>
       </div>
      <div class="mx-auto d-none" id="groupLED1">
-           <input  type="range" id="intLED" name="puissance" min="0" max="100" value="100" oninput="valIntLed.value = puissance.valueAsNumber">
-           <output class="text-primary" for="intLED"  name="valIntLed"></output>
+       <div>
+           <label for='selectfxled' class="text-primary">Effet visuel : </label>
+           <select class="form-control " name='effetLED' id='selectfxled'>
+          </select>
+        </div>
+          <div id="scoled" class="d-none">
+           <label for='selectcolorled' class="text-primary">Couleur : </label>
+           <select class="form-control" name='colorLED' id='selectcolorled'>
+           </select>
+         </div>
+         <div id="cycle" class="d-none">
+           <p class="text-primary pb-2">Cycle fx ( 1 à 10 )</p>
+           <input  type="range" id="loopLED" name="cycleled" min="1" max="10" value="1" oninput="valloopLed.value = cycleled.valueAsNumber">
+           <output class="text-primary" for="loopLED"  name="valloopLed"></output>
+         </div>
+       </br>
+         <div id="groupledintfx">
+         <p class="text-primary pb-1">Intensité LED ( 0 à 100 )</p>
+         <input  type="range" id="intLEDFX" name="puissance" min="0" max="100" value="100" oninput="valIntLedFX.value = puissance.valueAsNumber">
+         <output class="text-primary" for="intLEDFX"  name="valIntLedFX"></output>
+       </div>
       </div>
-      <div class="form-group d-none" id="groupAUDIO">
+      <div class="form-group d-none mt-2" id="groupAUDIO">
       <div class="custom-control custom-checkbox">
       <input type="checkbox" class="custom-control-input" id="notifAudio">
       <label class="custom-control-label text-primary" for="notifAudio">Notification AUDIO <small class="text-info" id="infoTypeAudio"></small></label>
       </div>
       </div>
       <div class="form-group d-none" id="groupAUDIO1">
-          <label for='type' class="text-primary">theme : </label>
+          <label for='selectTheme' class="text-primary">theme : </label>
           <select class="form-control " name='theme' id='selectTheme'>
           </select>
           </div>
@@ -156,6 +175,11 @@
       <button type="button" class="btn btn-outline-warning m-2" onclick="Minuteur('CRSTP')">Pause</button>
        <button type="button" class="btn btn-outline-info m-2" onclick="Minuteur('CR')"><span id="CR" >Masquer</span></button>
      </div>
+     <ul>
+     <li class="text-left">Notification visuelle : <span class="text-info" id="INVCR">Aucune</span></li>
+     <li class="text-left">Notification Audio : <span class="text-info" id="INACR">Aucune</span></li>
+     <li class="text-left">URL ACTION : <span class="text-info" id="IUACR">Aucune</span></li>
+   </ul>
   </div></div></div>
   <!-- Fin panel minuteur -->
     <div class="tab-pane fade" id="reveil">
@@ -163,50 +187,56 @@
         <div class="card-header bg-primary ">
           <h3 class="text-center text-white">Programmation Alarme</h3>
         </div>
-        <div class="card-body ">
+        <div class="card-body text-center">
           <div class="text-center mb-4 text-secondary " id="blocAl">
           <h1 class="display-3 ">--:--</h1>
           <h3>Alarme Inactive</h3>
         </div>
-          <div class="col-10 col-lg-8 mx-auto">
+
             <div class="form-group text-center">
-            <div class="input-group my-3" id="Alarme" >
-                       <input type="time" class="form-control text-primary"   value="07:00"/>
-                   </div>
-                   <button type="button" class="btn btn-outline-dark" id="btn_stopAl"><i class="fas fa-power-off h3"></i></button>
-                   <button type="button" class="btn btn-outline-danger" id="btn_upAl"><i class="fas fa-bell h3" ></i></button>
+          <div class="input-group my-3 mx-auto" id="Alarme" >
+             <input type="time" class="form-control text-primary" value="07:00" style="width:30px;"/>
+         </div>
+         <button type="button" class="btn btn-outline-dark" id="btn_stopAl"><i class="fas fa-power-off h3"></i></button>
+         <button type="button" class="btn btn-outline-danger" id="btn_upAl"><i class="fas fa-bell h3" ></i></button>
+
 </div>
 <div class="text-primary mx-auto">
 <div class="form-check  form-check-inline">
-  <input class="form-check-input" type="checkbox" id="alday2" value=2>
+  <input class="form-check-input alday" type="checkbox" id="alday2" value=2>
   <label class="form-check-label" for="alday2">Lun</label>
 </div>
 <div class="form-check form-check-inline">
-  <input class="form-check-input" type="checkbox" id="alday3" value=3>
+  <input class="form-check-input alday" type="checkbox" id="alday3" value=3>
   <label class="form-check-label" for="alday3">Mar</label>
 </div>
 <div class="form-check form-check-inline">
-  <input class="form-check-input" type="checkbox" id="alday4" value=4>
+  <input class="form-check-input alday" type="checkbox" id="alday4" value=4>
   <label class="form-check-label" for="alday4">Mer</label>
 </div>
 <div class="form-check form-check-inline">
-  <input class="form-check-input" type="checkbox" id="alday5" value=5>
+  <input class="form-check-input alday" type="checkbox" id="alday5" value=5>
   <label class="form-check-label" for="alday5">Jeu</label>
 </div>
 <div class="form-check form-check-inline">
-  <input class="form-check-input" type="checkbox" id="alday6" value=6>
+  <input class="form-check-input alday" type="checkbox" id="alday6" value=6>
   <label class="form-check-label" for="alday6">Ven</label>
 </div>
 <div class="form-check form-check-inline">
-  <input class="form-check-input" type="checkbox" id="alday7" value=7>
+  <input class="form-check-input alday" type="checkbox" id="alday7" value=7>
   <label class="form-check-label" for="alday7">Sam</label>
 </div>
 <div class="form-check form-check-inline">
-<input class="form-check-input" type="checkbox" id="alday1" value=1>
+<input class="form-check-input alday" type="checkbox" id="alday1" value=1>
 <label class="form-check-label" for="alday1">Dim</label>
 </div>
 </div>
-</div>
+<ul class="text-left">
+<li>Notification visuelle : <span class="text-info" id="INVAL">Aucune</span></li>
+<li>Notification Audio : <span class="text-info" id="INAAL">Aucune</span></li>
+<li>URL ACTION : <span class="text-info" id="IUAAL">Aucune</span></li>
+</ul>
+
 </div></div></div>
 <!--fin panel reveil -->
   </div>
@@ -234,7 +264,7 @@
       <div class="form-group">
       <div class="custom-control custom-switch">
       <input type="checkbox" class="custom-control-input" id="LUM" checked>
-      <label class="custom-control-label text-primary" for="LUM">Luminosité Auto</label>
+      <label class="custom-control-label text-primary" for="LUM">Luminosité Auto ( <span id="infoLUM" class="badge badge-info badge-pill"></span> )</label>
       </div>
       </div>
      <div class="mx-auto d-none" id="groupLum">
@@ -314,7 +344,8 @@
   <tr><th scope="row" class="bg-dark text-white">1er Synchro</th><td id="first"></td></tr>
    <tr><th scope="row" class="bg-dark text-white">Derniére Synchro </th><td id="last"></td></tr>
    <tr><th scope="row" class="bg-dark text-white">Mode Debug </th><td id="debug"></td></tr>
-   <tr><th scope="row" class="bg-dark text-white" id="newversion">Version </th><td><a id="urlversion" href="" target="_blank"><span id="lastversion"></span></a></td></tr>
+   <tr><th scope="row" class="bg-dark text-white" id="newversion">Version firmware</th><td><a id="urlversion" href="" target="_blank"><span id="lastversion"></span></a></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Version Interface </th><td id="vspiffs"></td></tr>
       </table>
           </div></div>
  <div class="card border-danger  m-1" style="min-width:300px;">
@@ -337,6 +368,7 @@
   <div class="card-header text-center"><H3>Display</H3></div>
   <div class="card-body">
       <table class="table table-bordered table-sm table-md">
+  <tr><th scope="row" class="bg-dark text-white">Type Matrices</th><td id="typMat"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">Nb Matrices</th><td id="display"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">Largeur Time</th><td id="WZT"></td></tr>
 <tr><th scope="row" class="bg-dark text-white">Mode XL</th><td id="XL"></td></tr>
@@ -363,7 +395,7 @@
   <div class="tab-pane fade" id="mqtt" >
     <p class="text-secondary"> Paramétres serveur MQTT ( si activé )</p>
     <div class="row" id="cardmqtt" >
-    <div class="col-lg-6">
+    <div class="col-lg-5">
      <div class="card border-primary mb-3 " >
           <div class="card-header">Info Serveur MQTT</div>
             <div class="card-body">
@@ -379,16 +411,16 @@
  </div>
  </div>
 </div>
-<div class="col-lg-5">
+<div class="col-lg-7">
   <div class="card text-white bg-primary mb-3">
   <div class="card-header">JSON MQTT</div>
   <div class="card-body">
-    <h4 class="card-title">Topic Souscription</h4>
-    <p class="card-text">Json à envoyer sous la forme : {"msg":"Hello World"}</p>
-    <p>msg : message a afficher</p>
-    <p>Possible de préciser des options  avec mot clef opt : par exemple {"msg":"Hello World","opt":"pause=0;nzo=1"}  pour une pause de 0 secondes sur la Zone 1 ( séparé par ; )</p>
-    <p>Si aucune option n'est précisé .Les paramétres par défaut sont appliqués. Envoie du message sur la zone "message" </P>
-      <h4 class="card-title">Topic Publication</h4>
+    <h5 class="card-title">Topic Souscription</h5>
+    <p class="card-text">Json à envoyer sous la forme : {<strong>"msg":</strong>"Hello World"}</p>
+    <p><strong>msg :</strong> message a afficher</p>
+    <p>Possible de préciser des options avec mot-clef <strong>opt</strong> : par exemple {<strong>"msg":</strong>"Hello World",<strong>"opt":</strong>"pause=0; nzo=1"} pour une pause de 0 seconde sur la zone 1 ( séparé par ; ).
+      Si aucune option n'est précisée .Les paramètres par défaut sont appliqués. Envoie du message sur la zone "message"</P>
+      <h5 class="card-title">Topic Publication</h5>
       <p class="card-text">Json  sous la forme : </p>
     <pre class="text-white">
     {
@@ -405,7 +437,33 @@
 </div>
 </div>
    <p class="text-secondary"> Paramétres Domotique ( si activé )</p>
+   <div class="row" id="cardbox" >
+   <div class="col-lg-5">
+    <div class="card border-primary mb-3 " >
+         <div class="card-header">Info Actions URL BOX</div>
+           <div class="card-body">
+       <h5 class="card-title"> URL BOX : <span id="infostatemqtt" class="text-primary"></span></h5>
+       <ul class="list-group list-group-flush">
+ <li class="list-group-item">URL Action 1 : <span id="infoaction1">N/A</span></li>
+ <li class="list-group-item">URL Action 2 : <span id="infoaction2">N/A</span></li>
+ <li class="list-group-item">URL Action 3 : <span id="infoaction3">N/A</span></li>
+</ul>
+    </div>
   </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card text-white bg-primary mb-3">
+    <div class="card-header">Information URL Actions</div>
+    <div class="card-body">
+      <h5 class="card-title">Message Information URL</h5>
+      <p class="card-text">État de la dernière requête envoyé :</p>
+      <p id="infoEtatURL"> En attente de retour d'état ..</p>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
   <div class="tab-pane fade" id="Options">
     <p>Ci dessous listes des actions associés aux differents modules ( Boutons , DFPlayer )- Si présent</p>
       <div class="card-deck ">
@@ -473,10 +531,19 @@
       <div class="card border-info mb-3">
           <div class="card-header">Configuration Systéme</div>
             <div class="card-body">
-        <h4 class="card-title"></h4>
-            <p>Ci dessous , lien vers la page de configuration du systéme Notif'Heure : </p>
+              <ul class="list-group list-group-flush">
+    <li class="list-group-item">
+    <p>Ci dessous , lien vers la page de configuration du NotifHeure </p>
+    <button type="button" class="btn btn-primary btn-sm" onclick="goConfig();">Configuration</button>
+    </li>
+    <li class="list-group-item">
+      <p>Permet de forcer la synchro de l'heure , dans le cas ou il y aurait eu une erreur de synchro au démarrage , avec le serveur de temps.
+      </br>Cette fonction , peut "freezer" l'affichage , le temps de la synchro.</p>
+      <button type="button" class="btn btn-primary btn-sm" onclick="checktime();">Forcer synchro heure</button>
+    </li>
+    <li class="list-group-item"></li>
+        </ul>
 
-         <a href="editconfig.html"> Page Configuration</a>
           </div></div>
 
 

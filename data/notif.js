@@ -5,7 +5,7 @@ var debug=false;
 var immp=false;
 var boutons=["Aucune","Afficher / Masquer les secondes","Afficher / Masquer l'horloge","Mode luminosite Mini / Maxi / Automatique","On / Off Veilleuse","Historique Message","Afficher / masquer Minuteur","lancer Minuteur","Action 1","Action 2","Action 3"];
 var Actions = ['Aucune','Afficher / Masquer les Secondes', 'Activer / desactiver Horloge','Mode Manuel ( Mini ) - Manuel ( Maxi ) - Automatique','On / Off LED','Action 1','Action 2','Action 3','Action 4','Action 5','Action 6','Afficher Historique message'];
-var couleurs=["Blanc","Rouge","Bleue","Vert","Jaune","Orange","Violet","Rose"];
+var couleurs=["Blanc","Rouge","Bleu","Vert","Jaune","Orange","Violet","Rose"];
 var jours = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
 var mois = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 var typeAudio = ["Absent","HP / Buzzer","MP3Player","Autre"];
@@ -15,13 +15,17 @@ var ZXL=["Zone XL","Zone XL haut","Zone Message","Zone Notif 2","Zone notif 3","
 var Z=["Zone Horloge","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone Notif 6","Zone Notif 7"];
 var fx=[ 'PRINT','SCROLL_LEFT','SCROLL_UP_LEFT','SCROLL_DOWN_LEFT','SCROLL_UP','GROW_UP','SCAN_HORIZ','BLINDS','WIPE','SCAN_VERTX','SLICE','FADE','OPENING_CURSOR','NO_EFFECT','SPRITE','CLOSING','SCAN_VERT','WIPE_CURSOR','SCAN_HORIZX','DISSOLVE','MESH','OPENING','CLOSING_CURSOR','GROW_DOWN','SCROLL_DOWN','SCROLL_DOWN_RIGHT','SCROLL_UP_RIGHT','SCROLL_RIGHT','RANDOM'];
 var animation=['PACMAN','fleche 1',"Roll 1","Marcheur","space invader","chevron","Coeur","Bateau vapeur","Voilier","boule de feu","rocket","ligne","vague","fantome pacman","fleche 2","roll 2"];
-var fxLed=['flash','breath','rainbow','colorWipe','colorWipeFill','chaseColor'];
+var fxLed3=['on','flash','breath','rainbow','colorWipe','colorWipeFill','chaseColor'];
+var fxLed2=['on'];
+var fxLed1=['on','flash','breath'];
+var typMat=['Parola','Genric','ICStation','FC16'];
 var cr=false;
 var crstp=false;
 var tA,tL;
 var ajaxload=false;
 var ver;
 var pause;
+var color;
 
 function IsJsonString(str) {
 try {
@@ -71,6 +75,13 @@ output['innerText'] = value;
 
 var DEBUG=true;
 
+function checktime() {
+  $.get('/Config?checktime');
+}
+
+function goConfig() {
+  window.location.href='/editconfig.html';
+}
 
 function getInfo() {
 $.ajax({
@@ -119,17 +130,13 @@ $.ajax({
          $("#MINUT").val(jinfo.CRTIME);
          $("#groupLum output").val(jinfo.INTENSITY);
          $('#LUM').prop('checked',jinfo.LUM);
+         $('#typMat').text(typMat[jinfo.TYPEMATRICE]);
 
-         $('#BRI').val(jinfo.LEDINT);
-         $("#groupLed output").val(jinfo.LEDINT);
+         //$("#groupLed output").val(jinfo.LEDINT);
          $('#LUM').prop('checked',jinfo.LUM);
+         $('#infoLUM').text(jinfo.INTENSITY);
          $('#SEC').prop('checked',jinfo.SEC);
          $('#HOR').prop('checked',jinfo.HOR);
-
-         if (tL>0) {
-          $('#LED').prop('disabled', false);
-          $('#LED').prop('checked',jinfo.LED);
-         }
          $('#tzname').text(jinfo.TZNAME);
          $('#hostname').text(jinfo.HOSTNAME);
          $('#mdns').text(jinfo.MDNS);
@@ -166,12 +173,26 @@ $.ajax({
 
           $('#isLED').text(typeLed[tL]);
           $('#isAUDIO').text(typeAudio[tA]);
+          // si LED
           if (tL > 0)  {
+            $('#LED').prop('disabled', false);
+            $('#LED').prop('checked',jinfo.LED);
             $('#groupLED').removeClass('d-none');
+            $('#BRI').val(jinfo.LEDINT);
             $('#infoTypeLed').text(" ("+typeLed[tL]+")");
-            $('#intLED').val(jinfo.LEDINT);
-            $('#COLOR').val(jinfo.COLOR);
-                  }
+            // pour fonctions
+            if (jinfo.CRFX>0) $('#INVCR').text(fxLed3[jinfo.CRFX-1]);
+            if (jinfo.ALFX>0) $('#INVAL').text(fxLed3[jinfo.ALFX-1]);
+            if (tL>1) {
+                if (tL !=2 ) $('#intLEDFX').val(jinfo.FXINT);
+            }
+            if (tL==3) {
+              color=jinfo.COLOR;
+              $('#COLOR').val(jinfo.COLOR);
+              $('#loopLED').val(2);
+                    }
+
+          }
             else {
               $('#groupLED').addClass('d-none');
             }
@@ -179,6 +200,8 @@ $.ajax({
             $('#groupAUDIO').removeClass('d-none');
             $('#infoTypeAudio').text(" ("+typeAudio[tA]+")");
             $('#volAUDIO').val(jinfo.VOLUME);
+              if (jinfo.CRFXSOUND>0) $('#INACR').text(buzMusic[jinfo.CRFXSOUND-1]);
+              if (jinfo.ALFXSOUND>0) $('#INAAL').text(buzMusic[jinfo.ALFXSOUND-1]);
             if (tA==2) {
               $('#cardMP3').removeClass('d-none');
               $('#MP3list').text(jinfo.TOTALMP3-jinfo.MP3_1);
@@ -219,8 +242,16 @@ $.ajax({
                   else $('#bouton2').text("Absent");
           if(jinfo.LED) $('#StatutLED').text("Présent");
                   else $('#StatutLED').text("Absent");
-          if(jinfo.BOX) $('#boxinfo').text("Présent");
-                  else $('#boxinfo').text("Absent");
+          if(jinfo.BOX) {
+              $('#boxinfo').text("Activé");
+              $("#cardbox").removeClass("d-none");
+              $('#IUACR').text(Actions[jinfo.ACTION[0]]);
+              $('#IUAAL').text(Actions[jinfo.ACTION[1]]);
+            }
+              else {
+                $('#boxinfo').text("Désactivée");
+                $("#cardbox").addClass("d-none");
+              }
             $("#Alarme input").val(pad(jinfo.TIMEREV[0],2)+":"+pad(jinfo.TIMEREV[1],2));
 
           if (jinfo.REV) {
@@ -236,10 +267,7 @@ $.ajax({
           }
           cr=jinfo.CR;
           crstp=jinfo.CRSTOP;
-          if (jinfo.CR) {
-            $('#CR').text('Masquer');
-          }
-          else $('#CR').text('Afficher');
+
           if (jinfo.BROKER) {
             $("#cardmqtt").removeClass("d-none");
             if (jinfo.STATEBROKER) {
@@ -271,11 +299,35 @@ $.ajax({
      },
      complete: function(resultat, statut){
       ajaxload=true;
+      if (cr) {
+        $('#CR').text('Afficher');
+      }
+      else $('#CR').text('Masquer');
       checkLum();
       checkLed();
       setInterval('update_Info();',20000); /* rappel après 20 secondes  */
       checkGithub();
- }
+      if (tL==1) fxLed3=fxLed1;
+      else if (tL==2) fxLed3=fxLed2;
+      if (tL>0) {
+        $.each(fxLed3, function (value, text) {
+          $('#selectfxled').append($('<option>', {
+                value: value+1,
+                text : (value+1)+" - "+text
+            }));
+          });
+        }
+       if (tL==3) {
+        $('#scoled').removeClass("d-none");
+        $('#cycle').removeClass("d-none");
+        $.each(couleurs, function (value, text) {
+          $('#selectcolorled').append($('<option>', {
+                value: value,
+                text : value+" - "+text
+            }));
+          });
+      }
+ } // fin complete
 
  }); //fin ajax
 }
@@ -301,8 +353,8 @@ function getHisto() {
 
 function infoJson() {
   $.getJSON( "/info.json", function(json) {
-    console.log(json);
     console.log(json.version);
+    $('#vspiffs').text(json.version);
 });
 }
 
@@ -328,6 +380,13 @@ $.ajax({
          $('#last').text(unixToDate(jinfo.LASTSYNCHRO));
          $('#Temp').text(jinfo.TEMP);
          $('#Hum').text(jinfo.HUM);
+         $('#infoLUM').text(jinfo.INTENSITY);
+         if (jinfo.INFO=="200") {
+         $('#infoEtatURL').text("derniére requéte URL : OK");
+       }
+         else {
+            $('#infoEtatURL').text("derniére requéte URL : Erreur ");
+         }
        }
       }
   });
@@ -383,7 +442,8 @@ function getMdns() {
                           $('#inforafraichir').text(" ... Récupération ip notifheure "+listnotif[i]+"...");
                           if (listnotif[i].length != 0 ) { mdns_Info(listnotif[i],i+1);}
                        }
-                        $('#inforafraichir').text("");
+                        $('#inforafraichir').text("fin recherche");
+
                       }
 
       }
@@ -393,20 +453,27 @@ function getMdns() {
 $("#FormMsg").submit(function(){
 Message=$('#inputMsg').val();
 // valeur par défaut
-ledType=0;
 audioValue=0;
 ledValue=0;
 numeroPiste=0;
 animation=0;
 P=pause;
+fxled=0;
+loop=1;
+colorled=color;
 //Si notif led
 if ($('#notifLed').prop('checked')) {
-  ledType=1;
+  if (tL>0) fxled=$("#selectfxled option:selected").val();
   if (tL==1 || tL==3) {
-    ledValue=$('#intLED').val();
+    ledValue=$('#intLEDFX').val();
+    loop=$("#loopLED").val();
   }
+  if ( tL==3) {
+    colorled=$("#selectcolorled option:selected").val();
+  }
+  if (tL==2) ledValue=100;
 }
-else ledType=0;
+
 if ($('#notifAudio').prop('checked')) {
   if (tA==1) {
     numeroPiste=$("#selectTheme option:selected").val();
@@ -415,6 +482,7 @@ if ($('#notifAudio').prop('checked')) {
     audioValue=$("#volAUDIO").val();
   }
 }
+
 typ=$("#type option:selected").val();
 if (typ==6) fio=$('#FX').val();
 else if (typ==7) {
@@ -431,7 +499,6 @@ if (typ==1) P=parseInt($('#pauseInfo').val());
 $.post('/Notification',
      {
 msg:Message,
-ledfx:ledType,
 ledlum:ledValue,
 audio:audioValue,
 num:numeroPiste,
@@ -439,7 +506,10 @@ nzo:$("#selectZone option:selected").val(),
 fio:fio,
 anim:animation,
 type:typ,
-pause:P
+pause:P,
+ledfx:fxled,
+color:colorled,
+loop:loop
    }, function(data) {
      //$("#infoSubmit").text(data);
      console.log(data);
@@ -469,20 +539,27 @@ $('#INT').rangeslider('update', true);
 function checkLed()
 {
   $('#BRI').rangeslider('update', true);
-if ($('#LED').prop('checked'))  {
-
-  $('#groupLed').removeClass("d-none");
-if (tL==3)  $('#groupled3').removeClass("d-none");
-// Options();
-    }
-else {
+  if ($('#LED').prop('checked'))  {
+      if (tL!=2) $('#groupLed').removeClass("d-none");
+      if (tL==3)  $('#groupled3').removeClass("d-none");
+      // Options();
+  }
+  else {
    $('#groupLed').addClass("d-none");
-if (tL==3)  $('#groupled3').addClass("d-none");
-}
+   if (tL==3)  $('#groupled3').addClass("d-none");
 }
 
+}
 
-function Options(cle = "") {
+function checkDay() {
+  ald="false,";
+  for (i=1;i<8;i++) {
+    ald+=$("#alday"+i).prop('checked')+",";
+  }
+Options('ALD',ald);
+}
+
+function Options(cle = "" , valeur = "") {
 
 key = ((typeof cle != 'object') ? cle : key=$(this).attr('id'));
 console.log ( "valeur de key :"+$(this).attr('id')+" et type cle "+typeof cle);
@@ -492,6 +569,7 @@ if (key=="INT" || key=="COLOR")   val=$(this).val();
 else if (key=="BRI")   { val=$(this).val()+"&COLOR="+$("#COLOR").val();key="LEDINT";}
 else if (key=="TIMEREV")  { val=$("#blocAl h1").text()+":";}
 else if (key=="REV")   val=false;
+else if (key=="ALD") val=valeur;
 else val=$(this).prop('checked');
 
 console.log ("Envoie des valeur "+key+" et "+val);
@@ -545,6 +623,7 @@ if (key=="MIN") {
   $('#MINUT').rangeslider('update', true);
    val=$('#MINUT').val();
    val=val*60;
+   cr=true;
  }
  else if (key=="STP") {
    val=0;
@@ -574,12 +653,19 @@ $('#MINUT').rangeslider('update', true);
 }
 
 $('#notifLed').change(function() {
+  console.log("test notif : "+tL);
  if ($(this).prop('checked'))  {
   if (tL==1 || tL==3)  {
         $('#groupLED1').removeClass("d-none");
-        valueOutput(document.getElementById('intLED'));
-        $('#intLED').rangeslider('update', true);
+        valueOutput(document.getElementById('intLEDFX'));
+        $('#intLEDFX').rangeslider('update', true);
+        valueOutput(document.getElementById('loopLED'));
+        $('#loopLED').rangeslider('update', true);
       }
+  if (tL==2) {
+      $('#groupLED1').removeClass("d-none");
+      $('#groupledintfx').addClass("d-none");
+    }
  }
  else {
    $('#groupLED1').addClass("d-none");
@@ -617,6 +703,19 @@ $('#type').change(function() {
   }
 });
 
+$('#selectfxled').change(function() {
+  if (tL==3) {
+  if ($(this).val()==4) $('#scoled').addClass('d-none');
+    else $('#scoled').removeClass('d-none');
+    if ($(this).val()==6) $('#cycle').addClass('d-none');
+    else $('#cycle').removeClass('d-none');
+  }
+  if (tL==3 || tL==1) {
+    if ($(this).val()==1) $('#cycle').addClass('d-none');
+    else $('#cycle').removeClass('d-none');
+  }
+});
+
 function checkGithub() {
   $.getJSON( "https://api.github.com/repos/byfeel/NotifheureXL/releases/latest", function( data ) {
     if (data.hasOwnProperty('tag_name')) {
@@ -647,6 +746,7 @@ $('#INT').on('change',Options);
 $('#REV').on('change',Options);
 $('#LED').on('change',Options);
 $('#BRI').on('change',Options);
+$('.alday').on('change',checkDay);
 $('#COLOR').on('change',Options);
 $('#DDHT').on('change',Options);
 $('#btn_upAl').on('click',upAl);
@@ -661,6 +761,8 @@ $.each(buzMusic, function (value, text) {
           text : (value+1)+" - "+text
       }));
 });
+
+
 
 $.each(couleurs, function (value, text) {
 

@@ -654,7 +654,7 @@ $( document ).ready(function() {
                      offset=jinfo.TZOFFSET;
                      tzname=jinfo.TZNAME;
                      //stampN= new Date(jinfo.DATE*1000);
-                     stampN= jinfo.DATE*1000;
+                     stampN= jinfo.DATE;
                      WZT=jinfo.ZONETIME;
                      MZM=jinfo.MAXZONEMSG;
                      if(jinfo.XL) XL=true ;
@@ -667,7 +667,8 @@ $( document ).ready(function() {
                     $('#checkBtn2').prop('checked',jinfo.BTN2).change();
                     $('#selectNotifLum').val(jinfo.TYPELED).change();
                     $('#selectNotifAud').val(jinfo.TYPEAUDIO).change();
-                    $("#datenotif").text(moment.tz(stampN,"UTC").format("DD-MM-YYYY  HH:MM")+" ("+moment().tz(tzname).format('Z')+" )");
+                    //$("#datenotif").text(moment.tz(stampN,"UTC").format("DD-MM-YYYY  HH:MM")+" ("+moment().tz(tzname).format('Z')+" )");
+                    $("#datenotif").text(moment.tz(stampN*1000,"UTC").format("DD-MM-YYYY  HH:MM")+" ( Offset : "+offset+" mn )");
                     $("#bloc-TZ").val(tzname).trigger("change");
                     }
                },
@@ -694,7 +695,7 @@ $( document ).ready(function() {
                 value = $(this).val();
                 timezone=moment().tz(value).format('Z');
                 zone=moment.tz(value).format('zz');
-                offset=-(moment.tz.zone(value).offset(stampN));
+                offset=-(moment.tz.zone(value).offset(stampN*1000));
               var DST=isDST(zone);
               $("#tz").text(timezone);
               $("#infotz").text(value);
@@ -710,6 +711,7 @@ $( document ).ready(function() {
 
               $("#infotime").addClass("d-none");
               $("#timezone").removeClass("d-none");
+
           })
 
         </script>

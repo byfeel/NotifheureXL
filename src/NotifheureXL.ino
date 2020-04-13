@@ -15,8 +15,9 @@
 //  n/2 ... 3  2  1  0    <- Matrice basse
 // ***************************************
 
-const String ver = "0.8.5.3";
+const String ver = "0.8.5.6";
 const String hardware = "NotifheureXL";
+const String vInterface="";
 // Bibliotheque à inclure
 //********** eeprom / SPIFFS
 #include <EEPROM.h>
@@ -62,6 +63,7 @@ const String hardware = "NotifheureXL";
 #include <ClickButton.h>
 // bibliotheque adafruit neopixel
 #include <Adafruit_NeoPixel.h>
+#include <TZ.h>
 //***************************
 // admin page config
 //***************************
@@ -148,15 +150,15 @@ const char* www_password = "notif";
 #define VOLUME 50 // volume audio de 0 à 15
 #define _MP3START 1
 #define _MP3NOTIF 3
-#define TXTALARM "Alarme !!!"
-#define TXTMINUT "Fin Minuteur."
+#define TXTALARM "Votre Alarme vient de se déclencher !!!"
+#define TXTMINUT "Fin Minuteur ! votre minuteur est terminé"
 // gestion des effets
 #define PAUSE_TIME 0
 #define SCROLL_SPEED 40
 // luminosité Led
 #define BRIGHTNESS 30
 // historique
-#define HF "NI"
+#define HF "NIQJ"
 //**************************
 
 // Message a afficher
@@ -216,19 +218,7 @@ const char* buzMusic[] = {
   "GoodBad:d=4,o=5,b=56:32p,32a#,32d#6,32a#,32d#6,8a#.,16f#.,16g#.,d#,32a#,32d#6,32a#,32d#6,8a#.,16f#.,16g#.,c#6,32a#,32d#6,32a#,32d#6,8a#.,16f#.,32f.,32d#.,c#,32a#,32d#6,32a#,32d#6,8a#.,16g#.,d#",
   "BackToTh:d=4,o=6,b=180:2c,8b5,8a5,b5,a5,g5,1a5,p,d,2c,8b5,8a5,b5,a5,g5,1a5"
 };
-/*
-const char* The_Simpsons PROGMEM = "The_Simpsons:d=4,o=5,b=160:c.6,e6,f#6,8a6,g.6,e6,c6,8a,8f#,8f#,8f#,2g,8p,8p,8f#,8f#,8f#,8g,a#.,8c6,8c6,8c6,c6";
-const char* tetris PROGMEM = "tetris:d=4,o=5,b=160:e6,8b,8c6,8d6,16e6,16d6,8c6,8b,a,8a,8c6,e6,8d6,8c6,b,8b,8c6,d6,e6,c6,a,2a,8p,d6,8f6,a6,8g6,8f6,e6,8e6,8c6,e6,8d6,8c6,b,8b,8c6,d6,e6,c6,a,a";
-const char* arkanoid PROGMEM = "Arkanoid:d=4,o=5,b=140:8g6,16p,16g.6,2a#6,32p,8a6,8g6,8f6,8a6,2g6";
-const char* mario PROGMEM = "mario:d=4,o=5,b=100:16e6,16e6,32p,8e6,16c6,8e6,8g6,8p,8g,8p,8c6,16p,8g,16p,8e,16p,8a,8b,16a#,8a,16g.,16e6,16g6,8a6,16f6,8g6,8e6,16c6,16d6,8b,16p,8c6,16p,8g,16p,8e,16p,8a,8b,16a#,8a,16g.,16e6,16g6,8a6,16f6,8g6,8e6,16c6,16d6,8b,8p,16g6,16f#6,16f6,16d#6,16p,16e6,16p,16g#,16a,16c6,16p,16a,16c6,16d6,8p,16g6,16f#6,16f6,16d#6,16p,16e6,16p,16c7,16p,16c7,16c7,p,16g6,16f#6,16f6,16d#6,16p,16e6,16p,16g#,16a,16c6,16p,16a,16c6,16d6,8p,16d#6,8p,16d6,8p,16c6";
-const char* Xfiles PROGMEM = "Xfiles:d=4,o=5,b=125:e,b,a,b,d6,2b.,1p,e,b,a,b,e6,2b.,1p,g6,f#6,e6,d6,e6,2b.,1p,g6,f#6,e6,d6,f#6,2b.,1p,e,b,a,b,d6,2b.,1p,e,b,a,b,e6,2b.,1p,e6,2b";
-const char* Axel PROGMEM = "AxelF:d=4,o=5,b=125:32p,8g,8p,16a#.,8p,16g,16p,16g,8c6,8g,8f,8g,8p,16d.6,8p,16g,16p,16g,8d#6,8d6,8a#,8g,8d6,8g6,16g,16f,16p,16f,8d,8a#,2g,p,SS,16f6,8d6,8c6,8a#,g,8a#.,16g,16p,16g,8c6,8g,8f,g,8d.6,16g,16p,16g,8d#6,8d6,8a#,8g,8d6,8g6,16g,16f,16p,16f,8d,8a#,2g";
-const char* Ghostbusters PROGMEM = "Ghostbusters:d=4,o=5,b=180:4c5,4c5,8e5,8f5,8g5,8p, 4a#5,4a#5,4f5,4f5,4c5,4c5,8e5,8f5,8g5,8p,4a#5,4a#5,4f5";
-const char* dkong PROGMEM = "dkong_level:d=4,o=5,b=200:c6,32p,8d6,8p,f6,8p,8d6,16p,8c6,16p,8d6,16p,a#";
-const char* pacman PROGMEM = "PacMan:b=160:32b,32p,32b6,32p,32f#6,32p,32d#6,32p,32b6,32f#6,16p,16d#6,16p,32c6,32p,32c7,32p,32g6,32p,32e6,32p,32c7,32g6,16p,16e6,16p,32b,32p,32b6,32p,32f#6,32p,32d#6,32p,32b6,32f#6,16p,16d#6,16p,32d#6,32e6,32f6,32p,32f6,32f#6,32g6,32p,32g6,32g#6,32a6,32p,32b.6";
-const char* donkey PROGMEM = "DonkeyKong:d=4,o=5,b=200:8a#,8p,8d6,16p,16f.6,16g.6,16f.6,8a#,8p,8d6,16p,16f.6,16g.6,16f.6,8a#,8p,8d6,16p,16f.6,16g.6,16f.6,8a#,8p,8d6,16p,16f.6,16g.6,16f.6";
-const char* dambuste PROGMEM = "Dambuste:d=4,o=5,b=63:4f6,8a#6,8f6,8f6,16d#6,16d6,8d#6,8f6,4d6,8f6,8d6,8d6,16c6,16a#,8a,8c6,8a#.,16c6,8d6,8g6,8f.6,16d6,4f6,8c6,8f6,16g6,16a6,8a#6,4a6,4p";
-*/
+
 //***************************************
 
 //******************
@@ -288,10 +278,10 @@ struct sConfigSys {
   bool REV;
   bool DHT;                   //affichage temperature sur notifheure si DHT
   byte timeREV[2];            // Heure reveil
-  char msgAlarme[30];         // Message a affiché pour alarme
-  char msgMinuteur[30];       // Message a affiché pour fin de minuteur
+  char msgAlarme[80];         // Message a affiché pour alarme
+  char msgMinuteur[80];       // Message a affiché pour fin de minuteur
   bool LED;
-  int LEDINT;                 // Intensité par defaut de la veilleuse / notif visuelle
+  int LEDINT;                 // Intensité par defaut de la veilleuse
   byte color;                 // couleur par défaut veilleuse
   char charOff;               // caractére / symbole à afficher sur horloge eteinte
   char textnotif[20];         // texte prénotif
@@ -301,14 +291,15 @@ struct sConfigSys {
   char URL_Action2[130];
   char URL_Action3[130];
   bool alDay[7];              // jour alarme
-  int fxint;                  // intensité par defaut fx
+  int fxint;                  // intensité par defaut fx visuel
   byte fxcolor;               //colueur par defaut fx
-  char hflag[5];              // flag autorisé pour historique
+  char hflag[10];              // flag autorisé pour historique
   int CrTime;
   byte fxCR;                  // fx minuteur par defaut
   byte fxAL;                  // fx Alarme par defaut
   byte fxSoundCR;             // fx Sound Minuteur par defaut
   byte fxSoundAL;             // fx Sound Alarme par defaut
+  byte action[2];             // Action pour minuteur / alarme
   int MP3Start;               // numero MP3 à jouer au démarrage
   int MP3Notif;               // numero MP3 a jouer pour notification
   int typeAudio;
@@ -321,7 +312,7 @@ struct sConfigSys {
 };
 sConfigSys configSys;
 const size_t capacityMQTT = JSON_OBJECT_SIZE(10) + 200;
-const size_t capacityConfig = JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(6) + JSON_ARRAY_SIZE(8) + JSON_OBJECT_SIZE(96) + 1800;
+const size_t capacityConfig = JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(6) + JSON_ARRAY_SIZE(8) + JSON_OBJECT_SIZE(100) + 1800;
 const size_t capacityHisto =3*JSON_ARRAY_SIZE(10)  + JSON_OBJECT_SIZE(4) + 500;
 const char *fileconfig = "/config/config.json";  // fichier config
 const char *fileHist = "/config/Historique.json";  // fichier config
@@ -341,7 +332,12 @@ NTPClient timeClient(ntpUDP, NTPSERV,0, synchroNTP);
 bool invertUpperZone = false;  // Type ICS ou FC16
 
 // HARDWARE SPI
+
+
 MD_Parola P = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
+
+
+
 
 // Declare votre neopixel Ring
 Adafruit_NeoPixel ring(LED_COUNT, LEDPIN, NEO_GRB + NEO_KHZ800);
@@ -375,6 +371,7 @@ char msgL[15]; // un buffer de 15 caractères au max
 // variable notif
 bool AUDIONOTIF = false;
 bool Notif=false;
+byte nzofx;
 //variable minuteur
 bool CR=false;
 bool CRStop=false;
@@ -408,6 +405,12 @@ String mdnsName;
 String topicName;
 String idNotif;
 bool statebroker=false;
+String infoBOX="OK";
+
+//nom fichier charge
+File fsUploadFile;
+void handleFileUpload();
+
 // boutons
 byte clic=0;
 //MP3
@@ -450,6 +453,7 @@ sHistNotif histNotif[MAX_HIST];
 
 byte indexHist = 0;
 
+const String matrices[]={"PAROLA","GENERIC","ICSTATION","FC16"};
 // couleur Led
 
 const uint32_t couleur[]={
@@ -475,14 +479,16 @@ struct snotifLed {
   int loop;
 };
 struct snotifLed notifLed={0,BRIGHTNESS,White,50,1};
-const struct snotifLed flash={1,100,White,40,4};
-const struct snotifLed breath={2,100,White,50,2};
-const struct snotifLed rainbow={3,100,White,50,4};
-const struct snotifLed colorWipe={4,100,White,50,2};
-const struct snotifLed colorWipeFill={5,100,White,50,1};
-const struct snotifLed chaseColor={6,100,White,50,1};
+const struct snotifLed nofxled={0,0,White,40,0};
+const struct snotifLed on={1,100,White,40,1};
+const struct snotifLed flash={2,100,White,40,4};
+const struct snotifLed breath={3,100,White,50,2};
+const struct snotifLed rainbow={4,100,White,50,4};
+const struct snotifLed colorWipe={5,100,White,50,2};
+const struct snotifLed colorWipeFill={6,100,White,50,1};
+const struct snotifLed chaseColor={7,100,White,50,1};
 
-snotifLed FX_led[]={flash,breath,rainbow,colorWipe,colorWipeFill,chaseColor};
+snotifLed FX_led[]={nofxled,on,flash,breath,rainbow,colorWipe,colorWipeFill,chaseColor};
 
 struct snotifAudio {
   int fx;
@@ -575,6 +581,8 @@ uint8_t utf8Ascii(uint8_t ascii)
 
   return(c);
 }
+
+
 
 void utf8Ascii(char* s)
 // In place conversion UTF-8 string to Extended ASCII
@@ -783,6 +791,8 @@ sprite[] =
 };
 
 
+
+ //void setType() {MD_MAX72XX::setModuleType(HARDWARE_TYPE);}
 /*************************
 * * *lecture eeprom * * *
 *************************/
@@ -1044,6 +1054,8 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   strlcpy(config.URL_Action1, docConfig["URL_ACT1"] | "N/A", sizeof(config.URL_Action1));
   strlcpy(config.URL_Action2, docConfig["URL_ACT2"] | "N/A", sizeof(config.URL_Action2));
   strlcpy(config.URL_Action3, docConfig["URL_ACT3"] | "N/A", sizeof(config.URL_Action3));
+  config.action[0] = docConfig["ACTION"][0] | 0;
+  config.action[1] = docConfig["ACTION"][1] | 0;
   file.close();
 
 } // fin fonction loadconfig
@@ -1149,10 +1161,14 @@ String createJson(sConfigSys  &config,bool flagCreate=false) {
   docConfig["TEMPOBROKER"]=config.tempobroker;
   docConfig["STATEBROKER"]=statebroker;
   //box
+  docConfig["INFO"]=infoBOX;
   docConfig["BOX"]=config.box;
   docConfig["URL_ACT1"]=config.URL_Action1;
   docConfig["URL_ACT2"]=config.URL_Action2;
   docConfig["URL_ACT3"]=config.URL_Action3;
+  JsonArray action = docConfig.createNestedArray("ACTION");
+  action.add(config.action[0]);
+  action.add(config.action[1]);
   //boutons
   docConfig["BTN1"]=hardConfig.btn1;
   docConfig["BTN2"]=hardConfig.btn2;
@@ -1174,6 +1190,7 @@ String createJson(sConfigSys  &config,bool flagCreate=false) {
     aday.add(config.alDay[6]);
     aday.add(config.alDay[7]);
   //donnee hardConfig
+  docConfig["TYPEMATRICE"]=String(HARDWARE_TYPE);
   docConfig["XL"]=hardConfig.XL;
   docConfig["MAXDISPLAY"]=hardConfig.maxDisplay;
   docConfig["MAXZONEMSG"]=hardConfig.maxZonesMsg;
@@ -1291,7 +1308,7 @@ switch (hardConfig.typeAudio) {
 
 void cmdLED(bool val,int intLED=configSys.LEDINT,byte C=configSys.color) {
   uint32_t color=couleur[C];
-  if (configSys.LEDINT<=0) val=false;
+  if (intLED<=0 && hardConfig.typeLED !=2 ) val=false;
   switch (hardConfig.typeLED) {
     case 1 : // Led interne  - true = LOW
     {
@@ -1306,6 +1323,7 @@ void cmdLED(bool val,int intLED=configSys.LEDINT,byte C=configSys.color) {
     break;
     case 2 : // relais ou autre sortie ( true= High)
     {
+
       digitalWrite(LEDPIN,val);
     }
     break;
@@ -1321,13 +1339,13 @@ void cmdLED(bool val,int intLED=configSys.LEDINT,byte C=configSys.color) {
 }
 break;
 } // fin switch
-configSys.LED=val;
+if (notifLed.fx==0 ) configSys.LED=val;
 }
 
 // Fonction LED **************
 // ***************************
 //
-void flashLED(int Lo=3,int In=configSys.LEDINT,int Sp=50) {
+void flashLED(int Lo=3,int In=configSys.fxint,int Sp=50) {
   for (int i=0;i<Lo;i++) {
     cmdLED(true,In,notifLed.color);
     delay(Sp);
@@ -1336,7 +1354,7 @@ void flashLED(int Lo=3,int In=configSys.LEDINT,int Sp=50) {
       }
 }
 
-void fadeLED(int Lo=1,int In=configSys.LEDINT) {
+void fadeLED(int Lo=1,int In=configSys.fxint) {
 for (int j=0;j<Lo;j++) {  // boucle loop
   for (int i=0;i<In;i=i+5) {
     cmdLED(true,i,notifLed.color);
@@ -1427,43 +1445,51 @@ void fxLED(int fx,int var1=configSys.LEDINT,int var2=50) {
 */
 
 void fxLED(byte c=configSys.fxcolor) {
-  if (hardConfig.typeLED==1) constrain(notifLed.fx, 1, 2);
-  if (hardConfig.typeLED==2) {notifLed.fx=1;notifLed.speed=100;}
-  if (hardConfig.typeLED==3) notifLed.color=c;
+  if (configSys.DEBUG) {
+    Serial.println(" FXLED : valeur fx="+String(notifLed.fx));
+    Serial.println(" Valeur typeLED ="+String(hardConfig.typeLED));
+    Serial.println(" Valeur couleur ="+String(c));
+  }
+  if (hardConfig.typeLED==1) constrain(notifLed.fx, 1, 3);
+  else if (hardConfig.typeLED==2) {notifLed.fx=1;notifLed.speed=100;}
+  else if (hardConfig.typeLED==3) notifLed.color=c;
+  else notifLed.fx=0;
   switch (notifLed.fx) {
-    case 1 : flashLED(notifLed.loop,notifLed.lum,notifLed.speed);
+    case 1 : cmdLED(true,100);
     break;
-    case 2 : fadeLED(notifLed.loop,notifLed.lum);
+    case 2 : flashLED(notifLed.loop,notifLed.lum,notifLed.speed);
     break;
-    case 3 :
+    case 3 : fadeLED(notifLed.loop,notifLed.lum);
+    break;
+    case 4 :
     ring.clear();
     ring.show();
     rainbowNEO(notifLed.loop,notifLed.lum);
     ring.clear();
     ring.show();
     break;
-    case 4:
+    case 5:
     //ring.clear();
     //ring.show();
      colorWipeNEO(c,notifLed.speed,true,notifLed.loop);
      ring.clear();
      ring.show();
     break;
-    case 5: // colorWipe Full
+    case 6: // colorWipe Full
      colorWipeNEO(c,notifLed.speed);
      ring.clear();
      ring.show();
     break;
-    case 6: //  color chase
+    case 7: //  color chase
     chaseColorNEO(c,notifLed.speed,notifLed.loop);
     ring.clear();
     ring.show();
     break;
 } //fin switch
-notifLed.fx=0;
+if (notifLed.fx!=1) notifLed.fx=0;
 }
 
-void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_LEFT, uint16_t S=configSys.scrollSpeed ,uint16_t P=configSys.pauseTime , byte fi=1,byte fo=1,char flag='A',byte An=0) {
+void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_LEFT, uint16_t S=configSys.scrollSpeed ,uint16_t P=configSys.pauseTime , byte fi=1,byte fo=1,char flag='D',byte An=0) {
   if (configSys.DEBUG) {
       Serial.println("**********************");
       Serial.println("valeur Notification : ");
@@ -1477,7 +1503,7 @@ void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_L
     }
 
 
-  char tabflag[10]={'A','F','F','P','B','O','X','x','x','S'};
+  char tabflag[11]={'D','F','F','A','A','A','X','Y','x','S','T'};
  // Verification Zones
  if (NZO >_maxZones-1 || _maxZones==xl) NZO=zoneMsg;
  // calcul largeur notif
@@ -1509,7 +1535,7 @@ void displayNotif(String Msg,int NZO=zoneMsg,byte type=0,textPosition_t pos=PA_L
   Notification[NZO].intensity=LuN;
 
   //if (configSys.typeLED>0 && notifLED>0) fxLED(1,notifLED);
-  if (hardConfig.typeLED>0 && notifLed.fx>0 ) fxLED();
+  if (hardConfig.typeLED>0 && notifLed.fx>0 ) {nzofx=NZO;fxLED(notifLed.color);}
   if (hardConfig.typeAudio>0 && notifAudio.fx>0 ) {
       notifAudio.nzo=NZO;
       audio();
@@ -1659,10 +1685,11 @@ void displayTimer(char *psz,bool f) {
       // fin minuteur
        if (minuteur==0) {
         CR=false;
-        //notifLed=flash;
-        notifLed=FX_led[configSys.fxCR];
+        notifAudio.fx=configSys.fxSoundCR;
         LuN=configSys.intensity;
-        displayNotif(configSys.msgMinuteur);
+        displayNotif(configSys.msgMinuteur,zoneTime);
+        notifLed=FX_led[configSys.fxCR];
+        if (configSys.box) BoutonAction(10 , configSys.action[0] );
        }
 }
 
@@ -1689,15 +1716,18 @@ void getFormatClock(char *psz, bool f = true)
   if (zoneTime==zoneMsg) displayClock();
   char Sec[2];
   if ((hardConfig.zoneTime<5 && configSys.REV) || (hardConfig.zoneTime<5 && minuteur>0)) configSys.SEC=false;
-  if (configSys.SEC) sprintf(Sec,"%02d",second());
 
-  createSecondes(Sec);
+  if (CR) displayTimer(psz,f);
+  else {
+    if (configSys.SEC) { sprintf(Sec,"%02d",second());
+                        createSecondes(Sec);
+                        }
   //sprintf(psz, "%02d%c%02d%s", timeClient.getHours(), (f ? ':' : ' '), timeClient.getMinutes(),Sec);
-sprintf(psz, "%c%02d%c%02d%s%c",(minuteur>0?(CRStop?92:93):' ') ,hour(), (f ? ':' : ' '), minute(),Sec,(configSys.REV?'.':' '));
-
+    sprintf(psz, "%c%02d%c%02d%s%c",(minuteur>0?(CRStop?92:93):' ') ,hour(), (f ? ':' : ' '), minute(),Sec,(configSys.REV?'.':' '));
+    }
 }
 else sprintf(psz,"%c",configSys.charOff);
-if (CR) displayTimer(psz,f);
+
 //sprintf(psz, "%02d%c%02d", timeClient.getHours(), (f ? ':' : ' '), timeClient.getMinutes());
 }
 
@@ -1706,7 +1736,7 @@ void displayDHT() {
   LuN=configSys.intensity;
   GetTemp();
   printDHT=String(temperature,1)+" °C";
-    displayNotif(printDHT,zoneMsg,10);
+    displayNotif(printDHT,zoneTime,10);
 }
 
 void ToBox(char *Url) {
@@ -1717,6 +1747,11 @@ void ToBox(char *Url) {
   httpCode = http.GET();
   if (configSys.DEBUG) Serial.println("valeur httpcode : " + httpCode);
   http.end();
+  // mise a jour code http
+  String json="";
+  infoBOX=String(httpCode);
+  json=createJson(configSys,true);
+  saveConfigSys(fileconfig,json);
   //if (httpCode != 200 ) return false;
   //else return true;
 }
@@ -1895,6 +1930,21 @@ void optionsSplit(byte *Opt,String Val,char split,int t=0) {
    }
 }
 
+void optionsSplit(bool *Opt,String Val,char split,int t=0) {
+  Serial.println("valeur de function split bool :  "+Val);
+  int  r=0;
+   for (int i=0; i < Val.length(); i++)
+   {
+    if(Val.charAt(i) == split)
+     {
+       if (Val.substring(r, i)=="true") Opt[t]=true;
+       else Opt[t]=false;
+       r=(i+1);
+       t++;
+     }
+   }
+}
+
 void handleConfig() {
   String rep="Aucune modification";
   String key,info,value;
@@ -1921,6 +1971,11 @@ void handleConfig() {
         if (key=="debug") if (optionsBool(&configSys.DEBUG,server.arg(i))) mem=1;
         if (key=="automsg") if (optionsBool(&configSys.ALN,server.arg(i))) mem=1;
         if (key=="box") if (optionsBool(&configSys.box,server.arg(i))) mem=1;
+        if (key=="flag") if(validString(server.arg(i),0,10)) {
+          value=server.arg(i);
+            value.toCharArray(configSys.hflag,sizeof(configSys.hflag));
+            mem=1;
+        }
         if (key=="url1") if(validString(server.arg(i),7,130)) {
           value=server.arg(i);
             value.toCharArray(configSys.URL_Action1,sizeof(configSys.URL_Action1));
@@ -1936,25 +1991,24 @@ void handleConfig() {
             value.toCharArray(configSys.URL_Action3,sizeof(configSys.URL_Action3));
             mem=1;
         }
+        if (key=="action") {optionsSplit(configSys.action,server.arg(i),',');mem=1;}
         if (key=="broker") if (optionsBool(&configSys.broker,server.arg(i))) {mem=1;reboot=true;}
         if (key=="ipbroker") if (validString(server.arg(i),8,50))
             {  value=server.arg(i);
               value.toCharArray(configSys.servbroker,sizeof(configSys.servbroker));
               mem=1;
             }
-        if (key=="ubroker") {
-              if (validString(server.arg(i),3,20))
+        if (key=="ubroker") if (validString(server.arg(i),3,20))
                   {  value=server.arg(i);
                     value.toCharArray(configSys.userbroker,sizeof(configSys.userbroker));
                     mem=1;
 
-                  }}
-        if (key=="pbroker") {
-              if (validString(server.arg(i),3,20))
+                  }
+        if (key=="pbroker") if (validString(server.arg(i),3,20))
                   {  value=server.arg(i);
                     value.toCharArray(configSys.passbroker,sizeof(configSys.passbroker));
                     mem=1;
-                  }}
+                  }
         if (key=="portbroker") {optionsNum(&configSys.portbroker,server.arg(i),1,66000);mem=1;}
         if (key=="tempobroker") {optionsNum(&configSys.tempobroker,server.arg(i),20,600);mem=1;}
         if (key=="btn1") if (optionsBool(&hardConfig.btn1,server.arg(i))) mem=2;
@@ -1962,48 +2016,50 @@ void handleConfig() {
         if (key=="btn2") if (optionsBool(&hardConfig.btn2,server.arg(i))) mem=2;
         if (key=="clicbtn2") {optionsSplit(configSys.btnclic[2],server.arg(i),',',1);mem=1;}
         if (key=="typeled") {optionsNum(&hardConfig.typeLED,server.arg(i),0,3);mem=2;}
-        if (key=="intled") {optionsNum(&configSys.fxint,server.arg(i),0,100);mem=1;}
+        if (key=="fxint") {optionsNum(&configSys.fxint,server.arg(i),0,100);mem=1;}
+        if (key=="intled") {optionsNum(&configSys.LEDINT,server.arg(i),0,100);mem=1;}
         if (key=="color") {optionsNum(&configSys.fxcolor,server.arg(i),0,7);mem=1;}
         if (key=="fxcr") {optionsNum(&configSys.fxCR,server.arg(i),0,5);mem=1;}
+        if (key=="fxal") {optionsNum(&configSys.fxAL,server.arg(i),0,5);mem=1;}
+        if (key=="aucr") {optionsNum(&configSys.fxSoundCR,server.arg(i),0,30);mem=1;}
+        if (key=="aual") {optionsNum(&configSys.fxSoundAL,server.arg(i),0,30);mem=1;}
         if (key=="typeaudio") {optionsNum(&hardConfig.typeAudio,server.arg(i),0,4);mem=2;}
         if (key=="tzname") { value=server.arg(i);;
           value.toCharArray(hardConfig.TZname,sizeof(hardConfig.TZname));
           mem=2;
         }
         if (key=="tzoffset") { optionsNum(&hardConfig.Offset,server.arg(i),-780,+840);mem=2;}
-        if (key=="ntpserver") {
-            if (validString(server.arg(i),4,50)) {
+        if (key=="ntpserver") if (validString(server.arg(i),4,50)) {
                     value=server.arg(i);
                     value.toCharArray(configSys.NTPSERVER,sizeof(configSys.NTPSERVER));
                     mem=1;
             }
-          }
+
     //    if (key=="dstvalue") { optionsNum(&hardConfig.DSTvalue,server.arg(i),0,180);mem=2;}
-        if (key=="hostname") {
-                if (validString(server.arg(i),2,15)) {
+        if (key=="hostname") if (validString(server.arg(i),2,15)) {
                           value=server.arg(i);
                           value.toLowerCase();
                           value.toCharArray(configSys.hostName,sizeof(configSys.hostName));
                           //toLowerCase();
                           mem=1;
                         }
-                      } // fin hostname
-        if (key=="name") {
-                if (validString(server.arg(i),3,20)) {
+        if (key=="name")  if (validString(server.arg(i),3,20)) {
                             value=server.arg(i);
                             value.toLowerCase();
                             value.toCharArray(hardConfig.nom,sizeof(hardConfig.nom));
                             //toLowerCase();
                             mem=2;
                             }
-                        } // fin name
-        if (key=="crtext") {
-                if (validString(server.arg(i),1,30)) {
+        if (key=="crtext")   if (validString(server.arg(i),1,80)) {
                                             value=server.arg(i);
                                             value.toCharArray(configSys.msgMinuteur,sizeof(configSys.msgMinuteur));
                                             mem=1;
                                             }
-                                        } // fin CR
+        if (key=="altext")   if (validString(server.arg(i),1,80)) {
+                                            value=server.arg(i);
+                                            value.toCharArray(configSys.msgAlarme,sizeof(configSys.msgAlarme));
+                                            mem=1;
+                                            }
       if (key=="crtime") {optionsNum(&configSys.CrTime,server.arg(i),1,120);mem=1;}
         if (key=="checktime") {checkTime();rep="mise a jour horloge";}
         if (key=="wifireset" && server.arg(i)=="true") {rep="Reset WIFI - reboot";rst=true;reboot=true;}
@@ -2028,6 +2084,7 @@ bool verif=true;
         rep=createJson(configSys);
         saveConfigSys(fileconfig,rep);
         rep="OK - Modification config System ";
+        if (reboot) rep+=" - REBOOT -";
         break;
       }
     case 2 :{
@@ -2101,6 +2158,7 @@ void handleOptions() {
     }
     if (key=="CR") if (optionsBool(&CR,server.arg(i))) {rep="CR:"+String(CR);mem=2;}
     if (key=="CRSTP") if (optionsBool(&CRStop,server.arg(i))) {rep="CRSTOP:"+String(CRStop);}
+    if (key=="ALD") {optionsSplit(configSys.alDay,server.arg(i),',');rep="ALD:"+server.arg(i);mem=1;}
   }
 
   if (mem==1) {
@@ -2143,7 +2201,7 @@ void initNotif() {
   Pa=configSys.pauseTime;
   Nflag='N';
   notifLed.fx=0;
-  notifLed.lum=configSys.LEDINT;
+  notifLed.lum=configSys.fxint;
   notifLed.loop=1;
   notifLed.color=configSys.color;
   notifLed.speed=50;
@@ -2175,8 +2233,10 @@ String prepNotif(String key,String val) {
   }
   if (key=="LEDFX") {
         optionsNum(&notifLed.fx,val,0,10);
-        if (notifLed.fx==1) notifLed.loop=3;
+        if (notifLed.fx==2) notifLed.loop=3;
       }
+  if (key=="COLOR") { optionsNum(&notifLed.color,val,0,7);}
+  if (key=="LOOP") { optionsNum(&notifLed.loop,val,1,10);}
   if (key=="LEDLUM") { optionsNum(&notifLed.lum,val,0,100);}
   if (key=="INTNOTIF") { optionsNum(&LuN,val,0,15);}
   if (key=="FLASH") notifLed=flash;
@@ -2395,11 +2455,12 @@ void Led_out() {
     case 2 : // autres , relais
     {
     pinMode(LEDPIN,OUTPUT);
+    digitalWrite(LEDPIN,configSys.LED);
     }
     case 3 : // ring neopixel
     {
       int Br;
-      Br=map(configSys.LEDINT,0,100,0,255);
+      Br=map(configSys.fxint,0,100,0,255);
       ring.begin();           // INITIALIZE NeoPixel ring object (REQUIRED)
       ring.setBrightness(Br); // Set BRIGHTNESS to about 1/5 (max = 255)
       ring.show();            // Turn OFF all pixels ASAP
@@ -2412,7 +2473,8 @@ void BoutonAction(byte btn , byte btnclic ) {
 int actionClick=0;
 int m=0;
 static byte clicstate=1;
-if (btnclic < 4 ) actionClick=configSys.btnclic[btn][btnclic];
+if (btn==10) actionClick=btnclic;
+else if (btnclic < 4 ) actionClick=configSys.btnclic[btn][btnclic];
 else if (btnclic>100)  actionClick=btnclic;
 else actionClick=0;
 
@@ -2484,10 +2546,9 @@ if (hardConfig.typeLED==1)  {
 }
 else if (hardConfig.typeLED==3)  {
 notifLed.fx=notifLed.fx+2;
-
 }
 else notifLed.fx=0;
-fxLED(Blue);
+if (notifLed.fx>0) fxLED(Blue);
 }
 
 void alarme() {
@@ -2498,14 +2559,19 @@ void alarme() {
   }
   // Si jour ok
   if (okDay==true) {
+        Serial.println("Mode alarme");
         LuN=configSys.intensity;
-        notifLed=flash;
-        displayNotif("Alarme !");
+        notifLed=FX_led[configSys.fxAL];
+        notifAudio.fx=configSys.fxSoundAL;
+        displayNotif(configSys.msgAlarme,zoneTime);
+        if (configSys.box) BoutonAction(10 , configSys.action[1] );
       }
 }
 
 //mqtt
 void MQTTsend() {
+  //update info temp
+      GetTemp();
   String t;
 //  char topicS[80];
   char buffer[512];
@@ -2569,6 +2635,7 @@ if (msg!="") {
           r=(i+1);
           }
         }  // fin for
+        Nflag='Q';
         displayNotif(msg,Nz,Ntype,Npos,Sc,Pa,Fi,Fo,Nflag,An);
 }  // fin rx message
 }
@@ -2628,12 +2695,13 @@ void setup() {
   // serial monitor pour debug
  Serial.begin(115200);
  delay(200);
+ String infoSys="OK";
  // Eeprom lecture config
  readEConfig();
  // ******************** init screen --- Start
 
- initPrintSystem();
 
+ initPrintSystem();
  infoSetup(0,"Start ...");
 
  // ******************* chargement donnée systémes
@@ -2643,73 +2711,12 @@ void setup() {
    loadConfigSys(fileconfig, configSys);
    if (hardConfig.setup) _pagehtml="index.html";
    else _pagehtml="setup.html";
- //Activation led si presente
- Led_out();
- //****************** Etpae 1
- infoSetup(1,"Init ...");
+   //Activation led si presente
+   Led_out();
+ //****************** Etpae 5 ** Reseau WIFI
+ infoSetup(3," 5");
 // Connexion WIFI
   wifiMan();
-// **********
-// config Sortie AUDIO Si present
-  switch (hardConfig.typeAudio) {
-    case 1 : // Buzzer
-    {
-      // Buzzer
-      pinMode(AUDIOPINTX, OUTPUT);
-      digitalWrite(AUDIOPINTX, LOW);
-      //noTone(AUDIOPINTX);
-    }
-    break;
-    case 2 : // MP3PLAYER
-    {
-    infoSetup(2,"DFplayer ...");
-      // serial softawre (pour player )
-     mySoftwareSerial.begin(9600);
-     if (!myDFPlayer.begin(mySoftwareSerial,false)) {  //Utilisation de  softwareSerial pour communiquer
-
-     Serial.println("Pb communication:");
-     Serial.println("1.SVP verifier connexion serie!");
-     Serial.println("2.SVP verifier SDcard !");
-     while(true){
-          delay(0); // Code to compatible with ESP8266 watch dog.
-        }
-     }
-      //Serial.println("DFPlayer Mini En ligne.");
-      myDFPlayer.setTimeOut(500); // Définit un temps de time out sur la communication série à 500 ms
-      infoSetup(2,"DFplayer ... OK");
-      //----Controle volume----
-      int vol=floor(configSys.volumeAudio*30/100);
-      vol=constrain(vol,0,30);
-      myDFPlayer.volume(vol);  //Monte le volume à 12 ( valeur de 0 à 30 )
-    // ---- indique d'utiliser le player de carte SD interne
-      myDFPlayer.outputDevice(DFPLAYER_DEVICE_SD);
-
-    // optionel , permet d'afficher quelques infos
-    totalMP3=myDFPlayer.readFileCounts(); //Le nombre total de fichier mp3 sur la carte ( dossier inclus )
-    nMP3_1=myDFPlayer.readFileCountsInFolder(1); // dossier 1 , nombre fichier
-    // Joue le premier morceau de la liste
-    myDFPlayer.playFolder(1,configSys.MP3Start);
-    }
-    break;
-  }
-
-// ************************ Etape 2
-infoSetup(2,"Net ...");
-// Debug fsinfo
-if (configSys.DEBUG) {
- //info SPIFFS
- FSInfo fsInfo;
-// info fs
-SPIFFS.info(fsInfo);
-//fsInfo.totalBytes
-float total=(fsInfo.totalBytes/1024);
-Serial.println("info totalbytes : "+String(total));
-Serial.println("info usedbytes : "+String(fsInfo.usedBytes));
-Serial.println("info blocksize : "+String(fsInfo.blockSize));
-Serial.println("info pagesize: "+String(fsInfo.pageSize));
-Serial.println("info maxOpenFiles : "+String(fsInfo.maxOpenFiles));
-Serial.println("info maxPathLength : "+String(fsInfo.maxPathLength));
-}
 //MakeName - creation hostname wifi
 // Set Hostname.
    idNotif=String(ESP.getChipId(), HEX);;
@@ -2725,12 +2732,30 @@ Serial.println("info maxPathLength : "+String(fsInfo.maxPathLength));
    topicName=BASETOP;
    topicName+="/"+hardware+"/"+idNotif+"/"+l;
 //
+// ************************ Etape 4 ** Service reseau
+infoSetup(3," 4");
+// Debug fsinfo
+if (configSys.DEBUG) {
+Serial.println(" Version Matrice : "+String(HARDWARE_TYPE)+" test FC16 "+String(MD_MAX72XX::FC16_HW) );
+Serial.println(msgDebug);
+ //info SPIFFS
+ FSInfo fsInfo;
+// info fs
+SPIFFS.info(fsInfo);
+//fsInfo.totalBytes
+float total=(fsInfo.totalBytes/1024);
+Serial.println("info totalbytes : "+String(total));
+Serial.println("info usedbytes : "+String(fsInfo.usedBytes));
+Serial.println("info blocksize : "+String(fsInfo.blockSize));
+Serial.println("info pagesize: "+String(fsInfo.pageSize));
+Serial.println("info maxOpenFiles : "+String(fsInfo.maxOpenFiles));
+Serial.println("info maxPathLength : "+String(fsInfo.maxPathLength));
+}
 //************** Services MDNS
 mdnsName.toLowerCase();
 serverMDNS(mdnsName);
  // Serveur OTA
 Ota(hostname);
-Serial.println(msgDebug);
 //Init MQTT
 if (configSys.broker) {
   MQTTclient.setServer(configSys.servbroker, configSys.portbroker);
@@ -2751,7 +2776,26 @@ if (configSys.broker) {
      server.send(404, "text/plain", "FileNotFound");
    }
     });
- server.onNotFound([]() {
+    // server upload file
+server.on("/Upload", HTTP_GET, []() {
+      if (!server.authenticate(www_username, www_password)) {
+        return server.requestAuthentication();
+      }
+      if (!handleFileRead("/upload.html")) {
+        server.send(404, "text/plain", "FileNotFound");
+
+      }
+    });
+
+server.on("/Upload", HTTP_POST, []() {
+      server.send ( 200, "text/html", getPage());
+    }, handleFileUpload);
+    server.onNotFound([]() {
+      if (!handleFileRead(server.uri())) {
+        server.send(404, "text/plain", "FileNotFound");
+      }
+    });
+server.onNotFound([]() {
   if (!handleFileRead(server.uri())) {
     server.send(404, "text/plain", "FileNotFound");
   }
@@ -2761,20 +2805,83 @@ if (configSys.broker) {
 //WebSocketsServer
 webSocket.begin();
 webSocket.onEvent(webSocketEvent);
+//***************** Etape 3  *******
+//options Audio / LED / DHT
+// config Sortie AUDIO Si present
+  infoSetup(3," 3");
+  switch (hardConfig.typeAudio) {
+    case 1 : // Buzzer
+    {
+      // Buzzer
+      pinMode(AUDIOPINTX, OUTPUT);
+      digitalWrite(AUDIOPINTX, LOW);
+      //noTone(AUDIOPINTX);
+    }
+    break;
+    case 2 : // MP3PLAYER
+    {
 
+      // serial softawre (pour player )
+     mySoftwareSerial.begin(9600);
+     if (!myDFPlayer.begin(mySoftwareSerial,false)) {  //Utilisation de  softwareSerial pour communiquer
+
+     Serial.println("Pb communication:");
+     Serial.println("1.SVP verifier connexion serie!");
+     Serial.println("2.SVP verifier SDcard !");
+     while(true){
+          delay(0); // Code to compatible with ESP8266 watch dog.
+        }
+     }
+      //Serial.println("DFPlayer Mini En ligne.");
+      myDFPlayer.setTimeOut(500); // Définit un temps de time out sur la communication série à 500 ms
+      infoSetup(3," 3..");
+      //----Controle volume----
+      int vol=floor(configSys.volumeAudio*30/100);
+      vol=constrain(vol,0,30);
+      myDFPlayer.volume(vol);  //Monte le volume à 12 ( valeur de 0 à 30 )
+    // ---- indique d'utiliser le player de carte SD interne
+      myDFPlayer.outputDevice(DFPLAYER_DEVICE_SD);
+
+    // optionel , permet d'afficher quelques infos
+    totalMP3=myDFPlayer.readFileCounts(); //Le nombre total de fichier mp3 sur la carte ( dossier inclus )
+    nMP3_1=myDFPlayer.readFileCountsInFolder(1); // dossier 1 , nombre fichier
+    // Joue le premier morceau de la liste
+    myDFPlayer.playFolder(1,configSys.MP3Start);
+    }
+    break;
+  }
+  //*************dHT
+  // init options
+  // Initialize temperature sensor
+   int pin(dhtpin);
+   dht.setup(pin,DHTTYPE);
+   delay(200);
+
+   //init variable Audio
+   notifAudio={0,_MP3START,VOLUME,zoneMsg,false};
+
+   //***************** Etape 2  *******
+   //  TIME
+     infoSetup(3," 2");
  // recuperation info temps
- // recuperation heure
    timeClient.begin();
    bool s=true;
    String MsgInfo;
    byte cpttime=0;
-while(!timeClient.update() || cpttime>30) {
+while(!timeClient.update() && cpttime<15) {
   // timeClient.forceUpdate();
-   MsgInfo=(s ? "Time ..." : "Time .. ");
-   infoSetup(2,MsgInfo);
+   MsgInfo=(s ? " 2" : " 2 .");
+   infoSetup(3,MsgInfo);
    s=!s;
    cpttime++;
+   Serial.print(String(cpttime)+" - ");
  }
+if (cpttime>=15) {
+  if (configSys.DEBUG) Serial.println("Erreur synchro time , force synchro.");
+infoSetup(2," 2");
+//infoSys="Erreur synchro Horloge";
+checkTime();
+}
 
  timeClient.setTimeOffset(hardConfig.Offset*60);
  setTime(timeClient.getEpochTime());
@@ -2785,16 +2892,9 @@ if (configSys.DEBUG) Serial.println("time ok :"+String(now())+" offset :"+String
 // historique
 String h=loadHisto(fileHist,histNotif );
 
-
- // init options
- // Initialize temperature sensor
-// dht.setup(dhtPin, DHTType);
-//DHT_MODEL_t;
-  int pin(dhtpin);
-  dht.setup(pin,DHTTYPE);
-
-  infoSetup(2, h);
-  delay(500);
+//***************** Etape 1  *******
+//  Configuration Matrices
+  infoSetup(3," 1");
   //ZONES
  // init variable  - Assignation zone
  _spaceChar = 1;
@@ -2863,20 +2963,17 @@ if (hardConfig.perso) {
  Serial.println("zone XL L "+String( zoneXL_L));
  Serial.println("zone XL H "+String( zoneXL_H));
  Serial.println("zone msg "+String( zoneMsg));
- //init variable Audio
- notifAudio={0,_MP3START,VOLUME,zoneMsg,false};
-
-infoSetup(2,"Ok ...");
+//****************************
+// Etape finale
+// ajustement matrices
+infoSetup(3," 0");
 // Selon modele des matrices - inversion de l'affichage ( true si Generic ou Parola )
 invertUpperZone = (HARDWARE_TYPE == MD_MAX72XX::GENERIC_HW || HARDWARE_TYPE == MD_MAX72XX::PAROLA_HW);
-
 //init Zones
 for (int i=0;i<MAX;i++) {
   ZWP[i]=ZonesWide[Zones[i]];
 }
-//uint8_t max = 0;
-
-  // initialisation des Zones
+// initialisation des Zones pour affichage zones et horloge
   P.begin(_maxZones);
   configSys.intensity=lumAuto();
   P.setIntensity(configSys.intensity);
@@ -2884,28 +2981,30 @@ for (int i=0;i<MAX;i++) {
       P.setZone(zoneXL_L , 0, hardConfig.maxDisplay-1);
   }
   else {
-    //Largeur zone enregistré
+    //Largeur zone perso enregistré
   for (int i=0;i<7;i++)
   {
-     Serial.println("Zone Perso creation "+String(i)+" taille = "+String(ZWP[i]));
+     if (configSys.DEBUG) Serial.println("Zone Perso creation "+String(i)+" taille = "+String(ZWP[i]));
   }
-      Start=0;
-      for (int i=0;i<_maxZones;i++)
+  //
+  Start=0;
+  for (int i=0;i<_maxZones;i++)
       {
-         End=Start+ZWP[i];
-         Serial.println("Creation Zone : "+String(i)+" de "+String(Start)+" a "+String(End));
-        P.setZone( i, Start, End - 1);
-         Start=End;
+    End=Start+ZWP[i];
+    if (configSys.DEBUG) Serial.println("Creation Zone : "+String(i)+" de "+String(Start)+" a "+String(End));
+    P.setZone( i, Start, End - 1);
+    Start=End;
     }
 
   }
   uint16_t S,E;
   // verification Zone
+  if (configSys.DEBUG) {
   for (int j=0;j<_maxZones;j++)
   {
-
   P.getDisplayExtent(j,S,E);
   Serial.println("Zone : "+String(j)+" colonne : "+String(S)+" à "+String(E));
+  }
   }
   // police de caractére à afficher
   //P.setFont(numeric7SegXL);
@@ -2935,7 +3034,7 @@ LuN=configSys.intensity;
 if (_maxZones==xl) zoneMsg=zoneTime;
 displayClock();
 //fin setup
-String infoSys="OK IP : ";
+infoSys +=" IP : ";
 infoSys += WiFi.localIP().toString();
 displayNotif(infoSys);
 
@@ -2963,13 +3062,16 @@ void loop() {
   static uint32_t  lastTimeMqtt= 0; // millis() system / synchro
   static bool flasher = false;  // seconds passing flasher
   static uint32_t  startAudio;
-  static bool dispNotif=true;
+  static bool dispNotif=false;
+  static bool dispNotiffx=false;
    //  ****** Page WEb :   traite les requetes http et ws
   server.handleClient();
   webSocket.loop();  // ecoute websocket
   // if (configSys.broker) MQTTclient.loop();  // ecoute mqtt client
   ArduinoOTA.handle(); // ecoute OTA
-  if (timeClient.update())
+
+
+if (timeClient.update() && (_lastSynchro > _refTime))
 {
   _lastSynchro=now();
 }
@@ -3027,15 +3129,7 @@ void loop() {
      clic=0;
      }
    }
-// Alarme
-if (configSys.REV) {
-  if (hour()==configSys.timeREV[0]) {
-    Serial.println("Mode heure alarme");
-    if (minute()==configSys.timeREV[1]) {
-      if (second() <5 ) {  alarme(); }
-    }
-  }
-}
+
 //********************************
 
 
@@ -3124,6 +3218,13 @@ else
         P.displayReset(i);
         Notification[i].Alert=false;
      } // fin display notif
+    //************ fin notif -sur zone fx led OFF si ON
+     if ( i==nzofx && dispNotiffx && notifLed.fx==1 && !configSys.LED) {
+          cmdLED(false,0);
+          notifLed.fx=0;
+          dispNotiffx=false;
+          if (configSys.DEBUG) Serial.println("fin notif fx");
+     }
    } // fin zone innactif
   else  // zone en cours
     {
@@ -3135,6 +3236,10 @@ else
         if (i==zoneTime && dispNotif ) rtttl::play();
         else if (i!=zoneTime) rtttl::play();
       }
+      // debut message avec effet
+      if (i==nzofx && notifLed.fx==1 && !dispNotiffx) {
+        if (configSys.DEBUG) Serial.println("debut notif fx");
+        dispNotiffx=true;}
     } // fin zone en lecture
   } // if XL
   } // fin boucle for
@@ -3144,12 +3249,11 @@ else
 if (configSys.broker) {
     if (!MQTTclient.connected()) {
         long nowmqtt = millis();
-        if (nowmqtt - lastReconnectAttempt > 5000) {
+        if (nowmqtt - lastReconnectAttempt > 10000) {
         lastReconnectAttempt = nowmqtt;
         // Attempt to reconnect
-        if (MQTTconnect()) {
-          lastReconnectAttempt = 0;
-        }
+        if (MQTTconnect()) lastReconnectAttempt = 0;
+
       }
   } else {
       // Client connected  - ecoute MQTT active
@@ -3157,135 +3261,51 @@ if (configSys.broker) {
       }
     }
     // si broker actif
-    if (configSys.broker)  {
+    if (configSys.broker && MQTTclient.connected())  {
          if (millis() - lastTimeMqtt >= (configSys.tempobroker*1000))
           {
             Serial.println("tempo broker : "+String(configSys.tempobroker*1000));
             lastTimeMqtt = millis();
-            GetTemp();
             MQTTsend();
           }
     }
-    //***************************
-    //***************************
-/*if (hardConfig.typeAudio==1 ) {
-  if (!P.getZoneStatus(notifAudio.nzo) && notifAudio.fx>0)  {
-    if (dispNotif && notififAudio.nzo!=zoneTime) {
-    rtttl::play();
-    Serial.print(".");
-  }
-  }
-}*/
-// l'animation commence
-//********************
-// Gestion zone XL
-//*********************
-/*
- //if ( XLZoneTest) {  // si aucune animation en cours
-  if ( P.getZoneStatus(zoneTime)) {  // si aucune animation en cours) {  // si aucune animation en cours
-   if (Notification[zoneTime].Alert) {
-                dispNotif=true;
-                Serial.println("mode notification");
 
-                P.displayClear(zoneTime);
-                P.setIntensity(zoneTime,Notification[zoneTime].intensity);
-                // prepa animation si demandé
-                if (Notification[zoneTime].fxIn==14 || Notification[zoneTime].fxOut==14) {
-                  P.setSpriteData(sprite[Notification[zoneTime].AnIn].data, sprite[Notification[zoneTime].AnIn].width, sprite[Notification[zoneTime].AnIn].frames,  //intro sprite
-                    sprite[Notification[zoneTime].AnOut].data, sprite[Notification[zoneTime].AnOut].width, sprite[Notification[zoneTime].AnOut].frames); // exit sprite
-                  }
-                // mode XL
-                if (hardConfig.XL) {
-                    Serial.println("mode XL");
-                    //prepa zone superieur
-                    P.displayClear(zoneXL_H);
-                    P.setIntensity(zoneXL_H,Notification[zoneTime].intensity);
-                    // Chargement police Double
-                    P.setFont(zoneXL_L, BigFontLower);
-                    P.setFont(zoneXL_H, BigFontUpper);
-                    //chargement et preparation de l'affichage notification
-                    if (invertUpperZone)
-                      {
-                        textPosition_t position;
-                        P.displayZoneText(zoneXL_L, Notification[zoneTime].Notif, Notification[zoneTime].pos, Notification[zoneTime].speed, Notification[zoneTime].pause, effect[Notification[zoneTime].fxIn],effect[Notification[zoneTime].fxIn]);
-                        if (Notification[zoneTime].pos==PA_LEFT) position=PA_RIGHT;
-                        else position=PA_LEFT;
-                        P.displayZoneText(zoneXL_H,Notification[zoneTime].Notif, position, Notification[zoneTime].speed,Notification[zoneTime].pause, effect[28-Notification[zoneTime].fxIn], effect[28-Notification[zoneTime].fxIn]);
-                      }
-                      else
-                      {
-                        byte fi,fo;
-                        if (Notification[zoneTime].type==1 ) {
-                            fi=Notification[zoneTime].fxOut;
-                            fo=Notification[zoneTime].fxIn;
-                            } else
-                            {
-                            fo=Notification[zoneTime].fxOut;
-                            fi=Notification[zoneTime].fxIn;
-                            }
-                       P.displayZoneText(zoneXL_H,Notification[zoneTime].Notif,Notification[zoneTime].pos,Notification[zoneTime].speed, Notification[zoneTime].pause,effect[fi], effect[fo]);
-                       P.displayZoneText(zoneXL_L,Notification[zoneTime].Notif,Notification[zoneTime].pos,Notification[zoneTime].speed, Notification[zoneTime].pause,effect[Notification[zoneTime].fxIn], effect[Notification[zoneTime].fxOut]);
-                      }
-                      // Affichage synchronisé
-                      P.synchZoneStart();
-                    }   // fin notif XL
-              else {
-                  // affichage simple
-                  Serial.println("mode simple");
-                  P.setFont(zoneXL_L, ExtASCII);
-                  P.displayZoneText(zoneXL_L,Notification[zoneTime].Notif,Notification[zoneTime].pos,Notification[zoneTime].speed, Notification[zoneTime].pause,effect[Notification[zoneTime].fxIn], effect[Notification[zoneTime].fxOut]);
-                }
-        //  Notification[zoneTime].Alert=false;
-        // si different de FIX autorise affichage horloge
-      //  if (Notification[zoneTime].type!=2 ) disClock=true;
-      //  Notification[zoneTime].Alert=false;
-        // preparation pour nouvel affichage
-
-        }  // fin alert
-      else {
-          // Mode affichage horloge
-          dispNotif=false;
-          P.setIntensity(zoneTime,configSys.intensity);
-          if (hardConfig.XL) P.setIntensity(zoneXL_H,configSys.intensity);
-
-        // Permet de stopper notif lorsque horloge est désactivé.
-      /*  if ( !Notification[zoneTime].Alert && disClock) {
-              displayClock();
-              disClock=false;
-            }
-       // affichage horloge si different de fix
-       if (Notification[zoneTime].type!=2 ) {
-       displayClock();
-       getFormatClock(msgL, flasher);
-       if (hardConfig.XL) createHStringXL(msgH, msgL);
-              }
-
-  }  // fin affichage horloge
-  // preparation pour nouvel affichage
-  P.displayReset(zoneXL_L);
-  if (hardConfig.XL) P.displayReset(zoneXL_H);
-}
- // Si animation en cours sur zone
- else {
-   // test quel type d'animation en cours ( horloge ou notification )
-   if (dispNotif) {
-       Notification[zoneTime].Alert=false;
-     // si mode hp/buzzer et fx contunue a jouer
-//     if (hardConfig.typeAudio==1 && notifAudio.fx>0) rtttl::play();
-
-   } else
-   {
-     // Si fin animation et lecture en cours - stop the music
-    // if (hardConfig.typeAudio==1 && rtttl::isPlaying()) rtttl::stop();
-   }
-
- }
-
-}
-*/
+    // Alarme
+    if (configSys.REV) {
+      if (hour()==configSys.timeREV[0]) {
+        if (minute()==configSys.timeREV[1]) {
+          if (second() <5 && second() >0 ) {  alarme(); }
+        }
+      }
+    }
 
 } // fin loop
-
+//chargement
+void handleFileUpload() {
+  if (configSys.DEBUG)  Serial.println("fonction file upload");
+  HTTPUpload& upload = server.upload();
+  if (configSys.DEBUG)  Serial.println(upload.status);
+  if (upload.status == UPLOAD_FILE_START) {
+    String filecfg = upload.filename;
+    if (filecfg.endsWith(".json")) {
+      filecfg = fileconfig;
+      if (configSys.DEBUG)  Serial.print("handleFileUpload Name: "); Serial.println(filecfg);
+      fsUploadFile = SPIFFS.open(filecfg, "w");
+      }
+      filecfg = String();
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    //Serial.print("handleFileUpload Data: "); Serial.println(upload.currentSize);
+    if (fsUploadFile) {
+      fsUploadFile.write(upload.buf, upload.currentSize);
+    }
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (fsUploadFile) {
+      fsUploadFile.close();
+    //  Reboot = true;
+    }
+    if (configSys.DEBUG)  Serial.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
+  }
+}
 
 // Affichage des pages WEB
 //********************* Page web
@@ -3319,4 +3339,15 @@ bool handleFileRead(String path){  // send the right file to the client (if it e
   }
   Serial.println(String("\tFile Not Found: ") + path);
   return false;                                          // If the file doesn't exist, return false
+}
+
+String getPage() {
+  String page = "<html lang=fr-FR><head><meta http-equiv='refresh' content='10'/>";
+  page += "<title>upload</title><meta charset='utf-8'>";
+  page += "<style> body { background-color: #fffff; font-family: Arial, Helvetica, Sans-Serif; Color: #000088; }</style>";
+  page += "</head><body><h3>Le fichier à bien été enregistré</h3>";
+  page += "<p>Le notif'heure va rebooter d'ici une trentaine de secondes - Merci d'atendre le reboot pour la prise en compte </p>";
+  page += "<p>Vous pouvez cliquer sur ce lien , pour retourner sur l' <a href='/'>Accueil</a> .</p>";
+  page += "</body></html>";
+  return page;
 }
