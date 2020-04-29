@@ -63,6 +63,7 @@ $.ajax({
         $('#URL_action1').val(jinfo.URL_ACT1);
         $('#URL_action2').val(jinfo.URL_ACT2);
         $('#URL_action3').val(jinfo.URL_ACT3);
+        $('#URL_update').val(jinfo.URL_UPD);
         $("#ipMQTT").val(jinfo.SRVBROKER);
         $("#userMQTT").val(jinfo.UBROKER);
         $("#passMQTT").val(jinfo.PBROKER);
@@ -176,6 +177,7 @@ $("#Config").submit(function(){
   url1:$('#URL_action1').val(),
   url2:$('#URL_action2').val(),
   url3:$('#URL_action3').val(),
+  urlbox:$('#URL_update').val(),
   ntpserver:$('#inputNTP').val(),
   charoff:$('#DispOff').val().charCodeAt(0),
   crtext:$('#CRTEXT').val(),

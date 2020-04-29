@@ -77,6 +77,14 @@ var DEBUG=true;
 
 function checktime() {
   $.get('/Config?checktime');
+  update_Info();
+}
+
+function checknet() {
+  $.get('/Config?checknet',function(data){
+  console.log(data);
+  update_Info();
+  });
 }
 
 function goConfig() {
@@ -145,6 +153,32 @@ $.ajax({
          $('#last').text(unixToDate(jinfo.LASTSYNCHRO));
          $('#ddj').text(unixToDate(jinfo.DATE));
          $('#NTP').text(jinfo.NTPSERVER);
+         if (jinfo.NTPOK) {
+           $('#blocInfoNTP').addClass("bg-dark");
+           $('#blocInfoNTP').removeClass("bg-danger");
+           $('#NTP').addClass("text-dark");
+           $('#NTP').removeClass("text-danger");
+         }
+         else {
+            $('#blocInfoNTP').addClass("bg-danger");
+            $('#blocInfoNTP').removeClass("bg-dark");
+            $('#NTP').removeClass("text-dark");
+            $('#NTP').addClass("text-danger");
+          }
+          if (jinfo.NETOK) {
+            $("#net").text("En ligne");
+            $('#net').addClass("text-success");
+            $('#net').removeClass("text-danger");
+            $('#blocInfoNet').addClass("bg-success");
+            $('#blocInfoNet').removeClass("bg-danger");
+          }
+          else {
+            $('#net').addClass("text-danger");
+            $('#net').removeClass("text-success");
+            $("#net").text("Hors Ligne");
+            $('#blocInfoNet').addClass("bg-danger");
+            $('#blocInfoNet').removeClass("bg-success");
+          }
          $('#MAC').text(jinfo.MAC);
           $('#IP').text(jinfo.IP);
           $('#SSID').text(jinfo.SSID);
@@ -247,6 +281,10 @@ $.ajax({
               $("#cardbox").removeClass("d-none");
               $('#IUACR').text(Actions[jinfo.ACTION[0]]);
               $('#IUAAL').text(Actions[jinfo.ACTION[1]]);
+              $('#infoaction1').text(jinfo.URL_ACT1);
+              $('#infoaction2').text(jinfo.URL_ACT2);
+              $('#infoaction3').text(jinfo.URL_ACT3);
+              $('#infoupdate').text(jinfo.URL_UPD);
             }
               else {
                 $('#boxinfo').text("Désactivée");
@@ -381,11 +419,38 @@ $.ajax({
          $('#Temp').text(jinfo.TEMP);
          $('#Hum').text(jinfo.HUM);
          $('#infoLUM').text(jinfo.INTENSITY);
-         if (jinfo.INFO=="200") {
+         if (jinfo.NTPOK) {
+           $('#blocInfoNTP').addClass("bg-dark");
+           $('#blocInfoNTP').removeClass("bg-danger");
+           $('#NTP').addClass("text-dark");
+           $('#NTP').removeClass("text-danger");
+         }
+         else {
+            $('#blocInfoNTP').addClass("bg-danger");
+            $('#blocInfoNTP').removeClass("bg-dark");
+            $('#NTP').removeClass("text-dark");
+            $('#NTP').addClass("text-danger");
+          }
+          if (jinfo.NETOK) {
+            $("#net").text("En ligne");
+            $('#net').addClass("text-success");
+            $('#net').removeClass("text-danger");
+            $('#blocInfoNet').addClass("bg-success");
+            $('#blocInfoNet').removeClass("bg-danger");
+          }
+          else {
+            $('#net').addClass("text-danger");
+            $('#net').removeClass("text-success");
+            $("#net").text("Hors Ligne");
+            $('#blocInfoNet').addClass("bg-danger");
+            $('#blocInfoNet').removeClass("bg-success");
+          }
+         var httpcode=parseInt(jinfo.INFO);
+         if (httpcode==200) {
          $('#infoEtatURL').text("derniére requéte URL : OK");
        }
          else {
-            $('#infoEtatURL').text("derniére requéte URL : Erreur ");
+            $('#infoEtatURL').text("derniére requéte URL : Erreur ( code  "+jinfo.INFO+" )");
          }
        }
       }
@@ -567,7 +632,7 @@ if (key=="LUM") checkLum();
 if (key=="LED") checkLed();
 if (key=="INT" || key=="COLOR")   val=$(this).val();
 else if (key=="BRI")   { val=$(this).val()+"&COLOR="+$("#COLOR").val();key="LEDINT";}
-else if (key=="TIMEREV")  { val=$("#blocAl h1").text()+":";}
+else if (key=="TIMEREV")  { val=$("#blocAl h1").text();}
 else if (key=="REV")   val=false;
 else if (key=="ALD") val=valeur;
 else val=$(this).prop('checked');

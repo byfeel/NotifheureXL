@@ -1,21 +1,12 @@
 
-// Tuto affichage double taille Horloge
-// Byfeel 2019
-// ****************************
-// Exemple affichage  horloge synchronisé via NTP
-//  sur 4 module de 4 Matrices Led 72xx
-//
-// Selon Module , il faudra brancher les matrices de deux façon differentes
-// * Modules ( type FC16 ou ICSstation ) - Type ZigZag
-//  n n-1 n-2 ... n/2+1   <- Matrice haute
-//  n/2 ... 3  2  1  0    <- Matrice basse
-//
-// * Modules (Parola ou Generic )  - type S
-//  n/2+1 ... n-2 n-1 n   -> Matrice haute
-//  n/2 ... 3  2  1  0    <- Matrice basse
-// ***************************************
-
-const String ver = "0.8.6";
+// **********************************************
+//***********************************************
+//*********** NOTIFHEURE XL *********************
+//***********************************************
+//***********************************************
+// *********  Byfeel 2019 ***********************
+// **********************************************
+const String ver = "0.9.2";
 const String hardware = "NotifheureXL";
 const String vInterface="";
 // Bibliotheque à inclure
@@ -70,6 +61,10 @@ const String vInterface="";
 const char* www_username = "admin";
 const char* www_password = "notif";
 
+//*************************************************************
+//**  Paramétre à ajuster en fonction de votre équipement *****
+//*************************************************************
+
 //****************************************************
 // En fonction de vos matrices , si probléme         *
 // d'affichage ( inversé , effet miroir , etc .....) *
@@ -85,42 +80,46 @@ const char* www_password = "notif";
 #define DATA_PIN  13  // MOSI ( D7 wemos D1R1 ou mini )
 #define CS_PIN    15  // SS ou CS ( D10 sur D1R1  ou D8 sur Mini )
 //#define CS_PIN    12  // SS ( D10 sur D1R1  ou D6  sur Mini )  ---- Pour NOtifheure 1
-// si modif CS_PÏN modifier AUDIOPINRX 15
+// si modif CS_PÏN modifier AUDIOPINRX 15 !!!!!
 // Pour info ancienne version NotifHeure
 //#define CLK_PIN   14
 //#define DATA_PIN  13
 //#define CS_PIN    12
-// Options matériels
-#define LED_OUT 0  // 0 aucune , 1 Led interne , 2 relais ,3 Ring neopixel ,4 Digital output
-#define AUDIO_OUT 0 // 0 aucun , 1 buzzer , 2 MP3player , 3 autres ( sortie relais ou digital)
-#define BOUTON1 false
-#define BOUTON2 false
-// PIN AUDIO ( AUDIOPINTX = MP3PLAYER TX ou Sortie Buzzer ou sortie RElais ou sortie Digital)
-// PINAUDIORX : uniquement our MP3player
-// PIN qui serviront pour la communication série sur le WEMOS
-#define AUDIOPINRX 12   // Entree pour DFP audio uniquement
-//#define AUDIOPINRX 15   // Entree pour DFP audio uniquement  si CS_PIN sur 12
-#define AUDIOPINTX 4    // Sortie principale pour AUdio
+//************************************
+// Options notif visuelle Si installé
+//************************************
+// PIN Notif visuel ( led , neopixel ou relais )
+#define LEDPIN 5    // Sortie dédié notification lumineuse
+//************************
 //option NeoPixel
 // Nombre de led si Ring ou strip neopixel en place
 #define LED_COUNT  12
-// LED PIN ou Relais Lum
-#define LEDPIN 5    // Sortie dédié notification lumineuse
+#define NEOTYPELED NEO_GRB
+//   NEO_GRB     Pixels are wired for GRB bitstream (La plupart des produit neopixel vendu)
+//   NEO_GRBW    Pixels are wired for GRBW bitstream (Si vous avez un neopixel avec Blanc en plus LED RGB + Blanc )
+//   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2) _ Plus rare d'en trouver
+//**************************************
+// Notification sonore
+// *************************************
+// PIN AUDIO ( AUDIOPINTX = MP3PLAYER TX ou Sortie HP / Buzzer ou sortie RElais ou sortie Digital)
+#define AUDIOPINTX 4    // Sortie principale pour Audio
+// Si DFPLAYER MP3
+// PINAUDIORX : uniquement our MP3player
+// PIN qui serviront pour la communication série sur le module ESP
+#define AUDIOPINRX 12   // Entree pour DFP audio uniquement
+//#define AUDIOPINRX 15   // Inversé Entree pour DFP audio uniquement  si CS_PIN sur 12
 
-// ********** DHT
-// ne pas modifier , sauf si Auto ne fonctionne pas
-#define DHTTYPE DHTesp::AUTO_DETECT
-//#define DHTTYPE DHTesp::DHT11  // si DHT11
-//#define DHTTYPE DHTesp::DHT12  // si DHT12
-
-// **************
+// *******************
+// Autres PIN utilisés
+// *******************
+// Même si options pas installés , laisser les valeurs par défaut - Auto détection
 // *** PIN ******
 // ***************
+// PIN DHT
 #define dhtpin 16 // GPIO16  egale a D2 sur WEMOS D1R1  ou D0 pour mini ( a verifier selon esp )
 // Entree analogique pour auto luminosité
-// PIN Analogique
+// PIN Analogique pour photocell
 #define PINAUTO_LUM A0
-
 //Boutons
 #define PIN_BTN1 2
 #define PIN_BTN2 0
@@ -128,12 +127,22 @@ const char* www_password = "notif";
 // *********** FIN PIN ****
 // ************************
 
-// Config valeur max sytéme ( ne pas modifier )
-// matrices max gérés par systémes
-#define MAX_DEVICES 80
-// Max zone à gerer
-#define MAX 8
-
+//
+//************************************************
+//************ Options matériels par défaut ******
+//************ PAS NECESSAIRE DE MODIFIER ********
+//************ Configuration dans SETUP **********
+//************************************************
+#define LED_OUT 0  // 0 aucune , 1 Led interne , 2 relais ,3 Ring neopixel ,4 Digital output
+#define AUDIO_OUT 0 // 0 aucun , 1 buzzer , 2 MP3player , 3 autres ( sortie relais ou digital)
+#define BOUTON1 false
+#define BOUTON2 false
+// ********** DHT ***************
+// Detection auto si presence DHT
+// ne pas modifier , sauf si Auto ne fonctionne pas
+#define DHTTYPE DHTesp::AUTO_DETECT
+//#define DHTTYPE DHTesp::DHT11  // si DHT11
+//#define DHTTYPE DHTesp::DHT12  // si DHT12
 
 //***************************
 // Valeur par defaut config :
@@ -142,12 +151,13 @@ const char* www_password = "notif";
 #define TAILLECLOCK 4
 #define NBZONE_SUP 0
 #define MODEXL false
-#define NTPSERV "pool.ntp.org"
 #define TZNAME "Europe/Paris"
+#define NTPSERV "pool.ntp.org"
+#define TEMPONTP 15
 #define OFFSET_VALUE 60  // decalage en minute du fuseau horaire
 #define OFFSET_ADJUST 0
-#define DEBUG_DEF true
-#define VOLUME 50 // volume audio de 0 à 15
+#define DEBUG_DEF false
+#define VOLUME 50 // volume audio de 0 à 100
 #define _MP3START 1
 #define _MP3NOTIF 3
 #define TXTALARM "Votre Alarme vient de se déclencher !!!"
@@ -156,7 +166,7 @@ const char* www_password = "notif";
 #define PAUSE_TIME 0
 #define SCROLL_SPEED 40
 // luminosité Led
-#define BRIGHTNESS 30
+#define BRIGHTNESS 30   // de 0 à 100
 // historique
 #define HF "NIQJ"
 //**************************
@@ -179,17 +189,16 @@ const char* www_password = "notif";
 #define TOPIC_SOUSCRIPTION "/message"
 #define TOPIC_STATE "/state"
 #define TEMPO_BROKER 60  // 60 secondes
-//****************************************
-//********** AUDIO OUT BUZZER ************
-//****************************************
-//int frequence[] = {262, 294, 330, 349, 370, 392, 440, 494};      // (moi) tableau de fréquence des notes
-/*int frequence[] = { 0,
-262, 277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494,
-523, 554, 587, 622, 659, 698, 740, 784, 831, 880, 932, 988,
-1047, 1109, 1175, 1245, 1319, 1397, 1480, 1568, 1661, 1760, 1865, 1976,
-2093, 2217, 2349, 2489, 2637, 2794, 2960, 3136, 3322, 3520, 3729, 3951
-};
-*/
+
+// Config valeur max sytéme ( ne pas modifier )
+// matrices max gérés par systémes
+#define MAX_DEVICES 64
+// Max zone à gerer
+#define MAX 8
+
+//*********************************************
+//********** AUDIO OUT BUZZER / HP ************
+//*********************************************
 const char* buzMusic[] = {
   "",
   "MissionImp:d=16,o=6,b=95:32d,32d#,32d,32d#,32d,32d#,32d,32d#,32d,32d,32d#,32e,32f,32f#,32g,g,8p,g,8p,a#,p,c7,p,g,8p,g,8p,f,p,f#,p,g,8p,g,8p,a#,p,c7,p,g,8p,g,8p,f,p,f#,p,a#,g,2d,32p,a#,g,2c#,32p,a#,g,2c,a#5,8c,2p,32p,a#5,g5,2f#,32p,a#5,g5,2f,32p,a#5,g5,2e,d#,8d",
@@ -290,6 +299,7 @@ struct sConfigSys {
   char URL_Action1[130];
   char URL_Action2[130];
   char URL_Action3[130];
+  char URL_Update[130];
   bool alDay[7];              // jour alarme
   int fxint;                  // intensité par defaut fx visuel
   byte fxcolor;               //colueur par defaut fx
@@ -312,7 +322,7 @@ struct sConfigSys {
 };
 sConfigSys configSys;
 const size_t capacityMQTT = JSON_OBJECT_SIZE(10) + 200;
-const size_t capacityConfig = JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(6) + JSON_ARRAY_SIZE(8) + JSON_OBJECT_SIZE(100) + 1800;
+const size_t capacityConfig = JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(6) + JSON_ARRAY_SIZE(8) + JSON_OBJECT_SIZE(105) + 2000;
 const size_t capacityHisto =3*JSON_ARRAY_SIZE(10)  + JSON_OBJECT_SIZE(4) + 500;
 const char *fileconfig = "/config/config.json";  // fichier config
 const char *fileHist = "/config/Historique.json";  // fichier config
@@ -332,15 +342,10 @@ NTPClient timeClient(ntpUDP, NTPSERV,0, synchroNTP);
 bool invertUpperZone = false;  // Type ICS ou FC16
 
 // HARDWARE SPI
-
-
 MD_Parola P = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 
-
-
-
 // Declare votre neopixel Ring
-Adafruit_NeoPixel ring(LED_COUNT, LEDPIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel ring(LED_COUNT, LEDPIN, NEOTYPELED + NEO_KHZ800);
 
 // init audio
 SoftwareSerial mySoftwareSerial(AUDIOPINTX,AUDIOPINRX); //  Tx,RX ( Dfplayer )
@@ -406,6 +411,12 @@ String topicName;
 String idNotif;
 bool statebroker=false;
 String infoBOX="OK";
+bool sendBox=false;
+bool ntpOK;
+bool netOK;
+int netcode;
+bool checkntp=false;
+bool checknet=false;
 
 //nom fichier charge
 File fsUploadFile;
@@ -1054,6 +1065,7 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   strlcpy(config.URL_Action1, docConfig["URL_ACT1"] | "N/A", sizeof(config.URL_Action1));
   strlcpy(config.URL_Action2, docConfig["URL_ACT2"] | "N/A", sizeof(config.URL_Action2));
   strlcpy(config.URL_Action3, docConfig["URL_ACT3"] | "N/A", sizeof(config.URL_Action3));
+  strlcpy(config.URL_Update, docConfig["URL_UPD"] | "N/A", sizeof(config.URL_Update));
   config.action[0] = docConfig["ACTION"][0] | 0;
   config.action[1] = docConfig["ACTION"][1] | 0;
   file.close();
@@ -1166,6 +1178,7 @@ String createJson(sConfigSys  &config,bool flagCreate=false) {
   docConfig["URL_ACT1"]=config.URL_Action1;
   docConfig["URL_ACT2"]=config.URL_Action2;
   docConfig["URL_ACT3"]=config.URL_Action3;
+  docConfig["URL_UPD"]=config.URL_Update;
   JsonArray action = docConfig.createNestedArray("ACTION");
   action.add(config.action[0]);
   action.add(config.action[1]);
@@ -1190,6 +1203,9 @@ String createJson(sConfigSys  &config,bool flagCreate=false) {
     aday.add(config.alDay[6]);
     aday.add(config.alDay[7]);
   //donnee hardConfig
+  docConfig["NETCODE"]=netcode;
+  docConfig["NETOK"]=netOK;
+  docConfig["NTPOK"]=ntpOK;
   docConfig["TYPEMATRICE"]=String(HARDWARE_TYPE);
   docConfig["XL"]=hardConfig.XL;
   docConfig["MAXDISPLAY"]=hardConfig.maxDisplay;
@@ -1403,7 +1419,7 @@ for (int j=0;j<loops;j++) {
 void rainbowNEO(int rainbowLoops,int F=100,int speed=3, int S=255) {
   int fadeVal=0, fadeMax;
   fadeMax=constrain(F, 1, 100);
-  for(uint32_t firstPixelHue = 0; firstPixelHue < rainbowLoops*65536;
+  for(uint32_t firstPixelHue = 0; firstPixelHue < rainbowLoops*65536L;
     firstPixelHue += 256) {
 
     for(int i=0; i<ring.numPixels(); i++) {
@@ -1739,21 +1755,31 @@ void displayDHT() {
     displayNotif(printDHT,zoneTime,10);
 }
 
-void ToBox(char *Url) {
-  String url = Url;
+void ToBox(char *Url,byte numero=0) {
   int httpCode;
-  if (configSys.DEBUG) Serial.println("valeur de URL dans tobox : " + url);
-  http.begin(url);
-  httpCode = http.GET();
-  if (configSys.DEBUG) Serial.println("valeur httpcode : " + httpCode);
-  http.end();
-  // mise a jour code http
-  String json="";
-  infoBOX=String(httpCode);
-  json=createJson(configSys,true);
-  saveConfigSys(fileconfig,json);
-  //if (httpCode != 200 ) return false;
-  //else return true;
+  if (configSys.box)  {
+    httpCode=sendURL(Url);
+    String json="";
+    infoBOX=String(numero)+":"+String(httpCode);
+    json=createJson(configSys);
+    saveConfigSys(fileconfig,json);
+  }
+}
+
+
+int sendURL(char *Url) {
+String url = Url;
+int httpCode=0;
+int testurl= url.length();
+if (testurl>=6) {
+    http.begin(url);
+    httpCode = http.GET();
+    if (configSys.DEBUG) {
+          Serial.println("valeur de URL dans tobox : " + url);
+          Serial.println("valeur httpcode : " + httpCode);
+        }
+  }
+return httpCode;
 }
 
 // luminosite auto
@@ -1991,6 +2017,11 @@ void handleConfig() {
             value.toCharArray(configSys.URL_Action3,sizeof(configSys.URL_Action3));
             mem=1;
         }
+        if (key=="urlbox") if(validString(server.arg(i),7,130)) {
+          value=server.arg(i);
+            value.toCharArray(configSys.URL_Update,sizeof(configSys.URL_Update));
+            mem=1;
+        }
         if (key=="action") {optionsSplit(configSys.action,server.arg(i),',');mem=1;}
         if (key=="broker") if (optionsBool(&configSys.broker,server.arg(i))) {mem=1;reboot=true;}
         if (key=="ipbroker") if (validString(server.arg(i),8,50))
@@ -2061,7 +2092,8 @@ void handleConfig() {
                                             mem=1;
                                             }
       if (key=="crtime") {optionsNum(&configSys.CrTime,server.arg(i),1,120);mem=1;}
-        if (key=="checktime") {checkTime();rep="mise a jour horloge";}
+        if (key=="checktime") {checkntp=true;rep="mise a jour horloge";displayNotif("upTime",zoneTime,2);}
+        if (key=="checknet") {testnet();rep=String(netOK);}
         if (key=="wifireset" && server.arg(i)=="true") {rep="Reset WIFI - reboot";rst=true;reboot=true;}
         if (key=="allreset" && server.arg(i)=="true") {rep="Reset usine - reboot -";readEConfig(true);rst=true;reboot=true;}
         if (key=="reboot" && server.arg(i)=="true") {rep="reboot en cours";reboot=true;}
@@ -2136,7 +2168,7 @@ void handleOptions() {
         rep="LUM : "+String(configSys.LUM)+" et INT: "+String(configSys.intensity);
       }
       if (key=="TIMEREV") {
-        optionsSplit(configSys.timeREV,server.arg(i),':');
+        optionsSplit(configSys.timeREV,server.arg(i)+":",':');
         mem=1;
         configSys.REV=true;
         rep="TIMEREV :"+String(configSys.timeREV[0])+"-"+String(configSys.timeREV[1]);
@@ -2168,6 +2200,7 @@ void handleOptions() {
   }
   if ( mem==1 || mem==2 ) {
       if (configSys.broker) MQTTsend();
+      if (configSys.box) sendBox=true;
     }
 
   server.send(200,"text/plane",rep);
@@ -2238,7 +2271,7 @@ String prepNotif(String key,String val) {
   if (key=="COLOR") { optionsNum(&notifLed.color,val,0,7);}
   if (key=="LOOP") { optionsNum(&notifLed.loop,val,1,10);}
   if (key=="LEDLUM") { optionsNum(&notifLed.lum,val,0,100);}
-  if (key=="INTNOTIF") { optionsNum(&LuN,val,0,15);}
+  if (key=="INTNOTIF" || key=="LUM") { optionsNum(&LuN,val,0,15);}
   if (key=="FLASH") notifLed=flash;
   if (key=="BREATH") notifLed=breath;
 
@@ -2259,7 +2292,7 @@ String prepNotif(String key,String val) {
 if (key=="FI" ) { optionsNum(&Fi,val,0,28);}
 if (key=="FO" ) { optionsNum(&Fo,val,0,28);}
 if (key=="FIO" ) { optionsNum(&Fo,val,0,28);optionsNum(&Fi,val,0,28);}
-
+if (key=="PLUGIN" ) { Nflag='J';}
 if (key=="IMPORTANT" ) { Nflag='I';}
   return rep;
 }
@@ -2391,10 +2424,23 @@ if(!wifiManager.autoConnect("AP-NotifXL")) {
 }
 
 void checkTime() {
-  while(!timeClient.forceUpdate()) {
-}
-setTime(timeClient.getEpochTime());
-_lastSynchro=now();
+  byte cpttime=0;
+  String infomsg="Ok";
+  while(!timeClient.forceUpdate() && cpttime<TEMPONTP ) {
+  cpttime++;
+  }
+if (cpttime>=TEMPONTP) {
+      if (configSys.DEBUG) Serial.println("Erreur synchro NTP");
+      ntpOK=false;
+      infomsg="Erreur";
+  }
+    else {
+    setTime(timeClient.getEpochTime());
+    if ( _startTime < _refTime ) _startTime=now();
+    _lastSynchro=now();
+    ntpOK=true;
+  }
+  displayNotif(infomsg,zoneTime,9);
 }
 
 
@@ -2518,23 +2564,27 @@ switch (actionClick) {
               CR=true;
       break;
       case 8 : //URL Action 1
-                ToBox(configSys.URL_Action1);
+                ToBox(configSys.URL_Action1,1);
       break;
       case 9 : //URL Action 1
-                ToBox(configSys.URL_Action2);
+                ToBox(configSys.URL_Action2,2);
       break;
       case 10 : //URL Action 1
-                ToBox(configSys.URL_Action3);
+                ToBox(configSys.URL_Action3,3);
       break;
     default:
 
       break;
   }
   if (m==1) {
-String json="";
-json=createJson(configSys);
-saveConfigSys(fileconfig,json);
+sendBox=true;
 }
+}
+
+void testnet() {
+  netcode=sendURL("http://byfeel.info");
+  if (netcode == 301 ) netOK=true;
+  else netOK=false;
 }
 
 void infoSetup(int step,String txt="") {
@@ -2864,33 +2914,37 @@ webSocket.onEvent(webSocketEvent);
    //  TIME
      infoSetup(3," 2");
  // recuperation info temps
-   timeClient.begin();
+  timeClient.setPoolServerName(configSys.NTPSERVER);
+  timeClient.begin();
    bool s=true;
    String MsgInfo;
    byte cpttime=0;
-while(!timeClient.update() && cpttime<15) {
+   ntpOK=true;
+while(!timeClient.update() && cpttime<TEMPONTP) {
   // timeClient.forceUpdate();
    MsgInfo=(s ? " 2" : " 2 .");
    infoSetup(3,MsgInfo);
    s=!s;
    cpttime++;
-   Serial.print(String(cpttime)+" - ");
+   if (configSys.DEBUG) Serial.print(String(cpttime)+" - ");
  }
-if (cpttime>=15) {
-  if (configSys.DEBUG) Serial.println("Erreur synchro time , force synchro.");
+if (cpttime>=TEMPONTP) {
+  if (configSys.DEBUG) Serial.println("Erreur synchro serveur temps");
 infoSetup(2," 2");
-//infoSys="Erreur synchro Horloge";
-checkTime();
+infoSys="Erreur synchro Horloge - ";
+//checkTime();
+ntpOK=false;
 }
-
+if (ntpOK) {
  timeClient.setTimeOffset(hardConfig.Offset*60);
  setTime(timeClient.getEpochTime());
  _startTime=now();
  _lastSynchro=_startTime;
 
 if (configSys.DEBUG) Serial.println("time ok :"+String(now())+" offset :"+String(hardConfig.Offset)+" minutes");
+}
 // historique
-String h=loadHisto(fileHist,histNotif );
+loadHisto(fileHist,histNotif );
 
 //***************** Etape 1  *******
 //  Configuration Matrices
@@ -2963,6 +3017,8 @@ if (hardConfig.perso) {
  Serial.println("zone XL L "+String( zoneXL_L));
  Serial.println("zone XL H "+String( zoneXL_H));
  Serial.println("zone msg "+String( zoneMsg));
+ //test acces internet
+testnet();
 //****************************
 // Etape finale
 // ajustement matrices
@@ -3060,6 +3116,8 @@ void loop() {
   static uint32_t  lastTimeLumAuto = 0; // millis() memory
   static uint32_t  lastTimePrintDHT= 0; // millis() system / synchro
   static uint32_t  lastTimeMqtt= 0; // millis() system / synchro
+  static uint32_t  tempoBox= 0; // tempo pour envoie update vers box
+  static uint32_t  tempoCheck= 0; // tempo pour envoie update vers box
   static bool flasher = false;  // seconds passing flasher
   static uint32_t  startAudio;
   static bool dispNotif=false;
@@ -3070,10 +3128,11 @@ void loop() {
   // if (configSys.broker) MQTTclient.loop();  // ecoute mqtt client
   ArduinoOTA.handle(); // ecoute OTA
 
-
-if (timeClient.update() && (_lastSynchro > _refTime))
-{
-  _lastSynchro=now();
+if (ntpOK) {
+    if (timeClient.update() && (_lastSynchro > _refTime))
+    {
+    _lastSynchro=now();
+    }
 }
   //MDNS.update();
 
@@ -3249,7 +3308,7 @@ else
 if (configSys.broker) {
     if (!MQTTclient.connected()) {
         long nowmqtt = millis();
-        if (nowmqtt - lastReconnectAttempt > 10000) {
+        if (nowmqtt - lastReconnectAttempt >= 10000) {
         lastReconnectAttempt = nowmqtt;
         // Attempt to reconnect
         if (MQTTconnect()) lastReconnectAttempt = 0;
@@ -3276,6 +3335,26 @@ if (configSys.broker) {
         if (minute()==configSys.timeREV[1]) {
           if (second() <5 && second() >0 ) {  alarme(); }
         }
+      }
+    }
+
+    if (configSys.box && sendBox) {
+      long nowbox = millis();
+      if (tempoBox==0) tempoBox = nowbox;
+      if ((nowbox - tempoBox) >=750) {
+        ToBox(configSys.URL_Update);
+        tempoBox=0;
+        sendBox=false;
+      }
+    }
+
+    if (checkntp) {
+      long nowCheck = millis();
+      if (tempoCheck==0) tempoCheck = nowCheck;
+      if ((nowCheck - tempoCheck) >=1000) {
+        checkTime();
+        tempoCheck=0;
+        checkntp=false;
       }
     }
 
