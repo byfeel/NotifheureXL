@@ -60,14 +60,14 @@
     <div class="col">
 
   <div class="alert alert-dark"><h4 >Options Matériels :</h4>
-  <small class="text-muted">Permets de configurer les options matérielles disponibles</small>
+  <small class="text-muted">Permet de configurer les options des matériels disponibles</small>
 </div>
 <div class="form-group">
     <div class="custom-control custom-checkbox">
       <input type="checkbox" class="custom-control-input" id="bouton1"  aria-describedby="bout1Help" disabled>
       <label class="custom-control-label text-info" for="bouton1">Bouton 1</label>
     </div>
-  <small id="bout1Help" class="form-text text-muted">Activer si presence bouton 1 (Activation dans SETUP)</small>
+  <small id="bout1Help" class="form-text text-muted">Activer si présence bouton 1 (Activation dans SETUP)</small>
 </div>
 <div class="card border-success mx-auto mb-3 d-none" style="max-width: 40rem;" id="btn1">
     <div class="card-header text-center bg-success text-white">Actions pour Bouton 1</div>
@@ -95,7 +95,7 @@
       <input type="checkbox" class="custom-control-input" id="bouton2"  aria-describedby="bout2Help" disabled>
       <label class="custom-control-label text-info" for="bouton2">Bouton 2</label>
     </div>
-  <small id="bout2Help" class="form-text text-muted">Activer si presence bouton 2 (Activation dans SETUP)</small>
+  <small id="bout2Help" class="form-text text-muted">Activer si présence bouton 2 (Activation dans SETUP)</small>
 </div>
 <div class="card border-danger mx-auto mb-3 d-none" style="max-width: 40rem;" id="btn2">
     <div class="card-header text-center bg-danger text-white">Actions pour Bouton 2</div>
@@ -125,7 +125,7 @@
         <option value=2>Relais</option>
         <option value=3>Neopixel Ring / Strip</option>
       </select>
-      <small id="notifLumHelp" class="form-text text-muted">Le type de notification visuel installé. ( Modifiable dans SETUP )</small>
+      <small id="notifLumHelp" class="form-text text-muted">Le type de notification visuelle installée. ( Modifiable dans SETUP )</small>
     </div>
     <div class="card border-primary mx-auto mb-3 d-none" style="max-width: 40rem;" id="led3">
         <div class="card-header text-center bg-primary text-white">Parametre pour : <sapn id="infovisuel"></span></div>
@@ -179,10 +179,10 @@
                 <option value=2>DFPlayer MP3</option>
                 <option value=3>Autre / Relais</option>
               </select>
-              <small id="notifAudHelp" class="form-text text-muted">Le type de notification visuel installé.( modifiable dans SETUP )</small>
+              <small id="notifAudHelp" class="form-text text-muted">Le type de notification visuelle installée.( modifiable dans SETUP )</small>
             </div>
             <div class="card border-info mx-auto mb-3" style="max-width: 40rem;" id="AUD0">
-                <div class="card-header text-center bg-info text-white">Parametre pour : <sapn id="infovisuelaudio"></span></div>
+                <div class="card-header text-center bg-info text-white">Paramètre pour : <sapn id="infovisuelaudio"></span></div>
                 <div class="card-body">
                   <div id="groupAUDIO1" class="d-none">
                   <div class="form-group">
@@ -205,7 +205,7 @@
 <div class="row">
     <div class="col-md-12">
       <div class="alert alert-dark"><h4 >Fonctions :</h4>
-      <small class="text-muted">Permets de configurer les fonctions : Minuteur / Alarme </small>
+      <small class="text-muted">Permet de configurer les fonctions : Minuteur / Alarme </small>
     </div>
 <br>
 
@@ -226,7 +226,7 @@
 </div>
 <input type="number" class="form-control" id="CRTIME" aria-describedby="cdTimeHelp" placeholder="5"  min="1" max="60">
 </div>
-<small id="crTimeHelp" class="form-text text-muted">Temps par défaut ( en minutes ) pour le minuteur . Ce temps sera celui lançé par le bouton si option Start Minuteur est sélectionné.</small>
+<small id="crTimeHelp" class="form-text text-muted">Temps par défaut ( en minutes ) pour le minuteur . Ce temps sera celui lancé par le bouton si option Start Minuteur est sélectionné.</small>
 <br>
 <h4 class="text-primary">Alarme / Reveil</h4>
 <small class="text-muted">Options pour l'alarme</small>
@@ -249,7 +249,7 @@
 <div class="row">
 <div class="col">
   <div class="alert alert-dark"><h4 >Communication :</h4>
-  <small class="text-muted">Permets de configurer les fonctionnalités de communication : MQTT / URL vers BOX </small>
+  <small class="text-muted">Permet de configurer les fonctionnalités de communication : MQTT / URL vers BOX </small>
 </div>
       <h4 class="text-primary">Communication MQTT</h4>
       <div class="form-group">
@@ -262,7 +262,7 @@
   <div class="card border-warning mx-auto mb-3"  id="MQTT" style="max-width: 40rem;">
       <div class="card-header text-center bg-warning text-white">Paramétrage Client MQTT</div>
       <div class="card-body">
-        <h6 class="text-info">L'activation du client MQTT, entraine le redémarrage du notifHeure</h6>
+        <h6 class="text-info">L'activation du client MQTT, entraîne le redémarrage du notifHeure</h6>
         <div class="input-group">
           <div class="input-group-prepend">
         <div class="input-group-text text-info">IP Serveur MQTT : </div>
@@ -286,7 +286,7 @@
         <small id="passMQTTHelp" class="form-text text-muted">Mot de passe utilisateur du serveur MQTT  ( laisser vide si pas utilisé )</small>
         <div class="input-group">
           <div class="input-group-prepend">
-        <div class="input-group-text text-warning">Numero port MQTT : </div>
+        <div class="input-group-text text-warning">Numéro port MQTT : </div>
         </div>
         <input type="number" class="form-control" id="portMQTT" aria-describedby="portMQTTHelp" placeholder="1883">
         </div>
@@ -312,14 +312,14 @@
       <input type="checkbox" class="custom-control-input" id="btnDOM"  aria-describedby="btnDOMHelp">
       <label class="custom-control-label text-info" for="btnDOM">Activer requete http </label>
     </div>
-    <small class="text-muted">Activer les actions vers requete http( exemple enoie d'une requete vers une box domotique comme JEEDOM ,NextDom ou autres )</small>
+    <small class="text-muted">Activer les actions vers requête http( exemple: envoi d'une requête vers une box domotique comme Jeedom ,NextDom ou autres )</small>
 </div>
       <div id="box" class="d-none">
 
     <div class="card border-primary mx-auto mb-2 " id="boxUrlActions" style="max-width: 40rem;">
     <div class="card-header text-center bg-primary text-white">URL Actions</div>
     <div class="card-body small">
-      <small>Les chaines de moins de 8 caractéres ne sont pas prises en comptes.</small>
+      <small>Les chaines de moins de 8 caractères ne sont pas prises en comptes.</small>
       <div class="input-group">
     <div class="input-group-prepend">
     <div class="input-group-text text-primary">URL Action 1 : </div>
@@ -393,7 +393,7 @@
 <div class="row">
 <div class="col">
   <div class="alert alert-dark"><h4 >Configuration :</h4>
-  <small class="text-muted">Permets de configurer les paramétres systémes </small>
+  <small class="text-muted">Permet de configurer les paramètres systèmes </small>
 </div>
 <div class="input-group">
 <div class="input-group-prepend">
@@ -401,7 +401,7 @@
 </div>
 <input type="text" class="form-control" id="inputhost" aria-describedby="hostHelp" placeholder="Notif">
 </div>
-<small id="hostHelp" class="form-text text-muted">Personaliser suffixe hostname</small>
+<small id="hostHelp" class="form-text text-muted">Personnaliser suffixe hostname</small>
 </br>
   </br>
 
@@ -416,29 +416,29 @@
 <input type="checkbox" class="custom-control-input" id="DEBUG"  aria-describedby="debugHelp">
 <label class="custom-control-label text-info" for="DEBUG">DEBUG</label>
 </div>
-<small id="debugHelp" class="form-text text-muted">Activer les infos de Debug sur le module ( à valider si module brancher sur port USB ) - Sinon ne pas Activer</small>
+<small id="debugHelp" class="form-text text-muted">Activer les infos de Debug sur le module ( à valider si module branché sur port USB ) - Sinon ne pas Activer</small>
 </div>
 <div class="form-group">
     <div class="custom-control custom-checkbox">
       <input type="checkbox" class="custom-control-input" id="AutoMsg"  aria-describedby="amsgHelp">
       <label class="custom-control-label text-info" for="AutoMsg">Adapter Affichage Message</label>
     </div>
-  <small id="amsgHelp" class="form-text text-muted">Le message basculera en mode scrolling , si celui ci depasse la capacité d'affichage de la Zone Message.</small>
+  <small id="amsgHelp" class="form-text text-muted">Le message basculera en mode scrolling , si celui ci dépasse la capacité d'affichage de la Zone Message.</small>
 </div>
 <div class="input-group">
   <div class="input-group-prepend ">
-<div class="input-group-text text-info">Caractére par défaut : </div>
+<div class="input-group-text text-info">Caractère par défaut : </div>
 </div>
 <input type="text" class="form-control col-2" id="DispOff" aria-describedby="carHelp" size="2" maxlength="1" placeholder="vide" >
 </div>
-<small id="carHelp" class="form-text text-muted ">Sélection du Caractére  par défaut sur l'ecran Off . Valeur par défaut : vide.</small>
+<small id="carHelp" class="form-text text-muted ">Sélection du Caractère  par défaut sur l'écran Off . Valeur par défaut : vide.</small>
 <div class="input-group">
   <div class="input-group-prepend">
 <div class="input-group-text text-info">Serveur NTP : </div>
 </div>
 <input type="text" class="form-control" id="inputNTP" aria-describedby="NTPlHelp" placeholder="pool.ntp.org">
 </div>
-<small id="NTPlHelp" class="form-text text-muted">Adresse serveur NTP non de domaine ou ip</small>
+<small id="NTPlHelp" class="form-text text-muted">Adresse serveur NTP nom de domaine ou IP</small>
 <div class="mx-auto my-2" >
     <label for="speed" class="text-info">Vitesse par défaut</label>
       <input  type="range" id="speed" name="vitesse" min="5" max="100" value="40" oninput="valspeed.value = vitesse.valueAsNumber">
@@ -469,12 +469,12 @@
 
 <div class="row">
     <div class="col-md-12 text-center bg-dark text-white mb-3 p-4">
-    <h3>Outils avancées de  configuration</h3>
+    <h3>Outils avancés de  configuration</h3>
         <hr class="my-2">
-    <p>Ces outils, permettent de modifier la configuration matérielle du notifheure.</p>
+    <p>Ces outils permettent de modifier la configuration matérielle du notifheure.</p>
     <ul class="text-left">
       <li>Setup : pour aller à la page du SETUP initial.</li>
-      <li>Importer config : permet d'importer les paramétres de configuration concernant cette page.</li>
+      <li>Importer config : permet d'importer les paramètres de configuration concernant cette page.</li>
       <li>Reboot : redémarre le notifheure si besoin.</li>
     </ul>
     <button type="button" class="btn btn-danger " onclick="window.location='/setup.html';">SETUP</button>
