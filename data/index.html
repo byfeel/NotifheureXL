@@ -48,7 +48,7 @@
 
 
 
-    <small id="lastnotif" class="text-info">derniére notification</small>
+    <small id="lastnotif" class="text-info">dernière notification</small>
      <hr class="my-2">
         <form action='/Notification' method='post' id="FormMsg" >
              <div class="form-group ">
@@ -332,17 +332,17 @@
       <div class="container-fluid">
       <div class="card-deck ">
       <div class="card  border-primary m-1" style="min-width:300px;">
-          <div class="card-header text-center"><H3>Systéme</H3></div>
+          <div class="card-header text-center"><H3>Système</H3></div>
   <div class="card-body ">
       <table class="table table-bordered table-sm table-md">
   <tr><th scope="row" class="bg-dark text-white">Hostname</th><td id="hostname"></td></tr>
-  <tr><th scope="row" class="bg-dark text-white">Date Systéme</th><td id="ddj"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Date Système</th><td id="ddj"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">TimeZone</th><td id="tzname"></td></tr>
   <tr><th scope="row" class="bg-dark text-white">mDNS</th><td id="mdns"></td></tr>
-  <tr><th scope="row" class="bg-dark text-white">Demarrage</th><td id="uptime"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Démarrage</th><td id="uptime"></td></tr>
   <tr><th scope="row" class="bg-dark text-white" id="blocInfoNTP">Serveur NTP</th><td><span id="NTP"></span><button type="button" class="btn btn-dark text-white btn-sm float-right" id="btnsynchro" onclick="checktime();">Synchro</button></td></tr>
   <tr><th scope="row" class="bg-dark text-white">1er Synchro</th><td id="first"></td></tr>
-   <tr><th scope="row" class="bg-dark text-white">Derniére Synchro </th><td id="last"></td></tr>
+   <tr><th scope="row" class="bg-dark text-white">Dernière Synchro </th><td id="last"></td></tr>
    <tr><th scope="row" class="bg-dark text-white">Mode Debug </th><td id="debug"></td></tr>
    <tr><th scope="row" class="bg-dark text-white" id="newversion">Version firmware</th><td><a id="urlversion" href="" target="_blank"><span id="lastversion"></span></a></td></tr>
   <tr><th scope="row" class="bg-dark text-white">Version Interface </th><td id="vspiffs"></td></tr>
@@ -420,17 +420,17 @@
     <p class="card-text">Json à envoyer sous la forme : {<strong>"msg":</strong>"Hello World"}</p>
     <p><strong>msg :</strong> message a afficher</p>
     <p>Possible de préciser des options avec mot-clef <strong>opt</strong> : par exemple {<strong>"msg":</strong>"Hello World",<strong>"opt":</strong>"pause=0; nzo=1"} pour une pause de 0 seconde sur la zone 1 ( séparé par ; ).
-      Si aucune option n'est précisée .Les paramètres par défaut sont appliqués. Envoie du message sur la zone "message"</P>
+      Si aucune option n'est précisée .Les paramètres par défaut sont appliqués. Envoi du message sur la zone "message"</P>
       <h5 class="card-title">Topic Publication</h5>
       <p class="card-text">Json  sous la forme : </p>
     <pre class="text-white">
     {
-    "temperature": "20.70",     // info temperature
-    "humidity": "49.30",        // info humidité
-    "sec": true,                // etat secondes
-    "hor": true,                // etat affichage horloge
-    "lum": true,                // mode luminosité
-    "rev": false                // Etat reveil
+    "temperature": "20.70",     // Info température
+    "humidity": "49.30",        // Info humidité
+    "sec": true,                // Etat secondes
+    "hor": true,                // Etat affichage horloge
+    "lum": true,                // Mode luminosité
+    "rev": false                // Etat réveil
     }
     </pre>
   </div>
@@ -470,7 +470,7 @@
 </div>
 </div>
   <div class="tab-pane fade" id="Options">
-    <p>Ci dessous listes des actions associés aux differents modules ( Boutons , DFPlayer )- Si présent</p>
+    <p>Ci dessous liste des actions associées aux différents modules ( Boutons , DFPlayer )- Si présent</p>
       <div class="card-deck ">
       <div class="card text-white bg-success mb-3 d-none" style="max-width: 20rem;" id="cardbtn1">
   <div class="card-header text-center"><H2>Bouton 1</H2></div>
@@ -534,7 +534,7 @@
   </div>
   <div class="tab-pane fade" id="Admin">
       <div class="card border-info mb-3">
-          <div class="card-header">Configuration Systéme</div>
+          <div class="card-header">Configuration Système</div>
             <div class="card-body">
               <ul class="list-group list-group-flush">
     <li class="list-group-item">
@@ -542,7 +542,7 @@
     <button type="button" class="btn btn-primary btn-sm" onclick="goConfig();">Configuration</button>
     </li>
     <li class="list-group-item">
-      <p>Permet de forcer la synchro de l'heure , dans le cas ou il y aurait eu une erreur de synchro au démarrage , avec le serveur de temps.
+      <p>Permet de forcer la synchro de l'heure , dans le cas où il y aurait eu une erreur de synchro au démarrage , avec le serveur de temps.
       </br>Cette fonction , peut "freezer" l'affichage , le temps de la synchro.</p>
       <button type="button" class="btn btn-primary btn-sm" onclick="checktime();">Forcer synchro heure</button>
     </li>
@@ -554,7 +554,7 @@
 
     </br>
     <div class="card border-primary mb-3">
-          <div class="card-header">Presence de Notif'Heure sur le reseau <span class="text-primary" id="inforafraichir"></span></div>
+          <div class="card-header">Présence de Notif'Heure sur le réseau <span class="text-primary" id="inforafraichir"></span></div>
             <div class="card-body">
         <h5 class="card-title text-center" >
                 <button type="button" class="btn btn-primary btn-sm" onclick="getMdns();">Rafraichir</button></h5>
