@@ -87,6 +87,13 @@ function checknet() {
   });
 }
 
+function sendConfigHA() {
+  $.get('/Config?mqttconfig',function(data){
+  console.log(data);
+  //update_Info();
+  });
+}
+
 function goConfig() {
   window.location.href='/editconfig.html';
 }
@@ -308,6 +315,7 @@ $.ajax({
 
           if (jinfo.BROKER) {
             $("#cardmqtt").removeClass("d-none");
+            $('#mqttState').text("activé");
             if (jinfo.STATEBROKER) {
               $("#infostatemqtt").text("Connexion OK");
               $("#infostatemqtt").removeClass("text-danger");
@@ -321,7 +329,9 @@ $.ajax({
             else $("#infousermqtt").text("Serveur MQTT anonyme");
             $("#infotempomqtt").text(jinfo.TEMPOBROKER);
             $("#infotopicS").text(jinfo.TOPIC);
+            $("#infotopicO").text(jinfo.TOPICOPT);
             $("#infotopicP").text(jinfo.TOPICSTATE);
+            $("#predisco").text(jinfo.PREFIXHA);
           }
           else {
               $("#cardmqtt").addClass("d-none");
@@ -419,6 +429,28 @@ $.ajax({
          $('#Temp').text(jinfo.TEMP);
          $('#Hum').text(jinfo.HUM);
          $('#infoLUM').text(jinfo.INTENSITY);
+         if (jinfo.BROKER) {
+         if (jinfo.STATEBROKER) {
+           $('#blocInfoMQTT').removeClass("bg-danger");
+           $('#blocInfoMQTT').removeClass("bg-dark");
+           $('#blocInfoMQTT').addClass("bg-success");
+           $("#infostatemqtt").text("Connexion OK");
+           $("#infostatemqtt").removeClass("text-danger");
+         }
+         else {
+           $("#infostatemqtt").addClass("text-danger");
+           $("#infostatemqtt").text("Erreur Connexion");
+           $('#blocInfoMQTT').removeClass("bg-dark");
+           $('#blocInfoMQTT').removeClass("bg-success");
+           $('#blocInfoMQTT').addClass("bg-danger");
+         }
+       }
+       else {
+         $('#blocInfoMQTT').removeClass("bg-danger");
+         $('#blocInfoMQTT').removeClass("bg-success");
+         $('#blocInfoMQTT').addClass("bg-dark");
+         $('#mqttState').text("désactivé");
+       }
          if (jinfo.NTPOK) {
            $('#blocInfoNTP').addClass("bg-dark");
            $('#blocInfoNTP').removeClass("bg-danger");
@@ -570,6 +602,7 @@ num:numeroPiste,
 nzo:$("#selectZone option:selected").val(),
 fio:fio,
 anim:animation,
+cycle:$("#cycle").val(),
 type:typ,
 pause:P,
 ledfx:fxled,
@@ -804,6 +837,7 @@ $( document ).ready(function() {
 getInfo();
 getHisto();
 infoJson();
+update_Info()
 $('#LUM').on('change',Options);
 $('#SEC').on('change',Options);
 $('#HOR').on('change',Options);

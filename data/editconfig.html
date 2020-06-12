@@ -25,13 +25,13 @@
             <a class="nav-link" href="#Config">Options <span class="sr-only">(current)</span></a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#">Fonctions</a>
+            <a class="nav-link" href="#fonctions">Fonctions</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#">Communications</a>
+            <a class="nav-link" href="#comm">Communications</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#">Configurations</a>
+            <a class="nav-link" href="#conf">Configurations</a>
           </li>
 
         </ul>
@@ -63,6 +63,7 @@
   <small class="text-muted">Permets de configurer les options matérielles disponibles</small>
 </div>
 <div class="form-group">
+<h4 class="text-primary">Options Boutons</h4>
     <div class="custom-control custom-checkbox">
       <input type="checkbox" class="custom-control-input" id="bouton1"  aria-describedby="bout1Help" disabled>
       <label class="custom-control-label text-info" for="bouton1">Bouton 1</label>
@@ -89,7 +90,6 @@
   </div>
     </div>
 </div>
-
 <div class="form-group">
     <div class="custom-control custom-checkbox">
       <input type="checkbox" class="custom-control-input" id="bouton2"  aria-describedby="bout2Help" disabled>
@@ -117,6 +117,7 @@
   </div>
     </div>
 </div>
+<h4 class="text-primary">Option Notification Visuelle</h4>
 <div class="form-group">
       <label for="selectNotifLum" class="text-info">Type Notification Visuelle :</label>
       <select class="form-control" id="selectNotifLum" aria-describedby="notifLumHelp" disabled>
@@ -170,7 +171,7 @@
   </div>
     </div>
 
-
+<h4 class="text-primary">Option Notification Audio</h4>
         <div class="form-group">
               <label for="selectNotifAud" class="text-info">Type Notification Audio :</label>
               <select class="form-control" id="selectNotifAud" aria-describedby="notifAudHelp" disabled>
@@ -199,10 +200,24 @@
                 </div>
               </div>  <!-- fin carte audio-->
 </div>
+
 </div> <!-- fin row -->
+<div class="row mb-2">
+<div class="col">
+  <h4 class="text-primary">Option DHT</h4>
+  <div class="input-group">
+    <div class="input-group-prepend">
+  <div class="input-group-text text-info">Temps par défaut pour Affichage info DHT sur NotifHeure: </div>
+  </div>
+  <input type="number" class="form-control" id="DDHTIME" aria-describedby="dhtTimeHelp" placeholder="5"  min="1" max="120">
+  </div>
+  <small id="dhtTimeHelp" class="form-text text-muted">Temps par défaut ( en minutes ) pour l'affichage des informations du DHT sur ecran NotifHeure. </small>
+
+</div>
+</div>
 
 
-<div class="row">
+<div class="row" id="fonctions">
     <div class="col-md-12">
       <div class="alert alert-dark"><h4 >Fonctions :</h4>
       <small class="text-muted">Permets de configurer les fonctions : Minuteur / Alarme </small>
@@ -246,9 +261,9 @@
 
 </div>
 </div> <!-- fin row -->
-<div class="row">
+<div class="row" id="comm">
 <div class="col">
-  <div class="alert alert-dark"><h4 >Communication :</h4>
+  <div class="alert alert-dark"><h4 >Communications :</h4>
   <small class="text-muted">Permets de configurer les fonctionnalités de communication : MQTT / URL vers BOX </small>
 </div>
       <h4 class="text-primary">Communication MQTT</h4>
@@ -298,6 +313,13 @@
         <input type="number" class="form-control" id="tempoMQTT" aria-describedby="tempoMQTTHelp" placeholder="60">
         </div>
         <small id="tempoMQTTHelp" class="form-text text-muted">Temporisation publications MQTT - entre 10 et 600 secondes ( 60 secondes par défaut )</small>
+        <div class="input-group">
+          <div class="input-group-prepend">
+        <div class="input-group-text text-warning">Prefix Discovery pour Home Assistant : </div>
+        </div>
+        <input type="text" class="form-control" id="prefixHA" aria-describedby="prefixHAHelp" placeholder="homeassistant">
+        </div>
+        <small id="prefixHAHelp" class="form-text text-muted">Prefix Home assistant pour importation automatique des entités Notifheure  ( homeassistant par défaut )</small>
       </div>
 
     </div>
@@ -390,9 +412,9 @@
 </div>
 </div> <!-- fin row -->
 
-<div class="row">
+<div class="row" id="conf">
 <div class="col">
-  <div class="alert alert-dark"><h4 >Configuration :</h4>
+  <div class="alert alert-dark"><h4 >Configurations :</h4>
   <small class="text-muted">Permets de configurer les paramétres systémes </small>
 </div>
 <div class="input-group">

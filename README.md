@@ -1,5 +1,18 @@
 # Notifheure XL
 
+* Version 0.9.6
+Ajout fonction cycle : Pour répétition message
+Ajout de la création auto dans Home Assistant
+Mofication interface Web ( champ MQTT et cycle )
+Correctifs bug intensité
+Mise a jour librairies
+correctifs divers
+
+* Version 0.9.5
+Amélioration des commandes MQTT  
+Ajout du topic pour les commandes Options
+Correctifs / amélioration code
+
 * Version 0.9.2
 Correction erreur NTP
 Nouvelle interface Configuration / ajout fonction synchro et test Internet

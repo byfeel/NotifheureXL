@@ -64,8 +64,14 @@
  </div>
       </div>
     <div class="col-6">
-
-        <div class="form-group">
+      <div class="input-group">
+      <div class="input-group-prepend">
+      <div class="input-group-text text-primary">Cycle : </div>
+      </div>
+      <input type="number" class="form-control" id="cycle" aria-describedby="cycleHelp" placeholder="1"  min="1" max="1000">
+      </div>
+      <small id="cycleHelp" class="form-text text-muted">Nombre de boucle , pour affichage</small>
+<div class="form-group">
 <label for='type' class="text-primary">Animation : </label>
 <select class="form-control" name='type' id='type'>
  <option value='0'>Aucune</option>
@@ -363,6 +369,8 @@
    <tr><th scope="row" class="bg-dark text-white">Canal</th><td id="channel"></td></tr>
      <tr><th scope="row" class="bg-dark text-white">BSSID</th><td id="BSSID"></td></tr>
      <tr><th scope="row" class=" text-white" id="blocInfoNet">Internet</th><td><span id="net"></span><button type="button" class="btn btn-dark text-white btn-sm float-right" id="btntest" onclick="checknet();">Test</button></td></tr>
+     <tr><th scope="row" class="bg-dark text-white" id="blocInfoMQTT">MQTT</th><td><span id="mqttState">Désactivé</span></td></tr>
+
       </table>
                     </div></div>
       <div class="card border-warning  m-1" style="min-width:300px;"  >
@@ -401,13 +409,18 @@
           <div class="card-header">Info Serveur MQTT</div>
             <div class="card-body">
         <h5 class="card-title"> Serveur MQTT : <span id="infostatemqtt" class="text-primary"></span></h5>
-        <ul class="list-group list-group-flush">
+<p>Si , vous avez une erreur MQTT , verifier l'adresse du serveur , le port ainsi que le nom utilisateur et mot de passe si celui ci est necessaire.</p>
+<p>Une fois les modifications effectué , dans la page de configuration. Pensez à redémarrer le Notifheure , pour la prise en compte des paramètres.</p>
+  <ul class="list-group list-group-flush">
   <li class="list-group-item">Serveur IP : <span id="infoipmqtt"></span></li>
   <li class="list-group-item">Serveur port : <span id="infoipmqtt">1883</span></li>
   <li class="list-group-item">Utilisateur : <span id="infousermqtt"></span></li>
   <li class="list-group-item">Tempo des Publications : <span id="infotempomqtt"></span> secondes(s)</li>
-  <li class="list-group-item">topic souscription : <span id="infotopicS"></span></li>
-  <li class="list-group-item">topic publication : <span id="infotopicP"></span></li>
+  <li class="list-group-item">topic ( Send Notif ) : <span id="infotopicS"></span></li>
+  <li class="list-group-item">topic ( Set Options ) : <span id="infotopicO"></span></li>
+  <li class="list-group-item">topic ( Get State ): <span id="infotopicP"></span></li>
+  <li class="list-group-item">Préfix discovery pour Home Assistant : <span id="predisco">homeassistant</span></li>
+  </ul>
 </ul>
  </div>
  </div>
@@ -417,10 +430,19 @@
   <div class="card-header">JSON MQTT</div>
   <div class="card-body">
     <h5 class="card-title">Topic Souscription</h5>
+    <h6 class="card-title">Envoie Notification</h6>
     <p class="card-text">Json à envoyer sous la forme : {<strong>"msg":</strong>"Hello World"}</p>
     <p><strong>msg :</strong> message a afficher</p>
     <p>Possible de préciser des options avec mot-clef <strong>opt</strong> : par exemple {<strong>"msg":</strong>"Hello World",<strong>"opt":</strong>"pause=0; nzo=1"} pour une pause de 0 seconde sur la zone 1 ( séparé par ; ).
       Si aucune option n'est précisée .Les paramètres par défaut sont appliqués. Envoie du message sur la zone "message"</P>
+    <h6 class="card-title">Réglage Options</h6>
+    <p>Json à envoyer sous la forme : {<strong>"key":</strong>"value"}</p>
+    <pre class="text-white">
+    Exemple Key :
+    "SEC": "true ou false",     // Affiche / désactive les secondes
+    Retrouvez toutes les clés possibles , dans la documentation du NotifHeureXL . 
+    Possibilité d'envoie de plusieurs commandes : {"key":"value","key2":"value2"}
+    </pre>
       <h5 class="card-title">Topic Publication</h5>
       <p class="card-text">Json  sous la forme : </p>
     <pre class="text-white">
@@ -433,6 +455,10 @@
     "rev": false                // Etat reveil
     }
     </pre>
+  <h5 class="card-title">Home Assistant</h5>
+  <p class="card-text">Pour home Assistant, le notifheure XL crée les entités automatiquement dans HA, si l'option est activée ( discovery auto). Selon les options matérielles du notifheure, il crée deux sensors température et humidité ( DHT), 3 switchs pour les options Secondes, Auto/manuel et affichage horloge et une entité "light" pour la LED.</p>
+  <p>Il est possible aussi de déclencher manuellement la création.</p>
+  <button type="button" class="btn btn-primary text-white btn-sm" id="btnHA" onclick="sendConfigHA();">Envoie Config vers HA</button>
   </div>
 </div>
 </div>
@@ -444,7 +470,7 @@
          <div class="card-header">Info Actions URL BOX</div>
            <div class="card-body">
        <h5 class="card-title"> URL ACTION : <span id="infostateURLACTION" class="text-primary"></span></h5>
-       <ul class="list-group list-group-flush">
+<ul class="list-group list-group-flush">
  <li class="list-group-item">URL Action 1 : <span id="infoaction1">N/A</span></li>
  <li class="list-group-item">URL Action 2 : <span id="infoaction2">N/A</span></li>
  <li class="list-group-item">URL Action 3 : <span id="infoaction3">N/A</span></li>

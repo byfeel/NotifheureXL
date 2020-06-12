@@ -69,6 +69,8 @@ $.ajax({
         $("#passMQTT").val(jinfo.PBROKER);
         $("#portMQTT").val(jinfo.PORTBROKER);
         $("#tempoMQTT").val(jinfo.TEMPOBROKER);
+        $("#prefixHA").val(jinfo.PREFIXHA);
+        $("#DDHTIME").val(jinfo.TEMPDDHT);
         $('#DispOff').val(String.fromCharCode(jinfo.CHAROFF));
         $('#intled').val(jinfo.LEDINT).trigger("input");
         $('#intled').rangeslider('update', true);
@@ -164,7 +166,7 @@ $("#Config").submit(function(){
   TFlag.forEach(function(item){
   strFlag+=item;
   });
-  console.log($("#btnMQTT").prop('checked'));
+  console.log($("#DDHTIME").val());
 
   $.post('/Config',
        {
@@ -174,6 +176,7 @@ $("#Config").submit(function(){
   pause:$('#pause').val(),
   speed:$('#speed').val(),
   box:$('#btnDOM').prop('checked'),
+  tempoddht:$('#DDHTIME').val(),
   url1:$('#URL_action1').val(),
   url2:$('#URL_action2').val(),
   url3:$('#URL_action3').val(),
@@ -196,6 +199,7 @@ $("#Config").submit(function(){
   ipbroker:$("#ipMQTT").val(),
   ubroker:$("#userMQTT").val(),
   pbroker:$("#passMQTT").val(),
+  prefixha:$("#prefixHA").val(),
   portbroker:$("#portMQTT").val(),
   tempobroker:$("#tempoMQTT").val(),
   action:$('#CRACT').val()+","+$('#ALACT').val()+",",
