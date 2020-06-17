@@ -1,9 +1,16 @@
 # Notifheure XL
 
+* Version 0.9.7
+  * Ajout Offset température / humidité
+  * Suppression affichage DHT lorsque l'horloge est off
+  * Mofication interface Web pour support nouvelles fonctions
+  * ajout d'un commutateur HA , pour valider envoie config MQTT
+  * correctifs divers / amélioration de la fonction Intensité auto
+
 * Version 0.9.6
   * Ajout fonction cycle : Pour répétition message
   * Ajout de la création auto dans Home Assistant
-  * Mofication interface Web ( champ MQTT et cycle )
+  * Modification interface Web ( champ MQTT et cycle )
   * Correctifs bug intensité
   * Mise a jour librairies
   * correctifs divers

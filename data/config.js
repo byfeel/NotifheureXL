@@ -59,6 +59,7 @@ $.ajax({
         $("#selectNotifLum").val(jinfo.TYPELED).change();
         $("#selectNotifAud").val(jinfo.TYPEAUDIO).change();
         $('#btnMQTT').prop('checked',jinfo.BROKER).change();
+        $('#btnHA').prop('checked',jinfo.HA).change();
         $('#btnDOM').prop('checked',jinfo.BOX).change();
         $('#URL_action1').val(jinfo.URL_ACT1);
         $('#URL_action2').val(jinfo.URL_ACT2);
@@ -71,6 +72,8 @@ $.ajax({
         $("#tempoMQTT").val(jinfo.TEMPOBROKER);
         $("#prefixHA").val(jinfo.PREFIXHA);
         $("#DDHTIME").val(jinfo.TEMPDDHT);
+        $("#offsetT").val(jinfo.OFT);
+        $("#offsetH").val(jinfo.OFH);
         $('#DispOff').val(String.fromCharCode(jinfo.CHAROFF));
         $('#intled').val(jinfo.LEDINT).trigger("input");
         $('#intled').rangeslider('update', true);
@@ -200,6 +203,9 @@ $("#Config").submit(function(){
   ubroker:$("#userMQTT").val(),
   pbroker:$("#passMQTT").val(),
   prefixha:$("#prefixHA").val(),
+  ha:$("#btnHA").prop('checked'),
+  ofh:$('#offsetH').val(),
+  oft:$('#offsetT').val(),
   portbroker:$("#portMQTT").val(),
   tempobroker:$("#tempoMQTT").val(),
   action:$('#CRACT').val()+","+$('#ALACT').val()+",",
@@ -231,6 +237,12 @@ $('#btnMQTT').change(function () {
           if (check) $('#MQTT').removeClass("d-none");
           else $('#MQTT').addClass("d-none");
                 });
+
+  $('#btnHA').change(function () {
+    var check = $(this).prop('checked');
+    if (check) $('#MQTTHA').removeClass("d-none");
+    else $('#MQTTHA').addClass("d-none");
+          });
 $('#btnDOM').change(function () {
           var check = $(this).prop('checked');
           if (check) $('#box').removeClass("d-none");

@@ -6,7 +6,7 @@
 //***********************************************
 // *********  Byfeel 2019 ***********************
 // **********************************************
-const String ver = "0.9.6";
+const String ver = "0.9.7";
 const String hardware = "NotifheureXL";
 const String vInterface="";
 //**************************
@@ -287,6 +287,7 @@ struct sConfigSys {
   char passbroker[20];
   int portbroker;
   int tempobroker;
+  bool HA;                     // activation home assistant discovery
   char prefixdiscovery[20];    // prefix discovery pour HA
   bool SEC;
   bool HOR;
@@ -326,6 +327,8 @@ struct sConfigSys {
   bool btn1;
   bool btn2;
   byte btnclic[2][3];          // valeur par defaut des boutons
+  float offsetT;                 // offset Température
+  float offsetH;                 // offset humidité
 };
 sConfigSys configSys;
 const size_t capacityMQTT = JSON_OBJECT_SIZE(10) + 250;
@@ -1022,6 +1025,7 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   strlcpy(config.userbroker,docConfig["UBROKER"] | USERBROKER,sizeof(config.userbroker));
   strlcpy(config.passbroker,docConfig["PBROKER"] | PASSBROKER,sizeof(config.passbroker));
   strlcpy(config.prefixdiscovery,docConfig["PREFIXHA"] | DISCOVERY_PREFIX,sizeof(config.prefixdiscovery));
+  config.HA=docConfig["HA"] | false;
   config.portbroker=docConfig["PORTBROKER"] | PORT_BROKER;
   config.tempobroker=docConfig["TEMPOBROKER"] | TEMPO_BROKER;
   config.DEBUG = docConfig["DEBUG"] | DEBUG_DEF;
@@ -1033,6 +1037,8 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   config.LUM=docConfig["LUM"] | true;
   config.REV=docConfig["REV"] | false;
   config.DHT=docConfig["DDHT"] | false;
+  config.offsetT=docConfig["OFT"] | -0.5;
+  config.offsetH=docConfig["OFH"] | -0.2;
   config.tempDDHT=docConfig["TEMPDDHT"] | TEMPODDHT;
   config.timeREV[0]=docConfig["TIMEREV"][0] | 7;
   config.timeREV[1]=docConfig["TIMEREV"][1] | 0;
@@ -1162,6 +1168,8 @@ String createJson(sConfigSys  &config,bool flagCreate=false) {
   docConfig["STAMPDHT"]=stamp_DHT;
   docConfig["DHTMODEL"]=Modele;
   docConfig["DHTSTATUS"]= dht.getStatusString();
+  docConfig["OFT"]=config.offsetT;
+  docConfig["OFH"]=config.offsetH;
 //minuteur
   docConfig["CR"]=CR;
   docConfig["CRSTOP"]=CRStop;
@@ -1186,6 +1194,7 @@ String createJson(sConfigSys  &config,bool flagCreate=false) {
   docConfig["TEMPOBROKER"]=config.tempobroker;
   docConfig["STATEBROKER"]=statebroker;
   docConfig["PREFIXHA"]=config.prefixdiscovery;
+  docConfig["HA"]=config.HA;
   //box
   docConfig["INFO"]=infoBOX;
   docConfig["BOX"]=config.box;
@@ -1253,9 +1262,9 @@ void saveConfigSys(const char *fileconfig,String json) {
 void GetTemp() {
   int ModelDHT;
     ModelDHT=dht.getModel();
-    temperature = dht.getTemperature();
+    temperature = dht.getTemperature() + configSys.offsetT;
     _dht=true;
-    humidity= dht.getHumidity();
+    humidity= dht.getHumidity() + configSys.offsetH;
     heatIndex = dht.computeHeatIndex(temperature, humidity, false);
     dewPoint = dht.computeDewPoint(temperature,humidity,false);
     per = dht.computePerception(temperature, humidity,true);
@@ -1797,31 +1806,40 @@ if (testurl>=6) {
 return httpCode;
 }
 
+int readPhotocell() {
+  int sensorValue;
+  sensorValue = analogRead(0); // read analog input pin 0
+  // inversion valeur sombre=0 et tres lumineur=1023
+  //sensorValue = 1023 - sensorValue;
+  // apres inversion 1023 signifie led au max ( sombre )
+  if (configSys.DEBUG) Serial.println("valeur sensorvalue : "+String(sensorValue));
+  return sensorValue;
+}
+
+// detection presence photocell
+bool isPhotocell() {
+  int valTestCell=0;
+  for (int i=0;i<6;i++) {
+        valTestCell+=readPhotocell();
+        delay (150); 
+  }
+  if (configSys.DEBUG)  Serial.println("valeur cptcell : "+String(valTestCell));
+  if (round(valTestCell/6) <= 12 )  return false;
+    else  return true;
+
+}
+
 // luminosite auto
 // fonction reglage auto luminosite
 int lumAuto() {
-  static int cptTestCell=0;
-  static int valTestCell=0;
-  int sensorValue,lum;
-  sensorValue = analogRead(0); // read analog input pin 0
-  cptTestCell++;
-  if (sensorValue)
-  valTestCell +=sensorValue;
-  if (configSys.DEBUG) {
-      Serial.println("valeur photocell dans boucle auto : "+String(sensorValue));
-      //Serial.println("valeur test "+String(valTestCell)+" boucle lum : "+String(cptTestCell));
-    }
-  if (cptTestCell>=6 ) {
-    if (round(valTestCell/cptTestCell) <= 12)  _photocell=false;
-    else _photocell=true;
-    cptTestCell=0;
-    valTestCell=0;
-    }
+  int lum,sv;
     if (_photocell) {
-          lum =round((sensorValue*1.5)/100);
-          lum = constrain(lum,0,15);
-    } else lum=configSys.intensity;
-   return lum;
+    sv=readPhotocell();
+    lum= map(sv, 0, 1023, 0, 15);
+    }
+  else lum=configSys.intensity;
+  if (configSys.DEBUG) Serial.println("valeur lum: "+String(lum));
+  return lum;
 }
 
 void cmdLum(bool val,byte I=configSys.intensity) {
@@ -2063,6 +2081,9 @@ void handleConfig() {
             value.toCharArray(configSys.prefixdiscovery,sizeof(configSys.prefixdiscovery));
             mem=1;
           }
+        if (key=="ofh") { configSys.offsetH=server.arg(i).toFloat();mem=1; }
+        if (key=="oft") { configSys.offsetT=server.arg(i).toFloat();mem=1; }
+        if (key=="ha") if (optionsBool(&configSys.HA,server.arg(i))) mem=1;
         if (key=="portbroker") {optionsNum(&configSys.portbroker,server.arg(i),1,66000);mem=1;}
         if (key=="tempobroker") {optionsNum(&configSys.tempobroker,server.arg(i),20,600);mem=1;}
         if (key=="tempoddht") {optionsNum(&configSys.tempDDHT,server.arg(i),1,120);mem=1;}
@@ -2745,10 +2766,10 @@ else if (t.indexOf(TOPIC_OPTIONS)>0) {
       val=kv.value().as<char*>();
       if (key=="LEDINT" ) {
             int valnumber;
-            valnumber = atoi(val.c_str());  
+            valnumber = atoi(val.c_str());
             valnumber = map(valnumber,0,255,0,100);
             val=String(valnumber);
-      } 
+      }
       SetOptions(key,val);
   }
       if (upOpt>0) updateOptions();
@@ -2891,7 +2912,7 @@ boolean MQTTconnect() {
         t=topicName+String(TOPIC_OPTIONS);
         MQTTsouscription(t);
     // envoie de la config auto à la premiere connection
-    if ( startSend) MQTTconfig();
+    if (startSend && configSys.HA) MQTTconfig();
 
     } else {  // si erreur connexion
         statebroker=false;
@@ -3080,6 +3101,10 @@ server.onNotFound([]() {
    //init variable Audio
    notifAudio={0,_MP3START,VOLUME,zoneMsg,false};
 
+   // test photocell
+   _photocell=isPhotocell();
+   if (configSys.DEBUG) Serial.println("presence photocell : "+String(_photocell));
+   if  (!_photocell) configSys.LUM=false;
    //***************** Etape 2  *******
    //  TIME
      infoSetup(3," 2");
@@ -3318,16 +3343,22 @@ if (ntpOK) {
      }
 
     }
-    if (millis() - lastTimeLumAuto >= 20000)
-     {
-       lastTimeLumAuto = millis();
-       if (configSys.LUM) configSys.intensity=lumAuto();
-     }
+    // photocell
+    if (configSys.LUM)  {
+        if (millis() - lastTimeLumAuto >= 10000)
+          {
+          lastTimeLumAuto = millis();
+          configSys.intensity=lumAuto();
+        }
+    }
+     //ddht
+     if (configSys.DHT && configSys.HOR) {
      if (millis() - lastTimePrintDHT >= (configSys.tempDDHT*60*1000))
       {
         lastTimePrintDHT = millis();
-        if (configSys.DHT) displayDHT();
+        displayDHT();
       }
+     }
 
      /*
   if (millis() - lastTimeSystem >= synchroNTP+500)

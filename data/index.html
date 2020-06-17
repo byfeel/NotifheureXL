@@ -419,7 +419,7 @@
   <li class="list-group-item">topic ( Send Notif ) : <span id="infotopicS"></span></li>
   <li class="list-group-item">topic ( Set Options ) : <span id="infotopicO"></span></li>
   <li class="list-group-item">topic ( Get State ): <span id="infotopicP"></span></li>
-  <li class="list-group-item">Préfix discovery pour Home Assistant : <span id="predisco">homeassistant</span></li>
+  <li class="list-group-item" id="HAP">Préfix discovery pour Home Assistant : <span id="predisco">homeassistant</span></li>
   </ul>
 </ul>
  </div>
@@ -455,10 +455,12 @@
     "rev": false                // Etat reveil
     }
     </pre>
+  <div id="HAtuto">
   <h5 class="card-title">Home Assistant</h5>
   <p class="card-text">Pour home Assistant, le notifheure XL crée les entités automatiquement dans HA, si l'option est activée ( discovery auto). Selon les options matérielles du notifheure, il crée deux sensors température et humidité ( DHT), 3 switchs pour les options Secondes, Auto/manuel et affichage horloge et une entité "light" pour la LED.</p>
   <p>Il est possible aussi de déclencher manuellement la création.</p>
   <button type="button" class="btn btn-primary text-white btn-sm" id="btnHA" onclick="sendConfigHA();">Envoie Config vers HA</button>
+</div>
   </div>
 </div>
 </div>

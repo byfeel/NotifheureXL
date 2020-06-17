@@ -261,6 +261,14 @@ $.ajax({
                    DEBUG=false;
                    $('#debug').text("inactif");
                  }
+          if(jinfo.HA) {
+            $('#HAP').removeClass("d-none");
+            $('#HAtuto').removeClass("d-none");
+          }
+          else {
+            $('#HAP').addClass("d-none");
+            $('#HAtuto').addClass("d-none");
+          }
           if(jinfo.PHOTOCELL) $('#photocell').text("Présent");
                   else $('#photocell').text("Absent");
           if(jinfo.DHT) { $('#dht').text("Présent");
