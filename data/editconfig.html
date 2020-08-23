@@ -181,24 +181,24 @@
                 <option value=3>Autre / Relais</option>
               </select>
               <small id="notifAudHelp" class="form-text text-muted">Le type de notification visuel installé.( modifiable dans SETUP )</small>
+          </div>
+        <div class="card border-info mx-auto mb-3 d-none" style="max-width: 40rem;" id="AUD0">
+            <div class="card-header text-center bg-info text-white">Parametre pour : <sapn id="infovisuelaudio"></span></div>
+            <div class="card-body">
+              <div id="groupAUDIO1" class="d-none">
+              <div class="form-group">
+              <label for="CRAudio" class="text-info">Musique par défaut ( minuteur )</label>
+              <select class="custom-select" id="CRAudio">
+              </select>
+              </div>
+              <div class="form-group">
+              <label for="ALAudioL" class="text-info">Musique par défaut ( Alarme )</label>
+              <select class="custom-select" id="ALAudio">
+              </select>
+              </div>
             </div>
-            <div class="card border-info mx-auto mb-3" style="max-width: 40rem;" id="AUD0">
-                <div class="card-header text-center bg-info text-white">Parametre pour : <sapn id="infovisuelaudio"></span></div>
-                <div class="card-body">
-                  <div id="groupAUDIO1" class="d-none">
-                  <div class="form-group">
-                  <label for="CRAudio" class="text-info">Musique par défaut ( minuteur )</label>
-                  <select class="custom-select" id="CRAudio">
-                  </select>
-                  </div>
-                  <div class="form-group">
-                  <label for="ALAudioL" class="text-info">Musique par défaut ( Alarme )</label>
-                  <select class="custom-select" id="ALAudio">
-                  </select>
-                  </div>
-                </div>
-                </div>
-              </div>  <!-- fin carte audio-->
+            </div>
+          </div>  <!-- fin carte audio-->
 </div>
 
 </div> <!-- fin row -->
@@ -266,13 +266,27 @@
 <input type="text" class="form-control" id="ALTEXT" aria-describedby="inpalHelp" placeholder="Fin Alarme !">
 </div>
   <small id="impalHelp" class="form-text text-muted">Texte à afficher en fin d'alarme'.</small>
-  <div class="input-group">
-    <div class="input-group-prepend">
-  <div class="input-group-text text-info">Heure par défaut : </div>
-  </div>
-  <input type="time" class="form-control" id="ALTIME" aria-describedby="altimeHelp" placeholder="06:00" style="max-width:50px">
-  </div>
 
+
+  <h4 class="text-primary">Extinction Horloge Auto</h4>
+  <small class="text-muted my-2">Cette option permet de programmer l'affichage de l'horloge. Peut etre utile dans une chambre par exemple , pour ne pas eclairer la nuit.</small>
+<div class="form-group">
+<div class="custom-control custom-checkbox mt-3">
+  <input type="checkbox" class="custom-control-input" id="btnAutoOnOff"  aria-describedby="btnAutoOnOffHelp"/>
+  <label class="custom-control-label text-info" for="btnAutoOnOff">Programmation affichage horloge</label>
+</div>
+<small id="btnAutoOnOffHelp" class="form-text">Activation / désactivation de l'affichage de l'horloge . Le notifHeureXL permet toujours d'afficher les messages.</small>
+</div>
+<div id="groupOnOff" class="d-none">
+  <div class="form-group">
+    <label for="horlogeOn" class="text-info">Activation Affichage Horloge :</label>
+    <input type="time" id="horlogeOn" class="form-control text-primary" value="06:00" style="width:100px;"/>
+  </div>
+  <div class="form-group">
+    <label for="horlogeOff" class="text-info">Désactivation Affichage Horloge :</label>
+    <input type="time" id="horlogeOff" class="form-control text-primary" value="22:00" style="width:100px;"/>
+  </div>
+</div>  <!-- fin groupe time on/off-->
 </div>
 </div> <!-- fin row -->
 <div class="row" id="comm">
@@ -289,6 +303,7 @@
     <small id="btnMQTTHelp" class="form-text text-muted">Activation / désactivation protocole MQTT</small>
   </div>
   <div id="MQTT">
+    <p class="text-warning">Topic Configuration : <span id="mqttTopicConfig" class="text-dark"></span></p>
   <div class="card border-warning mx-auto mb-3"  style="max-width: 40rem;">
       <div class="card-header text-center bg-warning text-white">Paramétrage Client MQTT</div>
       <div class="card-body">
@@ -476,11 +491,11 @@
 </div>
 <div class="input-group">
   <div class="input-group-prepend ">
-<div class="input-group-text text-info">Caractére par défaut : </div>
+<div class="input-group-text text-info">Caractére par défaut / Display Off : </div>
 </div>
 <input type="text" class="form-control col-2" id="DispOff" aria-describedby="carHelp" size="2" maxlength="1" placeholder="vide" >
 </div>
-<small id="carHelp" class="form-text text-muted ">Sélection du Caractére  par défaut sur l'ecran Off . Valeur par défaut : vide.</small>
+<small id="carHelp" class="form-text text-muted ">Sélection du Caractére  par défaut sur l'ecran Off . Valeur par défaut : vide. Ce caractére permet de visualiser que le NotifHeureXL est toujours en service ( par exemple par la présence d'un . (point ).</small>
 <div class="input-group">
   <div class="input-group-prepend">
 <div class="input-group-text text-info">Serveur NTP : </div>

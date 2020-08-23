@@ -1,4 +1,19 @@
 # Notifheure XL
+******************************
+Utilisation de LittleFS
+******************************
+
+Il faut utiliser la version 3.5.2 au minimum de la bibliothéque MD_Parola
+
+  * Version 1.0.0
+  * Transfert de SPIFFS à LittleFS . Cette nouvelle version à un nouveau systéme de fichier. Il faudra uploader le dossier data au format LittleFS
+  * Ajout de la fonction MQTT device trigger pour HA ( automation sur action btn)
+  * ajout fonctionalité extinction auto
+  * correctifs divers 
+
+******************************
+Utilisation de SPIFFS
+******************************
 
 * Version 0.9.7
   * Ajout Offset température / humidité

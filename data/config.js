@@ -26,7 +26,10 @@ function IsJsonString(str) {
     return true;
     }
 
-
+    function pad (str, max) {
+      str = str.toString();
+      return str.length < max ? pad("0" + str, max) : str;
+    }
 
 function getInfo() {
 $.ajax({
@@ -84,12 +87,17 @@ $.ajax({
         $('#pause').val(jinfo.PAUSE).trigger("input");
         $('#pause').rangeslider('update', true);
         $('#selectled3_color').val(jinfo.FXCOLOR);
+        $("#horlogeOn").val(pad(jinfo.HORON[0],2)+":"+pad(jinfo.HORON[1],2));
+        $("#horlogeOff").val(pad(jinfo.HOROFF[0],2)+":"+pad(jinfo.HOROFF[1],2));
+        $("#btnAutoOnOff").prop('checked',jinfo.HOO).change();
         fxcr=jinfo.CRFX;
         fxal=jinfo.ALFX;
         $('#CRAudio').val(jinfo.CRFXSOUND);
         $('#ALAudio').val(jinfo.ALFXSOUND);
         $('#CRACT').val(jinfo.ACTION[0]);
         $('#ALACT').val(jinfo.ACTION[1]);
+        $("#mqttTopicConfig").text(jinfo.TOPICCFG);
+
         validflag=jinfo.HFLAG;
         var charoff =jinfo.CHAROFF;
         if ( charoff == 32 ) $('#DispOff').attr("placeholder", "Espace");
@@ -169,7 +177,7 @@ $("#Config").submit(function(){
   TFlag.forEach(function(item){
   strFlag+=item;
   });
-  console.log($("#DDHTIME").val());
+  console.log("debuf hoo : "+$("#btnAutoOnOff").prop('checked'));
 
   $.post('/Config',
        {
@@ -189,8 +197,7 @@ $("#Config").submit(function(){
   crtext:$('#CRTEXT').val(),
   altext:$('#ALTEXT').val(),
   crtime:$('#CRTIME').val(),
-  clicbtn1 : $('#btn1_1').val()+","+$('#btn1_2').val()+","+$('#btn1_3').val()+",",
-  clicbtn2 : $('#btn2_1').val()+","+$('#btn2_2').val()+","+$('#btn2_3').val()+",",
+  clic: $('#btn1_1').val()+","+$('#btn1_2').val()+","+$('#btn1_3').val()+","+$('#btn2_1').val()+","+$('#btn2_2').val()+","+$('#btn2_3').val()+",",
   intled : $("#intled").val(),
   fxint : $("#fxintled").val(),
   color : $("#selectled3_color").val(),
@@ -209,6 +216,9 @@ $("#Config").submit(function(){
   portbroker:$("#portMQTT").val(),
   tempobroker:$("#tempoMQTT").val(),
   action:$('#CRACT').val()+","+$('#ALACT').val()+",",
+  horon:$("#horlogeOn").val(),
+  horoff:$("#horlogeOff").val(),
+  hoo:$("#btnAutoOnOff").prop('checked'),
   flag:strFlag
 //  nzo:$("#selectZone option:selected").val()
    }, function(data) {
@@ -280,6 +290,14 @@ $('#selectNotifLum').change(function () {
             }
             else $('#groupAUDIO1').addClass("d-none");
 });
+
+$('#btnAutoOnOff').change(function () {
+  var check = $(this).prop('checked');
+  if (check) $('#groupOnOff').removeClass("d-none");
+  else $('#groupOnOff').addClass("d-none");
+
+});
+
 //remplissage select
 $.each(boutons, function (value, text) {
 //  console.log("valeur :"+text);
