@@ -4,14 +4,14 @@ Utilisation de LittleFS
 ******************************
 
   * Version 1.0.1  
-  * correction pb intensité avec mode fix et auto activé
-  * correctifs divers 
+    * correction pb intensité avec mode fix et auto activé
+    * correctifs divers 
 
   * Version 1.0.0  - Il faut utiliser la version 3.5.2 au minimum de la bibliothéque MD_Parola
-  * Transfert de SPIFFS à LittleFS . Cette nouvelle version à un nouveau systéme de fichier. Il faudra uploader le dossier data au format LittleFS
-  * Ajout de la fonction MQTT device trigger pour HA ( automation sur action btn)
-  * ajout fonctionalité extinction auto
-  * correctifs divers 
+    * Transfert de SPIFFS à LittleFS . Cette nouvelle version à un nouveau systéme de fichier. Il faudra uploader le dossier data au format LittleFS
+    * Ajout de la fonction MQTT device trigger pour HA ( automation sur action btn)
+    * ajout fonctionalité extinction auto
+    * correctifs divers 
 
 ******************************
 Utilisation de SPIFFS
