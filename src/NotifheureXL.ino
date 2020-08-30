@@ -6,7 +6,7 @@
 //***********************************************
 // *********  Byfeel 2019 ***********************
 // **********************************************
-const String ver = "1.0.0";
+const String ver = "1.0.1";
 const String hardware = "NotifheureXL";
 const String vInterface="";
 //**************************
@@ -75,7 +75,7 @@ const char* www_password = "notif";
 // d'affichage ( inversé , effet miroir , etc .....) *
 // ***************************************************
 // matrix   - decocher selon config matrix    ********
-// #define HARDWARE_TYPE MD_MAX72XX::FC16_HW        //***
+//#define HARDWARE_TYPE MD_MAX72XX::FC16_HW        //***
 //#define HARDWARE_TYPE MD_MAX72XX::PAROLA_HW    //***
 #define HARDWARE_TYPE MD_MAX72XX::ICSTATION_HW //***
 //#define HARDWARE_TYPE MD_MAX72XX::GENERIC_HW   //***
@@ -335,6 +335,7 @@ struct sConfigSys {
   bool hoo;
   byte horon[2]; 
   byte horoff[2]; 
+  int tempoAutoLum;
 };
 sConfigSys configSys;
 const size_t capacityMQTT = JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(10) + 300;
@@ -1093,6 +1094,7 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   strlcpy(config.URL_Update, docConfig["URL_UPD"] | "N/A", sizeof(config.URL_Update));
   config.action[0] = docConfig["ACTION"][0] | 0;
   config.action[1] = docConfig["ACTION"][1] | 0;
+  config.tempoAutoLum = docConfig["TEMPOAUTOLUM"] | 20;
   file.close();
 
 } // fin fonction loadconfig
@@ -1130,6 +1132,7 @@ String createJson(sConfigSys  &config,bool flagCreate=false) {
   dochoff.add(config.horoff[0]);
   dochoff.add(config.horoff[1]);
   docConfig["HOO"]=config.hoo;
+  docConfig["TEMPOAUTOLUM"]=config.tempoAutoLum;
   //docConfig["DST"]=hardConfig.DST;
   docConfig["TZNAME"]=hardConfig.TZname;
   docConfig["DEBUG"]=config.DEBUG;
@@ -1832,11 +1835,12 @@ bool isPhotocell() {
 // luminosite auto
 // fonction reglage auto luminosite
 uint8_t  lumAuto() {
-  uint8_t lum,sv;
+  uint8_t lum;
+  int sv;
     if (_photocell) {
     sv=readPhotocell();
     if (configSys.DEBUG) Serial.println("valeur brut "+String(sv));
-    lum= map(sv, 0, 1023, 0, 15);
+    lum= map(sv, 0,1023 , 0, 15);
     }
   else lum=configSys.intensity;
   if (configSys.DEBUG) Serial.println("valeur lum: "+String(lum));
@@ -2013,7 +2017,8 @@ void optionsSplit(bool *Opt,String Val,char split,int t=0) {
 
 String setConfig(String key,String value) {
   String rep="Aucune modification";
-  upCfg=0;
+  bool memupcfg=false;
+  if (upCfg==10) memupcfg=true;
   int maxMsg;
   String val;
      if (key=="xl") if (optionsBool(&hardConfig.XL,value)) upCfg=2;
@@ -2149,6 +2154,7 @@ String setConfig(String key,String value) {
         if (key=="setupreset" && value=="true") {readEConfig(true);rep="Reset configuration setup";upCfg=8;}
         if (key=="purge" && value=="true") {LittleFS.remove(fileHist);delay(100);rep=loadHisto(fileHist,histNotif);}
 
+  if (memupcfg)  upCfg=10;
         return rep;
 }
 
@@ -2221,6 +2227,7 @@ if (upCfg>0) {
         break;
       }
   }
+  upCfg=0;
 } // fin if upcfg
 
      server.send(200, "text/plane",rep);
@@ -3455,7 +3462,8 @@ if (ntpOK) {
     }
     // photocell
     if (configSys.LUM)  {
-        if (millis() - lastTimeLumAuto >= 10000)
+       if (millis() - lastTimeLumAuto >= (configSys.tempoAutoLum*1000))
+        //if (millis() - lastTimeLumAuto >= 20000)
           {
           lastTimeLumAuto = millis();
           configSys.intensity=lumAuto();
@@ -3517,11 +3525,11 @@ P.displayAnimate();
              dispNotif=false;
            // affichage horloge si different de fix
            if (Notification[zoneTime].type!=2 ) {
-           P.setIntensity(zoneTime,configSys.intensity);
-           if (hardConfig.XL) P.setIntensity(zoneXL_H,configSys.intensity);
-           displayClock();
-           getFormatClock(msgL, flasher);
-           if (hardConfig.XL) createHStringXL(msgH, msgL);
+              P.setIntensity(zoneTime,configSys.intensity);
+              if (hardConfig.XL) P.setIntensity(zoneXL_H,configSys.intensity);
+              displayClock();
+              getFormatClock(msgL, flasher);
+              if (hardConfig.XL) createHStringXL(msgH, msgL);
           }
         } // fin test zone horloge
       } // fin display horloge
@@ -3612,6 +3620,8 @@ else
         dispNotiffx=true;}
     } // fin zone en lecture
   } // if XL
+  // mode auto lum pour fix 
+  if (Notification[i].type==2 && configSys.LUM) P.setIntensity(i,configSys.intensity);
   } // fin boucle for
 //********************************
 // service MQTT
