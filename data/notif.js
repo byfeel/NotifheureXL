@@ -148,7 +148,11 @@ $.ajax({
          $('#typMat').text(typMat[jinfo.TYPEMATRICE]);
 
          //$("#groupLed output").val(jinfo.LEDINT);
-         $('#LUM').prop('checked',jinfo.LUM);
+         $('#LUM').prop('checked',jinfo.LUM);       
+         if (jinfo.PHOTOCELL) {
+          $('#LUM').prop("disabled", false);
+         }
+         else $('#LUM').prop("disabled", true);
          $('#infoLUM').text(jinfo.INTENSITY);
          $('#SEC').prop('checked',jinfo.SEC);
          $('#HOR').prop('checked',jinfo.HOR);
