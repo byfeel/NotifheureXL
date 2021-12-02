@@ -1,8 +1,11 @@
 // fichier javascript pour Notifheure XL
 // init variables
+var langCode = 'en';
 var init=1;
 var debug=false;
 var immp=false;
+var hide=["Masquer","Afficher"];
+var alarm=["Alarm Inactive","Alarm Active"];
 var boutons=["Aucune","Afficher / Masquer les secondes","Afficher / Masquer l'horloge","Mode luminosite Mini / Maxi / Automatique","On / Off Veilleuse","Historique Message","Afficher / masquer Minuteur","lancer Minuteur","Action 1","Action 2","Action 3"];
 var Actions = ['Aucune','Afficher / Masquer les Secondes', 'Activer / desactiver Horloge','Mode Manuel ( Mini ) - Manuel ( Maxi ) - Automatique','On / Off LED','Action 1','Action 2','Action 3','Action 4','Action 5','Action 6','Afficher Historique message'];
 var couleurs=["Blanc","Rouge","Bleu","Vert","Jaune","Orange","Violet","Rose"];
@@ -14,7 +17,7 @@ var buzMusic=["Mission Impossible","Star Wars","Indiana Jones","Panthere Rose","
 var ZXL=["Zone XL","Zone XL haut","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone notif 6"];
 var Z=["Zone Horloge","Zone Message","Zone Notif 2","Zone notif 3","Zone notif 4","Zone Notif 5","Zone Notif 6","Zone Notif 7"];
 var fx=[ 'PRINT','SCROLL_LEFT','SCROLL_UP_LEFT','SCROLL_DOWN_LEFT','SCROLL_UP','GROW_UP','SCAN_HORIZ','BLINDS','WIPE','SCAN_VERTX','SLICE','FADE','OPENING_CURSOR','NO_EFFECT','SPRITE','CLOSING','SCAN_VERT','WIPE_CURSOR','SCAN_HORIZX','DISSOLVE','MESH','OPENING','CLOSING_CURSOR','GROW_DOWN','SCROLL_DOWN','SCROLL_DOWN_RIGHT','SCROLL_UP_RIGHT','SCROLL_RIGHT','RANDOM'];
-var animation=['PACMAN','fleche 1',"Roll 1","Marcheur","space invader","chevron","Coeur","Bateau vapeur","Voilier","boule de feu","rocket","ligne","vague","fantome pacman","fleche 2","roll 2"];
+var animation=["PACMAN","fleche 1","Roll 1","Marcheur","space invader","chevron","Coeur","Bateau vapeur","Voilier","boule de feu","rocket","ligne","vague","fantome pacman","fleche 2","roll 2"];
 var fxLed3=['on','flash','breath','rainbow','colorWipe','colorWipeFill','chaseColor'];
 var fxLed2=['on'];
 var fxLed1=['on','flash','breath'];
@@ -314,13 +317,13 @@ $.ajax({
           if (jinfo.REV) {
             $("#blocAl").addClass("text-danger");
             $("#blocAl").removeClass("text-secondary");
-            $("#blocAl h3").text("Alarme Active");
+            $("#blocAl h3").text(alarm[1]);
             $("#blocAl h1").text($("#Alarme input").val());
           }
           else {
             $("#blocAl").addClass("text-secondary");
             $("#blocAl").removeClass("text-danger");
-            $("#blocAl h3").text("Alarme Inactive");
+            $("#blocAl h3").text(alarm[0]);
           }
           cr=jinfo.CR;
           crstp=jinfo.CRSTOP;
@@ -360,9 +363,9 @@ $.ajax({
      complete: function(resultat, statut){
       ajaxload=true;
       if (cr) {
-        $('#CR').text('Afficher');
+        $('#CR').text(hide[1]);
       }
-      else $('#CR').text('Masquer');
+      else $('#CR').text(hide[0]);
       checkLum();
       checkLed();
       setInterval('update_Info();',20000); /* rappel après 20 secondes  */
@@ -378,8 +381,8 @@ $.ajax({
           });
         }
        if (tL==3) {
-        $('#scoled').removeClass("d-none");
-        $('#cycle').removeClass("d-none");
+        //$('#scoled').removeClass("d-none");
+        //$('#cycleledgroup').removeClass("d-none");
         $.each(couleurs, function (value, text) {
           $('#selectcolorled').append($('<option>', {
                 value: value,
@@ -699,7 +702,7 @@ if (res[0]=="INT") {
 function upAl() {
   $("#blocAl").addClass("text-danger");
   $("#blocAl").removeClass("text-secondary");
-  $("#blocAl h3").text("Alarme Active");
+  $("#blocAl h3").text(alarm[1]);
   $("#blocAl h1").text($("#Alarme input").val());
  Options("TIMEREV");
 }
@@ -707,7 +710,7 @@ function upAl() {
 function stopAl() {
   $("#blocAl").addClass("text-secondary");
   $("#blocAl").removeClass("text-danger");
-  $("#blocAl h3").text("Alarme Inactive");
+  $("#blocAl h3").text(alarm[0]);
   Options("REV");
 }
 
@@ -751,9 +754,9 @@ console.log("info minuteur :"+key+" = "+val);
 url="/Options?"+key+"="+val;
 $.get(url);
 if (cr) {
-  $('#CR').text('Masquer');
+  $('#CR').text(hide[0]);
 }
-else $('#CR').text('Afficher');
+else $('#CR').text(hide[1]);
 }
 
 function majMinut() {
@@ -814,16 +817,19 @@ $('#type').change(function() {
 });
 
 $('#selectfxled').change(function() {
-  if (tL==3) {
-  if ($(this).val()==4) $('#scoled').addClass('d-none');
-    else $('#scoled').removeClass('d-none');
-    if ($(this).val()==6) $('#cycle').addClass('d-none');
-    else $('#cycle').removeClass('d-none');
-  }
+       
   if (tL==3 || tL==1) {
-    if ($(this).val()==1) $('#cycle').addClass('d-none');
-    else $('#cycle').removeClass('d-none');
+    if ($(this).val()==1 ) $('#cycleledgroup').addClass('d-none');
+    else $("#cycleledgroup").removeClass("d-none");
   }
+  if (tL==3 && $(this).val()==4) {
+    $('#scoled').addClass('d-none');
+    $('#cycleledgroup').addClass('d-none');
+  }
+        else {
+          $('#scoled').removeClass('d-none');
+          $("#cycleledgroup").removeClass("d-none");
+        }
 });
 
 function checkGithub() {
@@ -845,7 +851,66 @@ function checkGithub() {
   });
 }
 
+function translate(jsdata)
+{	
+  $.each(jsdata.buzmusic, function ( key, value ) {
+    buzMusic[key]=value;
+    $('#selectTheme').append($('<option>', {
+      value: key+1,
+      text : (key+1)+" - "+value
+  }));
+  });
+
+	$("[bkey]").each (function (index)
+	{
+		var strTr = jsdata [$(this).attr ('bkey')];
+    if ($(this).is('button')) $(this).text (strTr);
+	    else $(this).html (strTr);
+	});
+   
+		$.each( jsdata.color_name, function( key, value ) {
+        couleurs[key]=value;
+          $('#COLOR').append($('<option>', {
+          value: key,
+          text : value
+      }));
+
+      	});
+
+
+
+	   $.each(jsdata.typeled, function ( key, value ) {
+		typeLed[key]=value;
+	   });
+		$.each(jsdata.ZXL, function ( key, value ) {
+		ZXL[key]=value;
+		});
+		$.each(jsdata.Z, function ( key, value ) {
+		Z[key]=value;
+		});
+	$.each(jsdata.animation, function ( key, value ) {
+		animation[key]=value;
+      $('#Anim').append($('<option>', {
+              value: key,
+              text : key+" - "+value
+          }));
+    
+	});
+  $.each(jsdata.hide, function ( key, value ) {
+		hide[key]=value;
+		});
+  $.each(jsdata.alarm-onoff, function ( key, value ) {
+      alarm[key]=value;
+      });
+    
+}
+
+
 $( document ).ready(function() {
+//adaptation language
+$.getJSON('lang/'+langCode+'.json', translate);
+
+// recup info
 getInfo();
 getHisto();
 infoJson();
@@ -863,25 +928,8 @@ $('#DDHT').on('change',Options);
 $('#btn_upAl').on('click',upAl);
 $('#btn_stopAl').on('click',stopAl);
 $('input[type="range"]').rangeslider({
- polyfill: false
-});
-//remplissage select
-$.each(buzMusic, function (value, text) {
-  $('#selectTheme').append($('<option>', {
-          value: value+1,
-          text : (value+1)+" - "+text
-      }));
-});
-
-
-
-$.each(couleurs, function (value, text) {
-
-  $('#COLOR').append($('<option>', {
-          value: value,
-          text : text
-      }));
-});
+      polyfill: false
+      });
 
 
 $.each(fx, function (value, text) {
@@ -893,30 +941,18 @@ $.each(fx, function (value, text) {
   }
 });
 
-$.each(animation, function (value, text) {
-  $('#Anim').append($('<option>', {
-          value: value,
-          text : value+" - "+text
-      }));
 
-});
-/*
-$('#Alarme').datetimepicker({
-                    locale: 'fr',
-                    format: 'HH:mm',
-                    inline: false,
-                    widgetPositioning:{
-                      horizontal: 'left',
-                      vertical: 'bottom'
-                                  }
 
-});
-*/
 $(document).on('input', 'input[type="range"]', function(e) {
         valueOutput(e.target);
     });
 
-//requete test version notifheure XL
-
+//remplissage select
+//$.each(buzMusic, function (value, text) {
+//  $('#selectTheme').append($('<option>', {
+//          value: value+1,
+//          text : (value+1)+" - "+text
+//      }));
+//});
 
 }); // fin fonction document

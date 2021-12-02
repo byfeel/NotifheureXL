@@ -1,5 +1,16 @@
 # Notifheure XL
 ******************************
+Nouvelle Interface ( vue.js )
+******************************
+
+* Version 1.1.0 
+    * Prise en charge nouvelle interface Web 2.x ( ancienne version 1.x toujours supporté )
+    * Gestion des langues ( anglais , français pour l'instant )
+    * Prise en charge amélioré de MQTT ( avec home assistant )
+    * et toujours des amliorations du code , afin d'apporter une meilleure expérience...
+
+
+******************************
 Utilisation de LittleFS
 ******************************
 

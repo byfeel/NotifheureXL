@@ -6,9 +6,11 @@
 //***********************************************
 // *********  Byfeel 2019 ***********************
 // **********************************************
-const String ver = "1.0.1";
-const String hardware = "NotifheureXL";
-const String vInterface="";
+#define ARDUINOJSON_USE_LONG_LONG 1
+#define _VERSION "1.1.0"
+#define _HARDWARE "NotifheureXL"
+#define _VINTERFACE ""
+const String espType="ESP8266";
 //**************************
 // Variable pour bibliotheque MQTT
 #define MQTT_MAX_PACKET_SIZE 1024
@@ -35,6 +37,7 @@ const String vInterface="";
 //NTP
 #include <NTPClient.h>
 #include <TimeLib.h>
+//#include <Timezone.h> 
 //#include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
@@ -75,16 +78,16 @@ const char* www_password = "notif";
 // d'affichage ( inversé , effet miroir , etc .....) *
 // ***************************************************
 // matrix   - decocher selon config matrix    ********
-#define HARDWARE_TYPE MD_MAX72XX::FC16_HW        //***
-//#define HARDWARE_TYPE MD_MAX72XX::PAROLA_HW    //***
-//#define HARDWARE_TYPE MD_MAX72XX::ICSTATION_HW //***
 //#define HARDWARE_TYPE MD_MAX72XX::GENERIC_HW   //***
+//#define HARDWARE_TYPE MD_MAX72XX::FC16_HW        //***
+//#define HARDWARE_TYPE MD_MAX72XX::PAROLA_HW    //***
+#define HARDWARE_TYPE MD_MAX72XX::ICSTATION_HW //***
 // ***************************************************
 // Branchement des matrices
 #define CLK_PIN   14  // SCK (D5 wemos D1R1 ou mini )
 #define DATA_PIN  13  // MOSI ( D7 wemos D1R1 ou mini )
-//#define CS_PIN    15  // SS ou CS ( D10 sur D1R1  ou D8 sur Mini )
-#define CS_PIN    12  // SS ( D10 sur D1R1  ou D6  sur Mini )  ---- Pour NOtifheure 1
+#define CS_PIN    15  // SS ou CS ( D10 sur D1R1  ou D8 sur Mini )
+//#define CS_PIN    12  // SS ( D10 sur D1R1  ou D6  sur Mini )  ---- Pour NOtifheure 1
 // si modif CS_PÏN modifier AUDIOPINRX 15 !!!!!
 // Pour info ancienne version NotifHeure
 //#define CLK_PIN   14
@@ -252,6 +255,7 @@ const int eeAddress = 64;
 const unsigned long _refTime=1514800000;
 const unsigned long _refTimeHigh=2081030400;
 #define BUFFEEP 280
+uint32_t chipID;
 //Hard Config  ( sauvé en EEPROM )
 struct sHardConfig {
   uint32_t magic;
@@ -308,10 +312,15 @@ struct sConfigSys {
   char textnotif[20];         // texte prénotif
   bool ALN;                   // Auto Longueur Notif
   bool box;                    // si urltobox actif
+  bool post;                  // Si requete POST else GET
   char URL_Action1[130];
   char URL_Action2[130];
   char URL_Action3[130];
   char URL_Update[130];
+  char URL_Data1[100];
+  char URL_Data2[100];
+  char URL_Data3[100];
+  char URL_Dataupd[100];
   bool alDay[7];              // jour alarme
   int fxint;                  // intensité par defaut fx visuel
   byte fxcolor;               //colueur par defaut fx
@@ -347,6 +356,7 @@ const char *fileHist = "/config/Historique.json";  // fichier config
 // init network (wifi , broker )
 WiFiUDP ntpUDP;
 WiFiClient espClient;
+WiFiClient htclient;
 HTTPClient http;
 PubSubClient MQTTclient(espClient);
 
@@ -436,6 +446,7 @@ int netcode;
 bool checkntp=false;
 bool checknet=false;
 bool startSend=true;
+String  networkName;
 
 //nom fichier charge
 File fsUploadFile;
@@ -1088,10 +1099,15 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   config.clic[4] = docConfig["btnclic"][4] | 7;
   config.clic[5] = docConfig["btnclic"][5] | 4;
   config.box=docConfig["BOX"] | false;
+  config.post=docConfig["POST"] | false;
   strlcpy(config.URL_Action1, docConfig["URL_ACT1"] | "N/A", sizeof(config.URL_Action1));
+  strlcpy(config.URL_Data1, docConfig["URL_DATA1"] | "{}", sizeof(config.URL_Data1));
   strlcpy(config.URL_Action2, docConfig["URL_ACT2"] | "N/A", sizeof(config.URL_Action2));
+  strlcpy(config.URL_Data2, docConfig["URL_DATA2"] | "{}", sizeof(config.URL_Data2));
   strlcpy(config.URL_Action3, docConfig["URL_ACT3"] | "N/A", sizeof(config.URL_Action3));
+  strlcpy(config.URL_Data3, docConfig["URL_DATA3"] | "{}", sizeof(config.URL_Data3));
   strlcpy(config.URL_Update, docConfig["URL_UPD"] | "N/A", sizeof(config.URL_Update));
+  strlcpy(config.URL_Dataupd, docConfig["URL_DATAUPD"] | "{}", sizeof(config.URL_Dataupd));
   config.action[0] = docConfig["ACTION"][0] | 0;
   config.action[1] = docConfig["ACTION"][1] | 0;
   config.tempoAutoLum = docConfig["TEMPOAUTOLUM"] | 20;
@@ -1104,7 +1120,7 @@ String createJson(sConfigSys  &config,bool flagCreate=false) {
 
   //const size_t capacityConfig = 2*JSON_ARRAY_SIZE(3) + JSON_OBJECT_SIZE(41) + 1500;
   DynamicJsonDocument docConfig(capacityConfig);
-  docConfig["HARDWARE"]=hardware;
+  docConfig["HARDWARE"]=_HARDWARE;
   if (flagCreate) docConfig["CONFIG"]=true;
   else docConfig["CONFIG"]=config.config;
   docConfig["NOM"]=hardConfig.nom;
@@ -1144,7 +1160,8 @@ String createJson(sConfigSys  &config,bool flagCreate=false) {
   docConfig["ALN"]=config.ALN;
   //info systeme
   docConfig["MEMOJSON"]=docConfig.memoryUsage();
-  docConfig["VERSION"]=ver;
+  docConfig["VERSION"]=_VERSION;
+  docConfig["ESP"]=espType;
   docConfig["MAC"]=WiFi.macAddress();
   docConfig["RSSI"] = String(WiFi.RSSI())+" dBm";
   docConfig["SSID"] = WiFi.SSID();
@@ -1226,10 +1243,15 @@ String createJson(sConfigSys  &config,bool flagCreate=false) {
   //box
   docConfig["INFO"]=infoBOX;
   docConfig["BOX"]=config.box;
+  docConfig["POST"]=config.post;
   docConfig["URL_ACT1"]=config.URL_Action1;
+  docConfig["URL_DATA1"]=config.URL_Data1;
   docConfig["URL_ACT2"]=config.URL_Action2;
+  docConfig["URL_DATA2"]=config.URL_Data2;
   docConfig["URL_ACT3"]=config.URL_Action3;
+  docConfig["URL_DATA3"]=config.URL_Data3;
   docConfig["URL_UPD"]=config.URL_Update;
+  docConfig["URL_DATAUPD"]=config.URL_Dataupd;
   JsonArray action = docConfig.createNestedArray("ACTION");
   action.add(config.action[0]);
   action.add(config.action[1]);
@@ -1782,31 +1804,61 @@ void displayDHT() {
     displayNotif(printDHT,zoneTime,10);
 }
 
+
+
+
+int sendURL(char *Url,byte n=0) {
+String url = Url;
+int httpCode=9;
+int testurl= url.length();
+if (testurl>=6) {
+  http.begin(htclient,url);
+    if (configSys.post) {    // requete POST
+          String data="{}"; 
+          if (n==1) data=configSys.URL_Data1;
+          else if (n==2) data=configSys.URL_Data2;
+          else if (n==3) data=configSys.URL_Data3;
+          else if (n==0) data=configSys.URL_Dataupd;
+          else data="{}";
+          http.addHeader("Content-Type", "application/json");
+           httpCode = http.POST(data);
+      }
+      else {    // requete GET
+          httpCode = http.GET();
+      }
+
+    if (configSys.DEBUG) {
+          Serial.println("valeur de URL dans tobox : " + url);
+          Serial.println("valeur httpcode : " + httpCode);
+        }
+  http.end();
+  }
+        // Specify content-type header
+      //http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+      // Data to send with HTTP POST
+     // String httpRequestData = "api_key=tPmAT5Ab3j7F9&sensor=BME280&value1=24.25&value2=49.54&value3=1005.14";           
+      // Send HTTP POST request
+     // int httpResponseCode = http.POST(httpRequestData);
+      
+      // If you need an HTTP request with a content type: application/json, use the following:
+      //http.addHeader("Content-Type", "application/json");
+      //int httpResponseCode = http.POST("{\"api_key\":\"tPmAT5Ab3j7F9\",\"sensor\":\"BME280\",\"value1\":\"24.25\",\"value2\":\"49.54\",\"value3\":\"1005.14\"}");
+
+      // If you need an HTTP request with a content type: text/plain
+      //http.addHeader("Content-Type", "text/plain");
+      //int httpResponseCode = http.POST("Hello, World!");
+return httpCode;
+}
+
 void ToBox(char *Url,byte numero=0) {
   int httpCode;
   if (configSys.box)  {
-    httpCode=sendURL(Url);
+    httpCode=sendURL(Url,numero);
     String json="";
     infoBOX=String(numero)+":"+String(httpCode);
     json=createJson(configSys);
     saveConfigSys(fileconfig,json);
   }
-}
-
-
-int sendURL(char *Url) {
-String url = Url;
-int httpCode=0;
-int testurl= url.length();
-if (testurl>=6) {
-    http.begin(url);
-    httpCode = http.GET();
-    if (configSys.DEBUG) {
-          Serial.println("valeur de URL dans tobox : " + url);
-          Serial.println("valeur httpcode : " + httpCode);
-        }
-  }
-return httpCode;
 }
 
 int readPhotocell() {
@@ -2038,29 +2090,51 @@ String setConfig(String key,String value) {
         if (key=="debug") if (optionsBool(&configSys.DEBUG,value)) upCfg=1;
         if (key=="automsg") if (optionsBool(&configSys.ALN,value)) upCfg=1;
         if (key=="box") if (optionsBool(&configSys.box,value)) upCfg=1;
+
+        if (key=="post") if (optionsBool(&configSys.post,value)) upCfg=1;
         if (key=="flag") if(validString(value,0,10)) {
           val=value;
             val.toCharArray(configSys.hflag,sizeof(configSys.hflag));
             upCfg=1;
         }
-        if (key=="url1") if(validString(value,7,130)) {
+        if (key=="url1") if(validString(value,0,130)) {
           val=value;
             val.toCharArray(configSys.URL_Action1,sizeof(configSys.URL_Action1));
             upCfg=1;
         }
-        if (key=="url2") if(validString(value,7,130)) {
+        if (key=="data1") if(validString(value,2,100)) {
+          val=value;
+            val.toCharArray(configSys.URL_Data1,sizeof(configSys.URL_Data1));
+            upCfg=1;
+        }
+        if (key=="url2") if(validString(value,0,130)) {
           val=value;
             val.toCharArray(configSys.URL_Action2,sizeof(configSys.URL_Action2));
             upCfg=1;
         }
-        if (key=="url3") if(validString(value,7,130)) {
+          if (key=="data2") if(validString(value,2,100)) {
+          val=value;
+            val.toCharArray(configSys.URL_Data2,sizeof(configSys.URL_Data2));
+            upCfg=1;
+        }
+        if (key=="url3") if(validString(value,0,130)) {
           val=value;
             val.toCharArray(configSys.URL_Action3,sizeof(configSys.URL_Action3));
             upCfg=1;
         }
-        if (key=="urlbox") if(validString(value,7,130)) {
+        if (key=="data3") if(validString(value,2,100)) {
+          val=value;
+            val.toCharArray(configSys.URL_Data3,sizeof(configSys.URL_Data3));
+            upCfg=1;
+        }
+        if (key=="urlbox") if(validString(value,0,130)) {
           val=value;
             val.toCharArray(configSys.URL_Update,sizeof(configSys.URL_Update));
+            upCfg=1;
+        }
+      if (key=="dataupd") if(validString(value,2,100)) {
+          val=value;
+            val.toCharArray(configSys.URL_Dataupd,sizeof(configSys.URL_Dataupd));
             upCfg=1;
         }
         if (key=="action") {optionsSplit(configSys.action,value,',');upCfg=1;}
@@ -2146,7 +2220,7 @@ String setConfig(String key,String value) {
         if (key=="crtime") {optionsNum(&configSys.CrTime,value,1,120);upCfg=1;}
         if (key=="checktime") {checkntp=true;rep="mise a jour horloge";displayNotif("upTime",zoneTime,2);}
         if (key=="checknet") {testnet();rep=String(netOK);}
-        if (key=="mqttconfig") { MQTTconfig();rep="mqtt config";}
+        if (key=="mqttconfig") { MQTTconfig();rep="MQTT -> OK";}
 
         if (key=="wifireset" && value=="true") {rep="Reset WIFI - reboot";upCfg=9;}
         if (key=="allreset" && value=="true") {rep="Reset usine - reboot -";readEConfig(true);upCfg=9;}
@@ -2229,7 +2303,7 @@ if (upCfg>0) {
   }
   upCfg=0;
 } // fin if upcfg
-
+     server.sendHeader("Access-Control-Allow-Origin", "*");
      server.send(200, "text/plane",rep);
      delay(2000);
      if (rst) wifiReset();
@@ -2306,6 +2380,7 @@ void handleOptions() {
     rep=SetOptions(key,value);
   }
   if (upOpt>0) updateOptions();
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200,"text/plane",rep);
 }
 
@@ -2328,6 +2403,26 @@ else if ( server.hasArg("HISTO")) {
 
 }
 
+void handleRedirectOpt() {
+    server.sendHeader("Location", "/?page=Options", true);
+    server.send ( 302, "text/plain", "");
+}
+void handleRedirectIN() {
+    server.sendHeader("Location", "/?page=Infos", true);
+    server.send ( 302, "text/plain", "");
+}
+void handleRedirectSE() {
+    server.sendHeader("Location", "/?page=Setup", true);
+    server.send ( 302, "text/plain", "");
+}
+void handleRedirectTI() {
+    server.sendHeader("Location", "/?page=Minuteur", true);
+    server.send ( 302, "text/plain", "");
+}
+void handleRedirectAL() {
+    server.sendHeader("Location", "/?page=Alarme", true);
+    server.send ( 302, "text/plain", "");
+}
 void initNotif() {
   // initialisation variable Notification
   Nz=zoneMsg;
@@ -2422,6 +2517,7 @@ void handleNotif() {
     rep=notif;
     //rep+=": type="+String(Ntype)+" - fi = "+String(Fi)+" - Anim:"+String(An);
   }
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "text/plane","Message : "+rep);
 }
 
@@ -2699,6 +2795,17 @@ void alarme() {
         if (configSys.box) BoutonAction(10 , configSys.action[1] );
       }
 }
+// uptime string
+String uptostring(long up ) {
+      int seconds = (up);
+      int days = seconds / (24 * 3600);
+      seconds = seconds % (24 * 3600); 
+      int hours = seconds / 3600;
+      seconds = seconds % 3600;
+      int minutes = seconds /  60;
+      seconds = seconds % 60;
+      return { (String(days) +"d " + String(hours) +"h " + String(minutes) +"m "+ String(seconds) +"s").c_str() };
+}
 
 //mqtt
 void MQTTsend() {
@@ -2713,6 +2820,9 @@ void MQTTsend() {
   docMqtt["temperature"] = (String)temperature;
   docMqtt["humidity"]= (String)humidity;
   }
+  docMqtt["rssi"] = String(WiFi.RSSI());
+  docMqtt["up"] = uptostring(now()-_startTime);
+  docMqtt["ip"] = String(WiFi.localIP().toString());
   docMqtt["sec"] = configSys.SEC;
   docMqtt["hor"] = configSys.HOR;
   docMqtt["lum"] = configSys.LUM;
@@ -2724,11 +2834,11 @@ void MQTTsend() {
     if (configSys.LED)  docMqtt["ledState"] ="on";
       else docMqtt["ledState"] ="off";
     if (hardConfig.typeLED == 1 || hardConfig.typeLED == 3) {
-    docMqtt["ledint"] =configSys.LEDINT;
+    docMqtt["ledint"] =(String)configSys.LEDINT;
     // home assistant brillance sur 8 bits
     int brightnessLed=configSys.LEDINT;
    brightnessLed = map(brightnessLed,0,100,0,255);
-    docMqtt["brightnessLed"] =brightnessLed;
+    docMqtt["brightnessLed"] =(String)brightnessLed;
     }
   }
   Serial.println("envoie publication MQTT");
@@ -2836,24 +2946,29 @@ void MQTTdevice(JsonDocument &doc) {
     JsonObject device = doc.createNestedObject("dev");
     device["ids"]=idNotif;
     device["mf"]="byfeel";
-    device["mdl"]=hardware;
+    device["mdl"]=String(_HARDWARE)+" - Chip: "+espType+" "+" "+chipID+" ( "+mdnsName+".local )";
     device["name"]="notif_"+String(hardConfig.nom);
-    device["sw"]=ver;
- //   JsonArray cns = device.createNestedArray("cns");
-  //  cns.add("ip");
-  //  cns.add(WiFi.localIP().toString());
+    device["sw"]=_VERSION;
+    device["cu"]="http://"+String(WiFi.localIP().toString());
+
+    //JsonArray cns = device.createNestedArray("cns");
+    //JsonArray cns_ip = cns.createNestedArray();
+    //cns_ip.add("mac");
+    //cns_ip.add("01:02:03:04:05:06");
 
 }
 
+
 void MQTTconfig() {
-  char topicN[80];
+  int buf=100;
+  char topicN[buf];
   String t="";
   String tt="";
   String nomHA="";
   //preparation json to send
   tt=String(configSys.prefixdiscovery)+"/sensor/"+idNotif;
   nomHA="notif_"+String(hardConfig.nom);
-      char buffer[700];
+      char buffer[1000];
       DynamicJsonDocument docMqtt(capacityMQTT);
       if (_dht) {
          MQTTdevice(docMqtt);
@@ -2866,20 +2981,74 @@ void MQTTconfig() {
       docMqtt["device_class"] ="temperature";
       docMqtt["val_tpl"] ="{{ value_json.temperature}}";
       docMqtt["unit_of_meas"] ="°C";
+      docMqtt["uniq_id"] ="temp_"+idNotif;
       serializeJson(docMqtt, buffer);
-      t=tt+"_T"+"/config";
-      t.toCharArray(topicN,80);
+      t=tt+"/temperature/config";
+      t.toCharArray(topicN,buf);
       MQTTclient.publish(topicN, buffer,true);
 //    Humidity
       docMqtt["name"] =nomHA+"_H";
       docMqtt["device_class"] ="humidity";
       docMqtt["val_tpl"] ="{{ value_json.humidity}}";
       docMqtt["unit_of_meas"] ="%";
+      docMqtt["uniq_id"] ="hum_"+idNotif;
       serializeJson(docMqtt, buffer);
-      t=tt+"_H"+"/config";
-      t.toCharArray(topicN,80);
+      t=tt+"/humidity/config";
+      t.toCharArray(topicN,buf);
       MQTTclient.publish(topicN, buffer,true);
       }
+    // sensor text
+     docMqtt.clear();
+      tt=String(configSys.prefixdiscovery)+"/sensor/"+idNotif;
+      MQTTdevice(docMqtt);
+      docMqtt["~"]=topicName;
+      docMqtt["stat_t"] ="~"+String(TOPIC_STATE);
+      // signal wifi
+      docMqtt["name"] =nomHA+"_wifi";
+      docMqtt["device_class"] ="signal_strength";
+      docMqtt["val_tpl"] ="{{ value_json.rssi}}";
+      docMqtt["unit_of_meas"] ="dBm";
+      docMqtt["uniq_id"] ="rssi_"+idNotif;;
+       size_t n = serializeJson(docMqtt, buffer);
+      serializeJson(docMqtt, buffer);
+      t=tt+"/wifi/config";
+      t.toCharArray(topicN,buf);
+      MQTTclient.publish(topicN, buffer,n);
+          // uptime
+      docMqtt.clear();
+      tt=String(configSys.prefixdiscovery)+"/sensor/"+idNotif;
+      MQTTdevice(docMqtt);
+      docMqtt["~"]=topicName;
+      docMqtt["icon"] ="mdi:clock-start";
+      docMqtt["stat_t"] ="~"+String(TOPIC_STATE);
+      docMqtt["name"] =nomHA+"_uptime";
+      docMqtt["val_tpl"] ="{{ value_json.up}}";
+ 
+      docMqtt["uniq_id"] ="up_"+idNotif;;
+      n = serializeJson(docMqtt, buffer);
+      serializeJson(docMqtt, buffer);
+      t=tt+"/up/config";
+      t.toCharArray(topicN,buf);
+      MQTTclient.publish(topicN, buffer,n);
+      // uptime
+      docMqtt.clear();
+      tt=String(configSys.prefixdiscovery)+"/sensor/"+idNotif;
+      MQTTdevice(docMqtt);
+      docMqtt["~"]=topicName;
+      docMqtt["icon"] ="mdi:ip-network";
+      docMqtt["stat_t"] ="~"+String(TOPIC_STATE);
+      docMqtt["name"] =nomHA+"_ip";
+      docMqtt["val_tpl"] ="{{ value_json.ip}}";
+ 
+      docMqtt["uniq_id"] ="ip_"+idNotif;;
+      n = serializeJson(docMqtt, buffer);
+      serializeJson(docMqtt, buffer);
+      t=tt+"/ip/config";
+      t.toCharArray(topicN,buf);
+      MQTTclient.publish(topicN, buffer,n);
+    //binary sensor
+    
+
 
   //  Switch
     docMqtt.clear();
@@ -2895,9 +3064,10 @@ void MQTTconfig() {
     docMqtt["stat_off"] =false;
     docMqtt["pl_on"] ="{'sec':'true'}";
     docMqtt["pl_off"] ="{'sec':'false'}";
-    size_t n = serializeJson(docMqtt, buffer);
-    t=tt+"_sec"+"/config";
-    t.toCharArray(topicN,80);
+    docMqtt["uniq_id"] ="sec_"+idNotif;
+     n = serializeJson(docMqtt, buffer);
+    t=tt+"/sec/config";
+    t.toCharArray(topicN,buf);
     MQTTclient.publish(topicN, buffer,n);
 
     //switch mqtt horloge
@@ -2905,9 +3075,10 @@ void MQTTconfig() {
     docMqtt["val_tpl"] ="{{ value_json.hor }}";
     docMqtt["pl_on"] ="{'hor':'true'}";
     docMqtt["pl_off"] ="{'hor':'false'}";
+    docMqtt["uniq_id"] ="hor_"+idNotif;
     n = serializeJson(docMqtt, buffer);
-    t=tt+"_hor"+"/config";
-    t.toCharArray(topicN,80);
+    t=tt+"/hor/config";
+    t.toCharArray(topicN,buf);
     MQTTclient.publish(topicN, buffer,n);
 
 if ( _photocell) {
@@ -2916,10 +3087,11 @@ if ( _photocell) {
     docMqtt["val_tpl"] ="{{ value_json.lum }}";
     docMqtt["pl_on"] ="{'lum':'true'}";
     docMqtt["pl_off"] ="{'lum':'false'}";
+    docMqtt["uniq_id"] ="lum_"+idNotif;
     n = serializeJson(docMqtt, buffer);
-    t=tt+"_lum"+"/config";
-    t.toCharArray(topicN,80);
-    MQTTclient.publish(topicN, buffer,n);
+    t=tt+"/lum/config";
+    t.toCharArray(topicN,buf);
+    MQTTclient.publish(topicN, buffer,true);
   }
 if (hardConfig.typeLED >0 ) {
   docMqtt.clear();
@@ -2937,9 +3109,10 @@ if (hardConfig.typeLED >0 ) {
   docMqtt["bri_tpl"] ="{{ value_json.brightnessLed }}";
   }
   else docMqtt["cmd_on_tpl"] ="{'led':'true'}";
+  docMqtt["uniq_id"] ="led_"+idNotif;
     n = serializeJson(docMqtt, buffer);
-    t=tt+"_led"+"/config";
-    t.toCharArray(topicN,80);
+    t=tt+"/led/config";
+    t.toCharArray(topicN,buf);
     MQTTclient.publish(topicN, buffer,n);
   }
   if (hardConfig.btn1 ) {
@@ -2947,6 +3120,7 @@ if (hardConfig.typeLED >0 ) {
     // '{"automation_type":"trigger","device":{"identifiers":["0AFFD234"],"name":"Bouton 1"}, "topic": "MQTT_button/button1", "payload":"PRESS", "type": "button_short_press", "subtype": "button_1"}'
     docMqtt.clear();
      MQTTdevice(docMqtt);
+    tt=String(configSys.prefixdiscovery)+"/device_automation/"+idNotif+"/boutons";
     tt=String(configSys.prefixdiscovery)+"/device_automation/"+idNotif;
     docMqtt["atype"]="trigger";
     docMqtt["t"]=String(topicName+"/btn1");
@@ -2955,22 +3129,22 @@ if (hardConfig.typeLED >0 ) {
     docMqtt["type"]="button_short_press";
     docMqtt["pl"]="1";
     n = serializeJson(docMqtt, buffer);
-    t=tt+"_btn1-1"+"/config";
-    t.toCharArray(topicN,80);
+    t=tt+"/btn1-1"+"/config";
+    t.toCharArray(topicN,buf);
     MQTTclient.publish(topicN, buffer,n);
         // Double clic
     docMqtt["type"]="button_double_press";
     docMqtt["pl"]="2";
     n = serializeJson(docMqtt, buffer);
-    t=tt+"_btn1-2"+"/config";
-    t.toCharArray(topicN,80);
+    t=tt+"/btn1-2"+"/config";
+    t.toCharArray(topicN,buf);
     MQTTclient.publish(topicN, buffer,n);
         // triple clic
     docMqtt["type"]="button_triple_press";
     docMqtt["pl"]="3";
     n = serializeJson(docMqtt, buffer);
-    t=tt+"_btn1-3"+"/config";
-    t.toCharArray(topicN,80);
+    t=tt+"/btn1-3"+"/config";
+    t.toCharArray(topicN,buf);
     MQTTclient.publish(topicN, buffer,n);
   }
   if ( hardConfig.btn2 ) {
@@ -2985,22 +3159,22 @@ if (hardConfig.typeLED >0 ) {
     docMqtt["type"]="button_short_press";
     docMqtt["pl"]="1";
     n = serializeJson(docMqtt, buffer);
-    t=tt+"_btn2-1"+"/config";
-    t.toCharArray(topicN,80);
+    t=tt+"/btn2-1"+"/config";
+    t.toCharArray(topicN,buf);
     MQTTclient.publish(topicN, buffer,n);
         // Double clic
     docMqtt["type"]="button_double_press";
     docMqtt["pl"]="2";
     n = serializeJson(docMqtt, buffer);
-    t=tt+"_btn2-2"+"/config";
-    t.toCharArray(topicN,80);
+    t=tt+"/btn2-2"+"/config";
+    t.toCharArray(topicN,buf);
     MQTTclient.publish(topicN, buffer,n);
         // Triple clic
     docMqtt["type"]="button_triple_press";
     docMqtt["pl"]="3";
     n = serializeJson(docMqtt, buffer);
-    t=tt+"_btn2-3"+"/config";
-    t.toCharArray(topicN,80);
+    t=tt+"/btn2-3"+"/config";
+    t.toCharArray(topicN,buf);
     MQTTclient.publish(topicN, buffer,n);
   }
   startSend=false;
@@ -3067,7 +3241,12 @@ void setup() {
    // lecture fichier json dans memoire SPIFFS
    loadConfigSys(fileconfig, configSys);
    if (hardConfig.setup) _pagehtml="index.html";
-   else _pagehtml="setup.html";
+   else {
+      if (LittleFS.exists("/setup.html")) _pagehtml="setup.html";
+      else _pagehtml="index.html";
+      }
+  
+   //else _pagehtml="setup.html";
    //Activation led si presente
    Led_out();
  //****************** Etpae 5 ** Reseau WIFI
@@ -3076,18 +3255,26 @@ void setup() {
   wifiMan();
 //MakeName - creation hostname wifi
 // Set Hostname.
-   idNotif=String(ESP.getChipId(), HEX);;
-   hostname = hardConfig.nom;
-   hostname +=configSys.hostName;
-   mdnsName = hostname;
-   hostname +="-"+idNotif;
-   WiFi.hostname(hostname);
+chipID = ESP.getChipId();
+    mdnsName=hardConfig.nom;
+    mdnsName +=configSys.hostName;
+    //************** Services MDNS
+    mdnsName.toLowerCase();
+    serverMDNS(mdnsName);
+
+   // hostname wifi
+      idNotif=String(chipID, HEX);
+      networkName = mdnsName;
+      // hostname +=configSys.hostName;
+      networkName +="-"+idNotif;
+      WiFi.hostname(networkName.c_str());
+
    // preparation topic
    String l;
    l=hardConfig.nom;
    l.replace(" ", "_");   // enleve les espaces de la chaines
-   topicName=BASETOP;
-   topicName+="/"+hardware+"/"+idNotif+"/"+l;
+    topicName=BASETOP;
+    topicName+="/"+String(_HARDWARE)+"/"+idNotif+"/"+l;
 //
 // ************************ Etape 4 ** Service reseau
 infoSetup(3," 4");
@@ -3112,7 +3299,7 @@ Serial.println("info maxPathLength : "+String(fsInfo.maxPathLength));
 mdnsName.toLowerCase();
 serverMDNS(mdnsName);
  // Serveur OTA
-Ota(hostname);
+Ota(networkName);
 //Init MQTT
 if (configSys.broker) {
   MQTTclient.setServer(configSys.servbroker, configSys.portbroker);
@@ -3126,6 +3313,11 @@ if (configSys.broker) {
  server.on("/Config",handleConfig); //page gestion Options
  server.on("/Options",handleOptions); //page gestion Options
  server.on("/getInfo",handleGetInfo); //page gestion Options
+ server.on("/opt", handleRedirectOpt);
+server.on("/infos", handleRedirectIN);
+server.on("/setup", handleRedirectSE);
+server.on("/timer", handleRedirectTI);
+server.on("/alarm", handleRedirectAL);
  // Gestion securisé page config
  server.on("/setup.html", []() {
       if (!server.authenticate(www_username, www_password)) {

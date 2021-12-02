@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <title>NotifHeure XL</title>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/materia/bootstrap.min.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.3.2/rangeslider.min.css">
+      <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+      <link rel="stylesheet" href="notifheure.css">
+    </head>
+<body>
+            <!-- Header -->
+        <div class="container ">
+            <header class="page-header">
+              <h4 class="d-inline"><b>NotifHeure<span class="text-danger font-weight-bold">XL </span></b><span id="lieu" class="text-primary"></span></h1><small>  Version : <span id="version" class="text-danger"></span></small>
+
+            </header>
+        </div>
+     <!-- Message -->
+     <div class="jumbotron bg-secondary no-padding">
+         <div class="container col-lg-6">
+           <div class="panel with-nav-tabs nav-justified">
+            <div class="panel-heading light">
+   <ul class="nav nav-pills nav-fil">
+  <li class="nav-item">
+    <a class="nav-link show active bg" data-toggle="tab" href="#Notif" bkey="notification">Notification</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link show" data-toggle="tab" href="#Minuteur" onclick="majMinut();" bkey="timer">Minuteur</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link show" data-toggle="tab" href="#reveil" bkey="alarm">Reveil</a>
+  </li>
+</ul>
+</div>
+<div class="my-2"></div>
+<div id="myMainTab" class="tab-content">
+  <div class="tab-pane fade active show" id="Notif">
+    <div class="card border-primary">
+      <div class="card-header bg-primary ">
+        <h3 class="text-center text-white" bkey="send notification">Envoyer une Notification</h3>
+      </div>
+      <div class="card-body">
+
+
+
+    <small id="lastnotif" class="text-info" bkey="last notification">derniére notification</small>
+     <hr class="my-2">
+        <form action='/Notification' method='post' id="FormMsg" >
+             <div class="form-group ">
+<label for='msg' class="text-primary" bkey="message">Message </label><br />
+<INPUT type='text'  id='inputMsg' maxlength='160' placeholder='Message ...' class="form-control" aria-describedby="msghelp"/>
+<small id ="msghelp" class="form-text text-muted" bkey="limitnotif">Notification limitée à 160 caractères.</small>
+                 </div>
+  <div class="form-row">
+    <div class="col-12">
+
+    <div class="col-6 col-sm-6 col-md-5 col-lg-4">
+
+ </div>
+      </div>
+    <div class="col-6">
+      <div class="input-group">
+      <div class="input-group-prepend">
+      <div class="input-group-text text-primary" bkey="cycle">Cycle : </div>
+      </div>
+      <input type="number" class="form-control" id="cycle" aria-describedby="cycleHelp" placeholder="1"  min="1" max="1000">
+      </div>
+      <small id="cycleHelp" class="form-text text-muted" bkey="cycleinfo">Répete l'affichage du texte x fois</small>
+<div class="form-group">
+<label for='type' class="text-primary" bkey="fx">Animation / fx : </label>
+<select class="form-control" name='type' id='type'>
+ <option value='0' bkey="any">Aucune</option>
+ <option value='1'>INFO</option>
+ <option value='2'>FIX</option>
+ <option value='3'>PAC MAN</option>
+ <option value='4' bkey="arrows">Fleches</option>
+ <option value='5'>Rolling</option>
+ <option value='6' bkey="fx custom">Fx Perso</option>
+ <option value='7'bkey="anim custom">Animation Perso</option>
+ </select>
+            </div>
+  <div id="blocFx" class="d-none">
+            <label for="FX" class="text-primary" bkey="fx select">Sélection FX </label>
+            <select class="custom-select" id="FX">
+            </select>
+    </div>
+    <div id="blocAn" class="d-none">
+              <label for="Anim" class="text-primary" bkey="anim select" >Sélection Animation </label>
+              <select class="custom-select" id="Anim">
+              </select>
+      </div>
+
+      <div class="mx-auto d-none" id="pausefield">
+            <p class="text-primary pb-1" bkey="pause time">temps de pause Info (secondes)</p>
+            <input  type="range" id="pauseInfo" name="pause_info" min="1" max="60" value="3" oninput="valPause.value = pause_info.valueAsNumber">
+            <output class="text-primary" for="pauseInfo"  name="valPause"></output>
+     </div>
+
+  </div>
+    <div class="col-6">
+      <div class="form-group d-none" id="groupZone">
+      <label class="col-form-label text-primary" for="inputZone" bkey="zone">Zone </label>
+      <select class="form-control" name='zone' id='selectZone'>
+      </select>
+      <small class="form-text text-muted" bkey="zoneinfo">Choix de la Zone , pour affichage notif.</small>
+      </div>
+      <div class="form-group d-none" id="groupLED">
+      <div class="custom-control custom-checkbox">
+      <input type="checkbox" class="custom-control-input" id="notifLed">
+      <label class="custom-control-label text-primary" for="notifLed" bkey="notifled">Notification LED <small class="text-info" id="infoTypeLed"></small></label>
+      </div>
+      </div>
+     <div class="mx-auto d-none" id="groupLED1">
+       <div>
+           <label for='selectfxled' class="text-primary" bkey="visualfx">Effet visuel : </label>
+           <select class="form-control " name='effetLED' id='selectfxled'>
+          </select>
+        </div>
+          <div id="scoled" class="d-none">
+           <label for='selectcolorled' class="text-primary" bkey="color">Couleur : </label>
+           <select class="form-control" name='colorLED' id='selectcolorled'>
+           </select>
+         </div>
+         <div id="cycleledgroup" class="d-none">
+           <p class="text-primary pb-2" bkey="loop">Cycle fx ( 1 à 10 )</p>
+           <input  type="range" id="loopLED" name="cycleled" min="1" max="10" value="1" oninput="valloopLed.value = cycleled.valueAsNumber">
+           <output class="text-primary" for="loopLED"  name="valloopLed"></output>
+         </div>
+       </br>
+         <div id="groupledintfx">
+         <p class="text-primary pb-1" bkey="intled">Intensité LED ( 0 à 100 )</p>
+         <input  type="range" id="intLEDFX" name="puissance" min="0" max="100" value="100" oninput="valIntLedFX.value = puissance.valueAsNumber">
+         <output class="text-primary" for="intLEDFX"  name="valIntLedFX"></output>
+       </div>
+      </div>
+      <div class="form-group d-none mt-2" id="groupAUDIO">
+      <div class="custom-control custom-checkbox">
+      <input type="checkbox" class="custom-control-input" id="notifAudio">
+      <label class="custom-control-label text-primary" for="notifAudio" bkey="notifaudio">Notification AUDIO <small class="text-info" id="infoTypeAudio"></small></label>
+      </div>
+      </div>
+      <div class="form-group d-none" id="groupAUDIO1">
+          <label for='selectTheme' class="text-primary" bkey="theme">theme : </label>
+          <select class="form-control " name='theme' id='selectTheme'>
+          </select>
+          </div>
+     <div class="mx-auto d-none" id="groupAUDIO2">
+           <input  type="range" id="volAUDIO" name="volume" min="0" max="100" value="40" oninput="valVolume.value = volume.valueAsNumber">
+           <output class="text-primary" for="volAUDIO"  name="valVolume"></output>
+      </div>
+    </div>
+  </div>
+
+    <INPUT type='submit' value='Envoyer Message' class="btn btn-primary d-block mx-auto"/>
+ </form>
+    </div>
+  </div>
+</div>
+    <!-- Fin panel Message -->
+    <!-- Fin panel minuteur -->
+      <div class="tab-pane fade" id="Minuteur">
+        <div class="card border-primary">
+          <div class="card-header bg-primary ">
+            <h3 class="text-center text-white" bkey="start-timer">Demarrer un Minuteur</h3>
+          </div>
+          <div class="card-body text-center">
+        <p bkey="info-timer">Réglage Durée Minuteur en Minutes</p>
+        <div class="mx-auto" id="groupTempo">
+              <input  type="range" id="MINUT" min="0" max="120" >
+              <output class="text-primary" for="MINUT"  name="valMINUT"></output>
+         </div>
+       <br >
+       <div class="text-center">
+       <button type="button" class="btn btn-outline-primary m-2" onclick="Minuteur('MIN');" ><span bkey="start">Start</span></button>
+       <button type="button" class="btn btn-outline-danger m-2" onclick="Minuteur('STP')" ><span bkey="stop">Stop</span></button>
+      <button type="button" class="btn btn-outline-warning m-2" onclick="Minuteur('CRSTP')" ><span bkey="pause">Pause</span></button>
+       <button type="button" class="btn btn-outline-info m-2" onclick="Minuteur('CR')"><span id="CR" >Masquer</span></button>
+     </div>
+     <ul>
+     <li><span bkey="notifled">Notification visuelle </span> : <span class="text-info" id="INVCR" bkey="any">Aucune</span></li>
+     <li><span bkey="notifaudio">Notification Audio </span> : <span class="text-info" id="INACR" bkey="any">Aucune</span></li>
+     <li><span  bkey="actionurl">URL ACTION </span> : <span class="text-info" id="IUACR" bkey="any">Aucune</span></li>
+   </ul>
+  </div></div></div>
+  <!-- Fin panel minuteur -->
+    <div class="tab-pane fade" id="reveil">
+      <div class="card border-primary">
+        <div class="card-header bg-primary ">
+          <h3 class="text-center text-white" bkey="alarm-prog">Programmation Alarme</h3>
+        </div>
+        <div class="card-body text-center">
+          <div class="text-center mb-4 text-secondary " id="blocAl">
+          <h1 class="display-3 ">--:--</h1>
+          <h3>Alarme Inactive</h3>
+        </div>
+
+            <div class="form-group text-center">
+          <div class="input-group my-3 mx-auto" id="Alarme" >
+             <input type="time" class="form-control text-primary" value="07:00" style="width:30px;"/>
+         </div>
+         <button type="button" class="btn btn-outline-dark" id="btn_stopAl"><i class="fas fa-power-off h3"></i></button>
+         <button type="button" class="btn btn-outline-danger" id="btn_upAl"><i class="fas fa-bell h3" ></i></button>
+
+</div>
+<div class="text-primary mx-auto">
+<div class="form-check  form-check-inline">
+  <input class="form-check-input alday" type="checkbox" id="alday2" value=2>
+  <label class="form-check-label" for="alday2" bkey="day2">Lun</label>
+</div>
+<div class="form-check form-check-inline">
+  <input class="form-check-input alday" type="checkbox" id="alday3" value=3>
+  <label class="form-check-label" for="alday3" bkey="day3">Mar</label>
+</div>
+<div class="form-check form-check-inline">
+  <input class="form-check-input alday" type="checkbox" id="alday4" value=4>
+  <label class="form-check-label" for="alday4" bkey="day4">Mer</label>
+</div>
+<div class="form-check form-check-inline">
+  <input class="form-check-input alday" type="checkbox" id="alday5" value=5>
+  <label class="form-check-label" for="alday5" bkey="day5">Jeu</label>
+</div>
+<div class="form-check form-check-inline">
+  <input class="form-check-input alday" type="checkbox" id="alday6" value=6>
+  <label class="form-check-label" for="alday6" bkey="day6">Ven</label>
+</div>
+<div class="form-check form-check-inline">
+  <input class="form-check-input alday" type="checkbox" id="alday7" value=7>
+  <label class="form-check-label" for="alday7" bkey="day7">Sam</label>
+</div>
+<div class="form-check form-check-inline">
+<input class="form-check-input alday" type="checkbox" id="alday1" value=1>
+<label class="form-check-label" for="alday1" bkey="day1">Dim</label>
+</div>
+</div>
+<ul class="text-left">
+<li><span bkey="notifled">Notification visuelle </span> : <span class="text-info" id="INVAL" bkey="any">Aucune</span></li>
+<li><span bkey="notifaudio">Notification Audio </span> : <span class="text-info" id="INAAL" bkey="any">Aucune</span></li>
+<li><span  bkey="actionurl">URL ACTION </span> : <span class="text-info" id="IUAAL" bkey="any">Aucune</span></li>
+</ul>
+
+</div></div></div>
+<!--fin panel reveil -->
+  </div>
+</div></div></div>
+    <!-- Fin Main Tab-->
+    <!-- bandeau -->
+<div class="container">
+<div class="row">
+    <!-- DHT-->
+    <div class="col-10 col-sm-10 col-md-7 col-lg-4 d-none mx-auto" id="dht_box">
+    <div class="card bg-dark text-white mb-3 text-center" style="max-width: 20rem;">
+        <div class="card-header bg-success" id="thermo"><h4><span id="Modele">DHT</span></h4></div>
+  <div class="card-body tex-center">
+
+        <h2 class="display-3"><span id="Temp"></span> &deg;C</h2>
+         <h2 class="display-4"><span id="Hum"></span> %</h2>
+    <p class="card-text" bkey="status">Statut :<span id="Status"></span> </p>
+    </div>
+          </div>
+    </div>
+    <!-- Options -->
+    <div class=" col-10 col-sm-8 col-md-5 col-lg-4 mx-auto">
+      <legend class="text-primary" bkey="options">Options :</legend>
+    <form name="FormOptions" action='/Options' method='POST' class="my-3 mx-2">
+      <div class="form-group">
+      <div class="custom-control custom-switch">
+      <input type="checkbox" class="custom-control-input" id="LUM" checked>
+      <label class="custom-control-label text-primary" for="LUM" bkey="auto-brightness">Luminosité Auto ( <span id="infoLUM" class="badge badge-info badge-pill"></span> )</label>
+      </div>
+      </div>
+     <div class="mx-auto d-none" id="groupLum">
+           <input  type="range" id="INT" name="intensity" min="0" max="15" oninput="valint.value = intensity.valueAsNumber">
+           <output class="text-primary" for="INT"  name="valint"></output>
+      </div>
+      <div class="form-group">
+      <div class="custom-control custom-switch">
+      <input name='SEC' type="checkbox"  class="custom-control-input"  id="SEC" checked >
+      <label   class="custom-control-label text-primary" for="SEC" bkey="second-display"> Affichage secondes </label>
+     </div>
+   </div>
+   <div class="form-group">
+   <div class="custom-control custom-switch">
+   <input name='HOR' type="checkbox"  class="custom-control-input"  id="HOR" checked >
+   <label   class="custom-control-label text-primary" for="HOR" bckey="clock-display"> Affichage Horloge </label>
+  </div>
+  </div>
+
+<div class="form-group">
+<div class="custom-control custom-switch">
+<input name='LED' type="checkbox"  class="custom-control-input"  id="LED" disabled>
+<label   class="custom-control-label text-primary" for="LED" bkey="nightlight"> LED / VEILLEUSE</label>
+</div>
+</div>
+
+<div class="mx-auto d-none border-left border-primary  px-3" id="groupLed">
+        <br/>
+        <label for="BRI" class="text-primary" bkey="ledintensity">Intensité veilleuse</label>
+     <input  class="mx-5" type="range" id="BRI" name="Brillance" min="1" max="100" oninput="valbri.value = Brillance.valueAsNumber">
+     <output class="text-primary" for="BRI"  name="valbri"></output>
+
+<div class="form-group d-none" id="groupled3" >
+
+  <label for="COLOR" class="text-primary" bkey="ledcolor">Couleur veilleuse</label>
+  <select class="custom-select" id="COLOR">
+  </select>
+</div>
+</div>
+</div>
+        </form>
+</div>
+</div>
+<!-- navbar -->
+<div class="container-fluid bg-light">
+    <ul class="nav nav-tabs">
+  <li class="nav-item">
+    <a class="nav-link active show" data-toggle="tab" href="#Info" bkey="information">Information</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#mqtt" id="navbtns" bkey="mqtt">MQTT / Domotique</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#Options" id="navbtns" bkey="options">Options</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link disabled" data-toggle="tab" href="#dhtpanel" id="navdht">DHT</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#Admin" bkey="admin">Admin</a>
+        </li>
+</ul>
+<div id="myTabContent" class="tab-content mt-4">
+  <div class="tab-pane fade active show" id="Info">
+      <div class="container-fluid">
+      <div class="card-deck ">
+      <div class="card  border-primary m-1" style="min-width:300px;">
+          <div class="card-header text-center"><H3>Systéme</H3></div>
+  <div class="card-body ">
+      <table class="table table-bordered table-sm table-md">
+  <tr><th scope="row" class="bg-dark text-white">Hostname</th><td id="hostname"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Date Systéme</th><td id="ddj"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">TimeZone</th><td id="tzname"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">mDNS</th><td id="mdns"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Demarrage</th><td id="uptime"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white" id="blocInfoNTP">Serveur NTP</th><td><span id="NTP"></span><button type="button" class="btn btn-dark text-white btn-sm float-right" id="btnsynchro" onclick="checktime();">Synchro</button></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">1er Synchro</th><td id="first"></td></tr>
+   <tr><th scope="row" class="bg-dark text-white">Derniére Synchro </th><td id="last"></td></tr>
+   <tr><th scope="row" class="bg-dark text-white">Mode Debug </th><td id="debug"></td></tr>
+   <tr><th scope="row" class="bg-dark text-white" id="newversion">Version firmware</th><td><a id="urlversion" href="" target="_blank"><span id="lastversion"></span></a></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Version Interface </th><td id="vspiffs"></td></tr>
+      </table>
+          </div></div>
+ <div class="card border-danger  m-1" style="min-width:300px;">
+  <div class="card-header text-center"><H3>NetWork</H3></div>
+  <div class="card-body">
+      <table class="table table-bordered table-sm table-md">
+<tr><th scope="row" class="bg-dark text-white">Mac adr.</th><td id="MAC"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">IP</th><td id="IP"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Masque</th><td id="masque"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Passerelle</th><td id="passerelle"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">DNS 1</th><td id="DNS"></td></tr>
+   <tr><th scope="row" class="bg-dark text-white">DNS 2</th><td id="DNS2"></td></tr>
+   <tr><th scope="row" class="bg-dark text-white">SSID</th><td id="SSID"></td></tr>
+     <tr><th scope="row" class="bg-dark text-white">Signal Wifi</th><td id="RSSI"></td></tr>
+   <tr><th scope="row" class="bg-dark text-white">Canal</th><td id="channel"></td></tr>
+     <tr><th scope="row" class="bg-dark text-white">BSSID</th><td id="BSSID"></td></tr>
+     <tr><th scope="row" class=" text-white" id="blocInfoNet">Internet</th><td><span id="net"></span><button type="button" class="btn btn-dark text-white btn-sm float-right" id="btntest" onclick="checknet();">Test</button></td></tr>
+     <tr><th scope="row" class="bg-dark text-white" id="blocInfoMQTT">MQTT</th><td><span id="mqttState">Désactivé</span></td></tr>
+
+      </table>
+                    </div></div>
+      <div class="card border-warning  m-1" style="min-width:300px;"  >
+  <div class="card-header text-center"><H3>Display</H3></div>
+  <div class="card-body">
+      <table class="table table-bordered table-sm table-md">
+  <tr><th scope="row" class="bg-dark text-white">Type Matrices</th><td id="typMat"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Nb Matrices</th><td id="display"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Largeur Time</th><td id="WZT"></td></tr>
+<tr><th scope="row" class="bg-dark text-white">Mode XL</th><td id="XL"></td></tr>
+<tr><th scope="row" class="bg-dark text-white">Total Zones</th><td id="TZ"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Nb Zones Notif</th><td id="MZM"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">N° Zones </th><td id="num"></td></tr>
+      </table>
+          </div></div>
+          <div class="card border-info  m-1" style="min-width:300px;">
+  <div class="card-header text-center"><H3>Matériel</H3></div>
+  <div class="card-body">
+      <table class="table table-bordered table-sm table-md">
+<tr><th scope="row" class="bg-dark text-white">PhotoCell</th><td id="photocell"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Bouton 1</th><td id="bouton1"></td></tr>
+<tr><th scope="row" class="bg-dark text-white">Bouton 2</th><td id="bouton2"></td></tr>
+<tr><th scope="row" class="bg-dark text-white">DHT</th><td id="dht"></td></tr>
+ <tr><th scope="row" class="bg-dark text-white">LED</th><td id="isLED"></td></tr>
+ <tr><th scope="row" class="bg-dark text-white">audio</th><td id="isAUDIO"></td></tr>
+  <tr><th scope="row" class="bg-dark text-white">Box</th><td id="boxinfo"></td></tr>
+      </table>
+          </div></div>
+          </div></div>
+  </div>
+  <div class="tab-pane fade" id="mqtt" >
+    <p class="text-secondary"> Paramétres serveur MQTT ( si activé )</p>
+    <div class="row" id="cardmqtt" >
+    <div class="col-lg-5">
+     <div class="card border-primary mb-3 " >
+          <div class="card-header">Info Serveur MQTT</div>
+            <div class="card-body">
+        <h5 class="card-title"> Serveur MQTT : <span id="infostatemqtt" class="text-primary"></span></h5>
+<p>Si , vous avez une erreur MQTT , verifier l'adresse du serveur , le port ainsi que le nom utilisateur et mot de passe si celui ci est necessaire.</p>
+<p>Une fois les modifications effectué , dans la page de configuration. Pensez à redémarrer le Notifheure , pour la prise en compte des paramètres.</p>
+  <ul class="list-group list-group-flush">
+  <li class="list-group-item">Serveur IP : <span id="infoipmqtt"></span></li>
+  <li class="list-group-item">Serveur port : <span id="infoipmqtt">1883</span></li>
+  <li class="list-group-item">Utilisateur : <span id="infousermqtt"></span></li>
+  <li class="list-group-item">Tempo des Publications : <span id="infotempomqtt"></span> secondes(s)</li>
+  <li class="list-group-item">topic ( Send Notif ) : <span id="infotopicS"></span></li>
+  <li class="list-group-item">topic ( Set Options ) : <span id="infotopicO"></span></li>
+  <li class="list-group-item">topic ( Get State ): <span id="infotopicP"></span></li>
+  <li class="list-group-item" id="HAP">Préfix discovery pour Home Assistant : <span id="predisco">homeassistant</span></li>
+  </ul>
+</ul>
+ </div>
+ </div>
+</div>
+<div class="col-lg-7">
+  <div class="card text-white bg-primary mb-3">
+  <div class="card-header">JSON MQTT</div>
+  <div class="card-body">
+    <h5 class="card-title">Topic Souscription</h5>
+    <h6 class="card-title">Envoie Notification</h6>
+    <p class="card-text">Json à envoyer sous la forme : {<strong>"msg":</strong>"Hello World"}</p>
+    <p><strong>msg :</strong> message a afficher</p>
+    <p>Possible de préciser des options avec mot-clef <strong>opt</strong> : par exemple {<strong>"msg":</strong>"Hello World",<strong>"opt":</strong>"pause=0; nzo=1"} pour une pause de 0 seconde sur la zone 1 ( séparé par ; ).
+      Si aucune option n'est précisée .Les paramètres par défaut sont appliqués. Envoie du message sur la zone "message"</P>
+    <h6 class="card-title">Réglage Options</h6>
+    <p>Json à envoyer sous la forme : {<strong>"key":</strong>"value"}</p>
+    <pre class="text-white">
+    Exemple Key :
+    "SEC": "true ou false",     // Affiche / désactive les secondes
+    Retrouvez toutes les clés possibles , dans la documentation du NotifHeureXL . 
+    Possibilité d'envoie de plusieurs commandes : {"key":"value","key2":"value2"}
+    </pre>
+      <h5 class="card-title">Topic Publication</h5>
+      <p class="card-text">Json  sous la forme : </p>
+    <pre class="text-white">
+    {
+    "temperature": "20.70",     // info temperature
+    "humidity": "49.30",        // info humidité
+    "sec": true,                // etat secondes
+    "hor": true,                // etat affichage horloge
+    "lum": true,                // mode luminosité
+    "rev": false                // Etat reveil
+    }
+    </pre>
+  <div id="HAtuto">
+  <h5 class="card-title">Home Assistant</h5>
+  <p class="card-text">Pour home Assistant, le notifheure XL crée les entités automatiquement dans HA, si l'option est activée ( discovery auto). Selon les options matérielles du notifheure, il crée deux sensors température et humidité ( DHT), 3 switchs pour les options Secondes, Auto/manuel et affichage horloge et une entité "light" pour la LED.</p>
+  <p>Il est possible aussi de déclencher manuellement la création.</p>
+  <button type="button" class="btn btn-primary text-white btn-sm" id="btnHA" onclick="sendConfigHA();">Envoie Config vers HA</button>
+</div>
+  </div>
+</div>
+</div>
+</div>
+   <p class="text-secondary"> Paramétres Domotique ( si activé )</p>
+   <div class="row" id="cardbox" >
+   <div class="col-lg-5">
+    <div class="card border-primary mb-3 " >
+         <div class="card-header">Info Actions URL BOX</div>
+           <div class="card-body">
+       <h5 class="card-title"> URL ACTION : <span id="infostateURLACTION" class="text-primary"></span></h5>
+<ul class="list-group list-group-flush">
+ <li class="list-group-item">URL Action 1 : <span id="infoaction1">N/A</span></li>
+ <li class="list-group-item">URL Action 2 : <span id="infoaction2">N/A</span></li>
+ <li class="list-group-item">URL Action 3 : <span id="infoaction3">N/A</span></li>
+</ul>
+<h5 class="card-title"> URL UPDATE : <span id="infostateURLUPD" class="text-primary"></span></h5>
+<ul class="list-group list-group-flush">
+<li class="list-group-item">URL Update : <span id="infoupdate">N/A</span></li>
+</ul>
+    </div>
+  </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card text-white bg-primary mb-3">
+    <div class="card-header">Information URL Actions</div>
+    <div class="card-body">
+      <h5 class="card-title">Message Information URL</h5>
+      <p class="card-text">État de la dernière requête envoyé :</p>
+      <p id="infoEtatURL"> En attente de retour d'état ..</p>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+  <div class="tab-pane fade" id="Options">
+    <p>Ci dessous listes des actions associés aux differents modules ( Boutons , DFPlayer )- Si présent</p>
+      <div class="card-deck ">
+      <div class="card text-white bg-success mb-3 d-none" style="max-width: 20rem;" id="cardbtn1">
+  <div class="card-header text-center"><H2>Bouton 1</H2></div>
+  <div class="card-body">
+    <h4 class="card-title">Simple Clic</h4>
+    <p class="card-text">Action définie : <span id="btn1clic1"></span></p>
+        <h4 class="card-title">Double Clic</h4>
+    <p class="card-text">Action définie : <span id="btn1clic2"></span></p>
+        <h4 class="card-title">Triple Clic</h4>
+ <p class="card-text">Action définie : <span id="btn1clic3"></span></p>
+  </div>
+  </div>
+ <div class="card text-white bg-danger mb-3 d-none" style="max-width: 20rem;" id="cardbtn2">
+  <div class="card-header text-center"><H2>Bouton 2</H2></div>
+  <div class="card-body">
+    <h4 class="card-title">Simple Clic</h4>
+    <p class="card-text">Action définie : <span id="btn2clic1"></span></p>
+        <h4 class="card-title">Double Clic</h4>
+    <p class="card-text">Action définie : <span id="btn2clic2"></span></p>
+        <h4 class="card-title">Triple Clic</h4>
+ <p class="card-text">Action définie : <span id="btn2clic3"></span></p>
+  </div>
+  </div>
+  <div class="card text-white bg-primary mb-3 d-none" style="max-width: 20rem;" id="cardMP3">
+   <div class="card-header text-center"><H2>DF PLayer</H2></div>
+   <div class="card-body">
+     <h4 class="card-title">Dossier MP3</h4>
+     <p class="card-text">Nombre de titre : <span id="MP3list"></span></p>
+         <h4 class="card-title">Dossier effet sonore</h4>
+     <p class="card-text">Nombre d'effets : <span id="MP3sound"></span></p>
+         <h4 class="card-title">Notification Par défaut</h4>
+  <p class="card-text">Effet n° : <span id="MP3notif"></span></p>
+   </div>
+   </div>
+      </div>
+    </div>
+  <div class="tab-pane fade" id="dhtpanel">
+     <div class="card border-primary mb-3">
+          <div class="card-header">Info DHT</div>
+            <div class="card-body">
+        <h5 class="card-title"> Dernier relevé DHT :<span id="dhtdate"></span></h5>
+        <ul class="list-group list-group-flush">
+  <li class="list-group-item">Température : <span id="dht_t"></span> °C</li>
+  <li class="list-group-item">Température Ressentie : <span id="dht_hi"></span>  °C</li>
+  <li class="list-group-item">Humiditée : <span id="dht_h"></span> %</li>
+  <li class="list-group-item">Point de Rosée : <span id="dht_p"></span> °C</li>
+</ul>
+ <hr class="my-2">
+    <div class="row">
+        <div class=" col-lg-4">
+      <div class="form-check">
+  <input class="form-check-input" type="checkbox" value="" id="DDHT" aria-describedby="ddhtHelp">
+  <label class="form-check-label" for="DDHT">
+    Afficher Info temperature sur Notif'heure
+  </label>
+<small id="ddhtHelp" class="form-text text-muted">Permet l'affichage des infos températures , relevé par le DHT , directement sur l'écran du notif'heure.Les infos sont affichés à chaque relevé de la température ( Programmé sur page configuration ). </small>
+          </div></div>
+         <div class=" col-lg-4">
+</div></div>
+ </div> </div>
+  </div>
+  <div class="tab-pane fade" id="Admin">
+      <div class="card border-info mb-3">
+          <div class="card-header">Configuration Systéme</div>
+            <div class="card-body">
+              <ul class="list-group list-group-flush">
+    <li class="list-group-item">
+    <p>Ci dessous , lien vers la page de configuration du NotifHeure </p>
+    <button type="button" class="btn btn-primary btn-sm" onclick="goConfig();">Configuration</button>
+    </li>
+    <li class="list-group-item">
+      <p>Permet de forcer la synchro de l'heure , dans le cas ou il y aurait eu une erreur de synchro au démarrage , avec le serveur de temps.
+      </br>Cette fonction , peut "freezer" l'affichage , le temps de la synchro.</p>
+      <button type="button" class="btn btn-primary btn-sm" onclick="checktime();">Forcer synchro heure</button>
+    </li>
+    <li class="list-group-item"></li>
+        </ul>
+
+          </div></div>
+
+
+    </br>
+    <div class="card border-primary mb-3">
+          <div class="card-header">Presence de Notif'Heure sur le reseau <span class="text-primary" id="inforafraichir"></span></div>
+            <div class="card-body">
+        <h5 class="card-title text-center" >
+                <button type="button" class="btn btn-primary btn-sm" onclick="getMdns();">Rafraichir</button></h5>
+        <table class="table table-hover" >
+        <thead>
+        <tr>
+          <th scope="col" style="width:5%;">#</th>
+          <th scope="col">Nom</th>
+          <th scope="col">IP</th>
+          <th scope="col" style="width:10%;">Version</th>
+          <th scope="col">Uptime</th>
+          <th scope="col" style="width:15%;">Signal</th>
+        </tr>
+      </thead>
+      <tbody id="mdnslist">
+      </tbody>
+        </table>
+            </div>
+    </div>
+    <hr class="my-2">
+    <div class="card border-secondary mb-3">
+          <div class="card-header">Historique Notification  <span class="badge badge-primary badge-pill" id="badgehist"></span><span id="imphist"></span></div>
+            <div class="card-body">
+              <h5 class="card-title text-center" >
+                      <button type="button" class="btn btn-secondary btn-sm" onclick="getHisto();">Rafraichir</button></h5>
+        <h3 class="card-title"></h3>
+    <div >
+      <table class="table table-hover">
+      <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">date</th>
+        <th scope="col">Notification</th>
+        <th scope="col">Flag</th>
+      </tr>
+      </thead>
+      <tbody id="histoList">
+      </tbody>
+      </table>
+
+
+    </div> </div>
+    </div>
+
+</div>
+    <div class="clearfix">
+    <span>
+    </br>
+    </br>
+    </br>
+
+    </span>
+    </div>
+    <!-- Footer -->
+<footer class="footer">
+     <div class="container-fluid bg-secondary text-center fixed-bottom">
+        <span class="text-muted"> © 2018
+    <a href="https:/byfeel.info"> byfeel.info</a></span>
+      </div>
+</footer>
+<!-- Footer -->
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"   integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="   crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.3.2/rangeslider.min.js"></script>
+
+    <script src="notif.js"></script>
+</body>
+</html>
