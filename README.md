@@ -2,6 +2,11 @@
 ******************************
 Nouvelle Interface ( vue.js )
 ******************************
+* Version 1.1.1 
+    * Correction bug sur offset décimal
+    * Ajout etiquette FIX et INFO pour commande MQTT
+    * Correction pb DHT
+    * et toujours des amliorations du code , afin d'apporter une meilleure expérience...
 
 * Version 1.1.0 
     * Prise en charge nouvelle interface Web 2.x ( ancienne version 1.x toujours supporté )

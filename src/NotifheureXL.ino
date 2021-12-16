@@ -7,7 +7,7 @@
 // *********  Byfeel 2019 ***********************
 // **********************************************
 #define ARDUINOJSON_USE_LONG_LONG 1
-#define _VERSION "1.1.0"
+#define _VERSION "1.1.1"
 #define _HARDWARE "NotifheureXL"
 #define _VINTERFACE ""
 const String espType="ESP8266";
@@ -351,7 +351,7 @@ const size_t capacityMQTT = JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(10) + 300;
 const size_t capacityConfig = 4*JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(6) + 2*JSON_ARRAY_SIZE(8) + JSON_OBJECT_SIZE(110) + 3500;
 const size_t capacityHisto =3*JSON_ARRAY_SIZE(10)  + JSON_OBJECT_SIZE(4) + 500;
 const char *fileconfig = "/config/config.json";  // fichier config
-const char *fileHist = "/config/Historique.json";  // fichier config
+const char *fileHist = "/config/Historique.json";  // fichier history
 
 // init network (wifi , broker )
 WiFiUDP ntpUDP;
@@ -1022,7 +1022,7 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   File file = LittleFS.open(fileconfig, "r");
    if (!file) {
      msgDebug+="Fonction load : Fichier Config absent ---";
-     //InfoDebugtInit=InfoDebugtInit+" Fichier config Jeedom absent -";
+     //InfoDebugtInit=InfoDebugtInit+" Fichier config  absent -";
      //if (configSys.DEBUG) Serial.println("Fichier Config absent");
     }
   DynamicJsonDocument docConfig(capacityConfig);
@@ -1057,8 +1057,8 @@ void loadConfigSys(const char *fileconfig, sConfigSys  &config) {
   config.LUM=docConfig["LUM"] | true;
   config.REV=docConfig["REV"] | false;
   config.DHT=docConfig["DDHT"] | false;
-  config.offsetT=docConfig["OFT"] | 0;
-  config.offsetH=docConfig["OFH"] | 0;
+  config.offsetT=docConfig["OFT"]| 0.0;
+  config.offsetH=docConfig["OFH"] | 0.0;
   config.tempDDHT=docConfig["TEMPDDHT"] | TEMPODDHT;
   config.timeREV[0]=docConfig["TIMEREV"][0] | 7;
   config.timeREV[1]=docConfig["TIMEREV"][1] | 0;
@@ -2481,6 +2481,11 @@ String prepNotif(String key,String val) {
   if (key=="FX" ) { optionsNum(&Fo,val,0,28);optionsNum(&Fi,val,0,28);optionsNum(&Ntype,"6",0,9);}
   if (key=="ANIM" ) { optionsNum(&An,val,0,15);optionsNum(&Ntype,"7",0,9);}
   if (key=="CYCLE") { optionsNum(&Cyc,val,0,1000);}
+  if (key=="ROLL") Ntype=5;
+  if (key=="ARROW") Ntype=4;
+  if (key=="PAC") Ntype=3;
+  if (key=="FIX") Ntype=2;
+  if (key=="INFO") Ntype=1;
   if (key=="TYPE") {
           if (val=="INFO") val=1;
           else if (val=="FIX") val=2;
@@ -2489,7 +2494,7 @@ String prepNotif(String key,String val) {
           else if (val=="ROLL") val=5;
           optionsNum(&Ntype,val,0,9);
         }
-  //if (key=="FIX") Ntype=2;
+
 if (key=="FI" ) { optionsNum(&Fi,val,0,28);}
 if (key=="FO" ) { optionsNum(&Fo,val,0,28);}
 if (key=="FIO" ) { optionsNum(&Fo,val,0,28);optionsNum(&Fi,val,0,28);}
@@ -3910,7 +3915,7 @@ void handleFileUpload() {
   } else if (upload.status == UPLOAD_FILE_END) {
     if (fsUploadFile) {
       fsUploadFile.close();
-    //  Reboot = true;
+      reboot = true;
     }
     if (configSys.DEBUG)  Serial.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
   }
