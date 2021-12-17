@@ -353,6 +353,13 @@ const size_t capacityHisto =3*JSON_ARRAY_SIZE(10)  + JSON_OBJECT_SIZE(4) + 500;
 const char *fileconfig = "/config/config.json";  // fichier config
 const char *fileHist = "/config/Historique.json";  // fichier history
 
+//fonctions
+bool handleFileRead(String path);
+void handleFileUpload();
+
+//nom upload
+File fsUploadFile;
+
 // init network (wifi , broker )
 WiFiUDP ntpUDP;
 WiFiClient espClient;
@@ -447,10 +454,8 @@ bool checkntp=false;
 bool checknet=false;
 bool startSend=true;
 String  networkName;
+bool espreboot = false;
 
-//nom fichier charge
-File fsUploadFile;
-void handleFileUpload();
 
 // boutons
 byte clic=0;
@@ -2588,7 +2593,8 @@ ArduinoOTA.setHostname((const char *)hostname.c_str());
 void wifiReset() {
   WiFiManager wifiManager;
   wifiManager.resetSettings();
-  //delay(1000);
+  ESP.eraseConfig(); 
+  delay(1000);
   //ESP.restart();
 }
 // callback fonction wifimanager
@@ -3345,17 +3351,18 @@ server.on("/Upload", HTTP_GET, []() {
 
 server.on("/Upload", HTTP_POST, []() {
       server.send ( 200, "text/html", getPage());
-    }, handleFileUpload);
-    server.onNotFound([]() {
+    }, handleFileUpload );
+
+server.onNotFound([]() {
       if (!handleFileRead(server.uri())) {
         server.send(404, "text/plain", "FileNotFound");
       }
     });
-server.onNotFound([]() {
-  if (!handleFileRead(server.uri())) {
-    server.send(404, "text/plain", "FileNotFound");
-  }
-});
+//server.onNotFound([]() {
+//  if (!handleFileRead(server.uri())) {
+//    server.send(404, "text/plain", "FileNotFound");
+//  }
+//});
  server.begin();
 
 //WebSocketsServer
@@ -3628,7 +3635,7 @@ void loop() {
   static uint32_t  lastTimePrintDHT= 0; // millis() system / synchro
   static uint32_t  lastTimeMqtt= 0; // millis() system / synchro
   static uint32_t  tempoBox= 0; // tempo pour envoie update vers box
-  static uint32_t  tempoCheck= 0; // tempo pour envoie update vers box
+  static uint32_t  tempoCheck= 0; // tempo ntp
   static bool flasher = false;  // seconds passing flasher
   static uint32_t  startAudio;
   static bool dispNotif=false;
@@ -3893,6 +3900,11 @@ if (configSys.broker) {
       }
     }
 
+    if (espreboot) {
+      delay(500);
+      ESP.restart();
+    }
+
 } // fin loop
 //chargement
 void handleFileUpload() {
@@ -3915,7 +3927,7 @@ void handleFileUpload() {
   } else if (upload.status == UPLOAD_FILE_END) {
     if (fsUploadFile) {
       fsUploadFile.close();
-      reboot = true;
+      espreboot=true;
     }
     if (configSys.DEBUG)  Serial.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
   }
@@ -3958,10 +3970,13 @@ bool handleFileRead(String path){  // send the right file to the client (if it e
 String getPage() {
   String page = "<html lang=fr-FR><head><meta http-equiv='refresh' content='10'/>";
   page += "<title>upload</title><meta charset='utf-8'>";
+  page += "<META http-EQUIV=\"Refresh\" CONTENT=\"7; url=http://byfeel.info>\">";
   page += "<style> body { background-color: #fffff; font-family: Arial, Helvetica, Sans-Serif; Color: #000088; }</style>";
   page += "</head><body><h3>Le fichier à bien été enregistré</h3>";
-  page += "<p>Le notif'heure va rebooter d'ici une trentaine de secondes - Merci d'atendre le reboot pour la prise en compte </p>";
-  page += "<p>Vous pouvez cliquer sur ce lien , pour retourner sur l' <a href='/'>Accueil</a> .</p>";
+  page += "<p>Le notif'heure a bien enregistré votre fichier  - Merci d'atendre le reboot pour la prise en compte </p>";
+  page += "<p>Vous pouvez cliquer sur ce lien , pour retourner sur l' <a href='/infos'>Accueil</a> .</p>";
+  
   page += "</body></html>";
+
   return page;
 }
