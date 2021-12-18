@@ -79,15 +79,15 @@ const char* www_password = "notif";
 // ***************************************************
 // matrix   - decocher selon config matrix    ********
 //#define HARDWARE_TYPE MD_MAX72XX::GENERIC_HW   //***
-//#define HARDWARE_TYPE MD_MAX72XX::FC16_HW        //***
+#define HARDWARE_TYPE MD_MAX72XX::FC16_HW        //***
 //#define HARDWARE_TYPE MD_MAX72XX::PAROLA_HW    //***
-#define HARDWARE_TYPE MD_MAX72XX::ICSTATION_HW //***
+//#define HARDWARE_TYPE MD_MAX72XX::ICSTATION_HW //***
 // ***************************************************
 // Branchement des matrices
 #define CLK_PIN   14  // SCK (D5 wemos D1R1 ou mini )
 #define DATA_PIN  13  // MOSI ( D7 wemos D1R1 ou mini )
-#define CS_PIN    15  // SS ou CS ( D10 sur D1R1  ou D8 sur Mini )
-//#define CS_PIN    12  // SS ( D10 sur D1R1  ou D6  sur Mini )  ---- Pour NOtifheure 1
+//#define CS_PIN    15  // SS ou CS ( D10 sur D1R1  ou D8 sur Mini )
+#define CS_PIN    12  // SS ( D10 sur D1R1  ou D6  sur Mini )  ---- Pour NOtifheure 1
 // si modif CS_PÏN modifier AUDIOPINRX 15 !!!!!
 // Pour info ancienne version NotifHeure
 //#define CLK_PIN   14
@@ -114,8 +114,8 @@ const char* www_password = "notif";
 // Si DFPLAYER MP3
 // PINAUDIORX : uniquement our MP3player
 // PIN qui serviront pour la communication série sur le module ESP
-#define AUDIOPINRX 12   // Entree pour DFP audio uniquement
-//#define AUDIOPINRX 15   // Inversé Entree pour DFP audio uniquement  si CS_PIN sur 12
+//#define AUDIOPINRX 12   // Entree pour DFP audio uniquement
+#define AUDIOPINRX 15   // Inversé Entree pour DFP audio uniquement  si CS_PIN sur 12
 
 // *******************
 // Autres PIN utilisés
