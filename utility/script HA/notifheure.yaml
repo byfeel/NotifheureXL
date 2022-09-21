@@ -1,0 +1,61 @@
+# exemple fichier scipt notifheure.yaml dans dossier packages Home assistant
+# ligne a configurer dans Configuration.yaml
+# homeassistant:
+#    packages: !include_dir_named packages
+# si installé dans configuration.yaml ( mettre la balise homeassistant: avant )
+############################################
+############ Notifheure ####################
+############################################
+############################################
+# script envoie notif selon emplacement
+# si pas de target précisé envoie vers bureau par défaut
+script:
+  notify_notifheure:
+    description: "Send a notification to Notifheure"
+    fields:
+      target:
+        description: "choice of Notifheure target (optional)"
+        example: "office"
+      message:
+        description: "The message content"
+        example: "The light is on!"
+      options:
+        description: "display options"
+        example: "nzo=0;pause=5"
+    sequence:
+    - service: mqtt.publish
+      data_template:
+        payload: '{"msg":"{{ message }}","opt":"{{ options }}"}'
+        qos: 1
+        retain: false
+        topic: >
+          {% if target == "bureau" %} 
+          byfeel/NotifheureXL/46fd32/bureau/message 
+          {% elif target == "salon" %} 
+          byfeel/NotifheureXL/226a33/salon/message 
+          {% elif target == "matt" %} 
+          byfeel/NotifheureXL/680c34/matt/message
+          {% else %} 
+          byfeel/NotifheureXL/46fd32/bureau/message 
+          {% endif %}
+      
+### Script notification tous les notifheure
+  notify_notifheure_all:
+      alias: Notification vers tous les Notifheures
+      sequence:
+      - service: script.notify_notifheure
+        data:
+          message: '{{ message }}'
+          target: salon
+          options: '{{ option }}'
+      - service: script.notify_notifheure
+        data:
+          message: '{{ message }}'
+          target: bureau
+          options: '{{ option }}'
+      - service: script.notify_notifheure
+        data:
+          message: '{{ message }}'
+          target: matt
+          options: '{{ option }}'
+      mode: single
