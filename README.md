@@ -2,6 +2,10 @@
 ******************************
 Nouvelle Interface ( vue.js )
 ******************************
+* Version 1.1.2
+    * Correction decouverte home assistant - Remplacer nom par defaut different des entités, suite à nouvelle version 2023.8.0
+    * Pensez à supprimer les anciens notifheure . Pas d'incidence sur les automatisations , les topics restent identiques
+
 * Version 1.1.1 
     * Correction bug sur offset décimal
     * Ajout etiquette FIX et INFO pour commande MQTT

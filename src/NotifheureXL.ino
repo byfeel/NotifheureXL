@@ -7,7 +7,7 @@
 // *********  Byfeel 2019 ***********************
 // **********************************************
 #define ARDUINOJSON_USE_LONG_LONG 1
-#define _VERSION "1.1.1"
+#define _VERSION "1.1.2"
 #define _HARDWARE "NotifheureXL"
 #define _VINTERFACE ""
 const String espType="ESP8266";
@@ -88,7 +88,7 @@ const char* www_password = "notif";
 #define CLK_PIN   14  // SCK (D5 wemos D1R1 ou mini )
 #define DATA_PIN  13  // MOSI ( D7 wemos D1R1 ou mini )
 #define CS_PIN    15  // SS ou CS ( D10 sur D1R1  ou D8 sur Mini )
-//#define CS_PIN    12  // SS ( D10 sur D1R1  ou D6  sur Mini )  ---- Pour NOtifheure 1
+//define CS_PIN    12  // SS ( D10 sur D1R1  ou D6  sur Mini )  ---- Pour NOtifheure 1
 // si modif CS_PÏN modifier AUDIOPINRX 15 !!!!!
 // Pour info ancienne version NotifHeure
 //#define CLK_PIN   14
@@ -2962,7 +2962,7 @@ void MQTTdevice(JsonDocument &doc) {
     device["ids"]=idNotif;
     device["mf"]="byfeel";
     device["mdl"]=String(_HARDWARE)+" - Chip: "+espType+" "+" "+chipID+" ( "+mdnsName+".local )";
-    device["name"]="notif_"+String(hardConfig.nom);
+    device["name"]="NotifHeure_"+String(hardConfig.nom);
     device["sw"]=_VERSION;
     device["cu"]="http://"+String(WiFi.localIP().toString());
 
